@@ -1,42 +1,38 @@
-﻿using SnpDepotManagement.Domain.Common;
+using SnpDepotManagement.Domain.Common;
 using SnpDepotManagement.Domain.Enums;
-using Error = SnpDepotManagement.Domain.Common.Error;
 
 namespace SnpDepotManagement.Domain.Entities.Operations;
 
-public sealed class ContainerLifecycle: AuditableEntity
+public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
 {
-    public Guid ContainerId { get; private set; } 
+    public string TenantId { get; set; } = string.Empty;
+    public Guid ContainerId { get; private set; }
     public string LineOperator { get; private set; } = string.Empty;
-    public ContainerClassification Classification { get; private set; }
+    public Classification Classification { get; private set; }
     public ContainerCondition Condition { get; private set; }
-    // Thông tin chiều nhập bãi(Gate - In)
-    public string InVehicleNumber { get; private set; } = string.Empty; // Biển số xe chở cont vào bãi
-    public DateTime InDate { get; private set; }                       // Thời điểm vào bãi
+    public LifecycleStatus Status { get; private set; }
 
-    // Thông tin chiều xuất bãi (Gate-Out)
-    public string? OutVehicleNumber { get; private set; }              // Biển số xe lấy cont ra khỏi bãi
-    public DateTime? OutDate { get; private set; }                     // Thời điểm ra khỏi bãi
-    public Guid? DeliveryOrderId { get; private set; }                 // Lệnh cấp vỏ dùng để xuất cont
+    public string InVehicleNumber { get; private set; } = string.Empty;
+    public DateTime InDate { get; private set; }
 
-    // Khóa ngoại vị trí slot bãi hiện tại mà cont đang chiếm giữ
+    public string? OutVehicleNumber { get; private set; }
+    public DateTime? OutDate { get; private set; }
+    public Guid? DeliveryOrderId { get; private set; }
+
     public Guid? CurrentSlotId { get; private set; }
 
-    // Biểu thức kiểm tra: container đang nằm trong bãi nếu có gắn slot và chưa ghi nhận ngày ra
-    public bool IsInDepot => CurrentSlotId.HasValue && OutDate == null;
+    public bool IsInDepot => Status == LifecycleStatus.InYard && OutDate == null;
 
     private ContainerLifecycle() { }
 
-    /// 
-    /// Factory Method: Tiếp nhận container qua cổng vào bãi (Gate-In)
-    /// 
     public static ContainerLifecycle GateIn(
         Guid containerId,
         string lineOperator,
-        ContainerClassification classification,
+        Classification classification,
         ContainerCondition condition,
         string inVehicleNumber,
-        Guid slotId)
+        Guid slotId,
+        string tenantId = "")
     {
         return new ContainerLifecycle
         {
@@ -44,30 +40,34 @@ public sealed class ContainerLifecycle: AuditableEntity
             LineOperator = lineOperator.Trim().ToUpperInvariant(),
             Classification = classification,
             Condition = condition,
+            Status = LifecycleStatus.InYard,
             InVehicleNumber = inVehicleNumber.Trim().ToUpperInvariant(),
             InDate = DateTime.UtcNow,
-            CurrentSlotId = slotId // Ghi nhận vị trí lưu bãi
+            CurrentSlotId = slotId,
+            TenantId = tenantId
         };
     }
 
-    /// 
-    /// Nghiệp vụ xuất container rời khỏi depot (Gate-Out)
-    /// 
     public Result GateOut(string outVehicleNumber, Guid deliveryOrderId)
     {
-        // Kiểm tra xem container có thực sự đang nằm trong depot hay không
-        if (!IsInDepot)
-            return Result.Failure(Error.Conflict("Lifecycle.NotInDepot", "Container hiện không nằm trong bãi lưu trữ."));
+        if (Status == LifecycleStatus.GatedOut || OutDate != null)
+        {
+            return Result.Failure(
+                Error.Conflict("Lifecycle.AlreadyGatedOut", "Container has already been gated out."));
+        }
 
+        if (Status != LifecycleStatus.InYard)
+        {
+            return Result.Failure(
+                Error.Conflict("Lifecycle.NotInYard", "Container is not currently in the yard."));
+        }
+
+        Status = LifecycleStatus.GatedOut;
         OutVehicleNumber = outVehicleNumber.Trim().ToUpperInvariant();
         OutDate = DateTime.UtcNow;
         DeliveryOrderId = deliveryOrderId;
-
-        // Rời khỏi vị trí bãi: đặt slot về null để đánh dấu giải phóng ô bãi
         CurrentSlotId = null;
 
         return Result.Success();
     }
-
-
 }
