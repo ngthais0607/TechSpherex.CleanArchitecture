@@ -1,63 +1,68 @@
-﻿using SnpDepotManagement.Domain.Common;
+using SnpDepotManagement.Domain.Common;
 using SnpDepotManagement.Domain.Enums;
-using SnpDepotManagement.Domain.Rules;
 
 namespace SnpDepotManagement.Domain.Entities.Yard;
 
-public sealed class YardBlock: AuditableEntity 
+public sealed class YardBlock : AuditableEntity, ITenantEntity
 {
+    public string TenantId { get; set; } = string.Empty;
     public string Code { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public bool IsVirtual { get; private set; }
+    public YardBlockType BlockType { get; private set; }
 
-    // Sức chứa giới hạn theo 3 chiều không gian[cite: 2]
     public int MaxBays { get; private set; }
     public int MaxRows { get; private set; }
     public int MaxTiers { get; private set; }
 
     private readonly List<YardSlot> _slots = new();
     public IReadOnlyCollection<YardSlot> Slots => _slots.AsReadOnly();
+
     private YardBlock() { }
 
-    public static YardBlock CreateStandard(string code, string name, int bays, int rows, int tiers)
+    public static YardBlock CreateStandard(
+        string code,
+        string name,
+        int bays,
+        int rows,
+        int tiers,
+        string tenantId = "")
     {
         var block = new YardBlock
         {
             Code = code.Trim().ToUpperInvariant(),
-            Name = name,
+            Name = name.Trim(),
             IsVirtual = false,
-            MaxBays = bays,
-            MaxRows = rows,
-            MaxTiers = tiers
+            BlockType = YardBlockType.Standard,
+            MaxBays = Math.Max(0, bays),
+            MaxRows = Math.Max(0, rows),
+            MaxTiers = Math.Max(0, tiers),
+            TenantId = tenantId
         };
 
-        // Tự động sinh ma trận tọa độ slot rỗng cho bãi[cite: 2]
         block.InitializeSlots();
         return block;
     }
 
-    /// 
-    /// Factory Method: Khởi tạo Block ảo dùng cho nghiệp vụ đặc thù[cite: 2].
-    /// 
-    public static YardBlock CreateVirtual(string code, string name)
+    public static YardBlock CreateVirtual(string code, string name, string tenantId = "")
     {
         return new YardBlock
         {
             Code = code.Trim().ToUpperInvariant(),
-            Name = name,
+            Name = name.Trim(),
             IsVirtual = true,
+            BlockType = YardBlockType.Virtual,
             MaxBays = 0,
             MaxRows = 0,
-            MaxTiers = 0
+            MaxTiers = 0,
+            TenantId = tenantId
         };
     }
 
-    /// 
-    /// Sinh toàn bộ danh mục vị trí theo 3 vòng lặp không gian[cite: 2].
-    /// 
     private void InitializeSlots()
     {
-        for (int bay = 1; bay <= MaxBays; bay++)
+        // YardSlot only exists at odd bays (20ft standard slots)
+        for (int bay = 1; bay <= MaxBays; bay += 2)
         {
             for (int row = 1; row <= MaxRows; row++)
             {
@@ -69,42 +74,75 @@ public sealed class YardBlock: AuditableEntity
         }
     }
 
-    /// 
-    /// Nghiệp vụ xếp container vào slot chỉ định trong Block[cite: 2].
-    /// Đóng gói kiểm tra quy tắc nghiệp vụ ngay bên trong Entity[cite: 2].
-    /// 
-    public Result AssignSlot(int bay, int row, int tier, ContainerSize containerSize)
+    public Result Expand(int newMaxBays, int newMaxRows, int newMaxTiers)
     {
-        // 1. Block ảo không hỗ trợ tọa độ slot[cite: 2]
         if (IsVirtual)
-            return Result.Failure(Error.Conflict("Yard.VirtualBlock", "Block ảo không hỗ trợ phân vị trí theo Bay, Row, Tier."));
+        {
+            return Result.Failure(
+                Error.Conflict("YardBlock.VirtualCannotExpand", "Virtual blocks cannot be expanded."));
+        }
 
-        // 2. Kích hoạt Business Rule kiểm tra tính tương thích Bay lẻ / Bay chẵn[cite: 2]
-        var rule = new ValidBayContainerSizeRule(bay, containerSize);
-        if (rule.IsBroken())
-            return Result.Failure(Error.Validation("Yard.InvalidBay", rule.Message));
+        if (newMaxBays < MaxBays || newMaxRows < MaxRows || newMaxTiers < MaxTiers)
+        {
+            return Result.Failure(
+                Error.Validation("YardBlock.InvalidExpansion", "New dimensions must be greater than or equal to current dimensions."));
+        }
 
-        // 3. Tìm slot theo tọa độ
-        var slot = _slots.FirstOrDefault(s => s.Bay == bay && s.Row == row && s.Tier == tier);
-        if (slot == null)
-            return Result.Failure(Error.NotFound("Yard.SlotNotFound", "Vị trí không tồn tại trong bãi."));
+        for (int bay = 1; bay <= newMaxBays; bay += 2)
+        {
+            for (int row = 1; row <= newMaxRows; row++)
+            {
+                for (int tier = 1; tier <= newMaxTiers; tier++)
+                {
+                    bool exists = _slots.Any(s => s.Bay == bay && s.Row == row && s.Tier == tier);
+                    if (!exists)
+                    {
+                        _slots.Add(new YardSlot(Id, bay, row, tier));
+                    }
+                }
+            }
+        }
 
-        // 4. Kiểm tra slot đã có container khác chiếm chỗ chưa
-        if (slot.IsOccupied)
-            return Result.Failure(Error.Conflict("Yard.SlotOccupied", "Vị trí này đã có container chiếm chỗ."));
+        MaxBays = newMaxBays;
+        MaxRows = newMaxRows;
+        MaxTiers = newMaxTiers;
 
-        // Đánh dấu chiếm chỗ thành công
-        slot.Occupy();
         return Result.Success();
     }
 
-    /// 
-    /// Nghiệp vụ giải phóng vị trí khi cont được bốc dỡ ra khỏi bãi.
-    /// 
-    public void ReleaseSlot(int bay, int row, int tier)
+    public Result Shrink(int newMaxBays, int newMaxRows, int newMaxTiers)
     {
-        var slot = _slots.FirstOrDefault(s => s.Bay == bay && s.Row == row && s.Tier == tier);
-        slot?.Release();
+        if (IsVirtual)
+        {
+            return Result.Failure(
+                Error.Conflict("YardBlock.VirtualCannotShrink", "Virtual blocks cannot be shrunk."));
+        }
+
+        if (newMaxBays > MaxBays || newMaxRows > MaxRows || newMaxTiers > MaxTiers)
+        {
+            return Result.Failure(
+                Error.Validation("YardBlock.InvalidShrink", "New dimensions must be less than or equal to current dimensions."));
+        }
+
+        var slotsToRemove = _slots
+            .Where(s => s.Bay > newMaxBays || s.Row > newMaxRows || s.Tier > newMaxTiers)
+            .ToList();
+
+        if (slotsToRemove.Any(s => s.IsOccupied))
+        {
+            return Result.Failure(
+                Error.Conflict("YardBlock.CannotShrinkOccupiedSlots", "Cannot shrink block because slots in the removed area are currently occupied."));
+        }
+
+        foreach (var slot in slotsToRemove)
+        {
+            _slots.Remove(slot);
+        }
+
+        MaxBays = newMaxBays;
+        MaxRows = newMaxRows;
+        MaxTiers = newMaxTiers;
+
+        return Result.Success();
     }
 }
-
