@@ -1,0 +1,11 @@
+## Ignore Visual Studio / VS Code temporary and build files
+.vs/
+.vscode/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+TestResults/
+*.log

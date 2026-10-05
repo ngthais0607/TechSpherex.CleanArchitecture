@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Domain\SnpDepotManagement.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Application\SnpDepotManagement.Application.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\SnpDepotManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Api\SnpDepotManagement.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+</Project>
