@@ -1,13 +1,19 @@
 # SnpDepotManagement
 
-Container Depot Management System built with .NET 10 and Clean Architecture.
+Hệ thống quản lý depot container vỏ rỗng được xây dựng theo Clean Architecture trên .NET 10.
 
-## Architecture Overview
-- **Domain**: Core business entities, value objects, domain rules, and enums. Independent of external frameworks.
-- **Application**: Application business rules, CQRS / Use Cases, FluentValidation.
-- **Infrastructure**: Persistence (EF Core + PostgreSQL), Identity, JwtBearer, HybridCache.
-- **Api**: ASP.NET Core Web API, OpenAPI, Scalar.
-- **Tests**:
-  - `Domain.UnitTests`: Unit tests for domain logic and business rules using xUnit.v3 and FluentAssertions.
-  - `Application.UnitTests`: Unit tests for application handlers using EF InMemory and NSubstitute.
-  - `Architecture.Tests`: Architectural rules verification using NetArchTest.Rules.
+## Tài Liệu
+
+- [Tuần 1 - Domain](docs/week-01/README.md): entity, value object, aggregate và business rules.
+- [Tuần 2 - Application](docs/week-02/README.md): CQRS in-house, validation và điều phối use case.
+
+Mỗi tuần có bảy nhật ký ngày và một tài liệu `codebase-structure-and-files.md` giải thích cấu trúc, cú pháp đáng chú ý và phạm vi kiểm thử.
+
+## Trạng Thái Kiểm Thử
+
+- Domain: 120 tests.
+- Application: 131 tests.
+- Architecture: 7 tests.
+- Tổng: 258 tests.
+
+Các Application tests dùng EF Core InMemory. Transaction, tenant isolation và luồng E2E qua API/database thật cần được xác minh ở giai đoạn Infrastructure/API.
