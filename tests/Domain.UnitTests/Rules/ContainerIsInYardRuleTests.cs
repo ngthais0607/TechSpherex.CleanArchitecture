@@ -6,6 +6,7 @@ namespace SnpDepotManagement.Domain.UnitTests.Rules;
 
 public sealed class ContainerIsInYardRuleTests
 {
+    private static readonly DateTime UtcNow = new(2026, 10, 10, 8, 30, 0, DateTimeKind.Utc);
     [Fact]
     public void IsBroken_WhenContainerIsInYard_ShouldBeFalse()
     {
@@ -15,7 +16,8 @@ public sealed class ContainerIsInYardRuleTests
             Classification.A,
             ContainerCondition.Normal,
             "51C-12345",
-            Guid.NewGuid());
+            Guid.NewGuid(),
+            UtcNow);
 
         var rule = new ContainerIsInYardRule(lifecycle);
 
@@ -31,9 +33,10 @@ public sealed class ContainerIsInYardRuleTests
             Classification.A,
             ContainerCondition.Normal,
             "51C-12345",
-            Guid.NewGuid());
+            Guid.NewGuid(),
+            UtcNow);
 
-        lifecycle.GateOut("51D-99999", Guid.NewGuid());
+        lifecycle.GateOut("51D-99999", Guid.NewGuid(), UtcNow.AddHours(1));
 
         var rule = new ContainerIsInYardRule(lifecycle);
 

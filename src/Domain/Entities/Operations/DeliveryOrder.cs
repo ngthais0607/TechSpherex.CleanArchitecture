@@ -102,6 +102,8 @@ public sealed class DeliveryOrderItem : BaseEntity
     public int DeliveredQuantity { get; private set; }
     public int RemainingQuantity => RequiredQuantity - DeliveredQuantity;
 
+    private DeliveryOrderItem() { }
+
     internal DeliveryOrderItem(Guid orderId, ContainerSize size, ContainerType type, int requiredQuantity)
     {
         DeliveryOrderId = orderId;

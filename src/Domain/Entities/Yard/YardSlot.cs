@@ -11,6 +11,8 @@ public sealed class YardSlot : BaseEntity
     public Guid? ContainerId { get; private set; }
     public bool IsOccupied { get; private set; }
 
+    private YardSlot() { }
+
     internal YardSlot(Guid blockId, int bay, int row, int tier)
     {
         BlockId = blockId;

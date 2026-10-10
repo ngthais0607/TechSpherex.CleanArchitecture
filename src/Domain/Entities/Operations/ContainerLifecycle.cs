@@ -32,6 +32,7 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
         ContainerCondition condition,
         string inVehicleNumber,
         Guid slotId,
+        DateTime utcNow,
         string tenantId = "")
     {
         return new ContainerLifecycle
@@ -42,13 +43,13 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
             Condition = condition,
             Status = LifecycleStatus.InYard,
             InVehicleNumber = inVehicleNumber.Trim().ToUpperInvariant(),
-            InDate = DateTime.UtcNow,
+            InDate = utcNow,
             CurrentSlotId = slotId,
             TenantId = tenantId
         };
     }
 
-    public Result GateOut(string outVehicleNumber, Guid deliveryOrderId)
+    public Result GateOut(string outVehicleNumber, Guid deliveryOrderId, DateTime utcNow)
     {
         if (Status == LifecycleStatus.GatedOut || OutDate != null)
         {
@@ -64,7 +65,7 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
 
         Status = LifecycleStatus.GatedOut;
         OutVehicleNumber = outVehicleNumber.Trim().ToUpperInvariant();
-        OutDate = DateTime.UtcNow;
+        OutDate = utcNow;
         DeliveryOrderId = deliveryOrderId;
         CurrentSlotId = null;
 
