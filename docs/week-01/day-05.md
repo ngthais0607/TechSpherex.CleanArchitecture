@@ -20,5 +20,3 @@
 - Lifecycle chuyển từ `InYard` sang `GatedOut`; thời gian được truyền từ Application.
 - Bốn dispatch rules tách riêng để có thể kiểm thử độc lập.
 - Các test tại cuối ngày xác nhận quota và state transition chính.
-
-Chi tiết luồng và chữ ký hiện tại xem tại [tài liệu tham chiếu Tuần 1](codebase-structure-and-files.md).

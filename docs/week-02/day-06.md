@@ -20,5 +20,3 @@
 - Gate-In/Gate-Out cùng các luồng thời hạn dùng `TimeProvider`.
 - Xác nhận hiện còn warning nullable/xUnit analyzer và ghi rõ giới hạn này trong báo cáo.
 - Infrastructure tiếp theo cần mapping EF Core, authentication, tenant filter và relational tests.
-
-Chi tiết xem tại [tài liệu tham chiếu Tuần 2](codebase-structure-and-files.md).

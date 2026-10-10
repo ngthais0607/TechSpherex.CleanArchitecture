@@ -20,5 +20,3 @@
 - Toàn solution hiện có 120 Domain tests, 131 Application tests và 7 Architecture tests.
 - Tổng cộng 258 tests pass; warning analyzer vẫn được ghi nhận riêng.
 - API/database end-to-end và relational transaction tests thuộc giai đoạn tiếp theo.
-
-Ma trận kiểm thử và giới hạn xem tại [tài liệu tham chiếu Tuần 2](codebase-structure-and-files.md).

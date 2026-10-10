@@ -20,5 +20,3 @@
 - Constructor `YardSlot` là `internal` để hạn chế nơi tạo slot.
 - `Expand` chỉ thêm tọa độ mới; `Shrink` từ chối vùng còn container.
 - Kết quả kiểm thử tại cuối ngày xác nhận cấu trúc block chuẩn và block ảo.
-
-Chi tiết xem tại [tài liệu tham chiếu Tuần 1](codebase-structure-and-files.md).

@@ -20,5 +20,3 @@
 - Không thêm MediatR, repository hay Domain Events khi chưa có nhu cầu thực tế.
 - Chọn CQRS interfaces tự định nghĩa; Infrastructure sẽ hiện thực persistence.
 - Các nhận định về transaction, tenant và database được giữ ở mức thiết kế chưa kiểm chứng.
-
-Các quyết định kỹ thuật được tổng hợp tại [tài liệu tham chiếu Tuần 1](codebase-structure-and-files.md).

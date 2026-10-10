@@ -7,8 +7,6 @@ Hệ thống quản lý depot container vỏ rỗng được xây dựng theo Cl
 - [Tuần 1 - Domain](docs/week-01/README.md): entity, value object, aggregate và business rules.
 - [Tuần 2 - Application](docs/week-02/README.md): CQRS in-house, validation và điều phối use case.
 
-Mỗi tuần có bảy nhật ký ngày và một tài liệu `codebase-structure-and-files.md` giải thích cấu trúc, cú pháp đáng chú ý và phạm vi kiểm thử.
-
 ## Trạng Thái Kiểm Thử
 
 - Domain: 120 tests.

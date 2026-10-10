@@ -14,10 +14,6 @@ Tuần 1 xây nền tảng nghiệp vụ độc lập với API và persistence:
 | 6 | Rà soát Domain và chốt hướng Application | [day-06.md](day-06.md) |
 | 7 | Hoàn thiện kiểm thử Domain | [day-07.md](day-07.md) |
 
-## Tài Liệu Tham Chiếu
-
-[Cấu trúc Domain và giải thích kỹ thuật](codebase-structure-and-files.md) tổng hợp nhiệm vụ thư mục/file, enum, cú pháp C#, business rules, mô hình dữ liệu đề xuất và phạm vi kiểm thử.
-
 ## Kết Quả Hiện Tại
 
 - 120 Domain unit tests.

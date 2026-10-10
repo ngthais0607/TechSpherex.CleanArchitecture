@@ -19,5 +19,3 @@
 - Dùng `ITenantEntity` làm hợp đồng; tenant isolation thực tế được để lại cho Infrastructure.
 - Dùng architecture test để bảo vệ hướng phụ thuộc.
 - Kết thúc ngày với bộ khung có thể mở rộng cho entity và rule.
-
-Chi tiết xem tại [tài liệu tham chiếu Tuần 1](codebase-structure-and-files.md).

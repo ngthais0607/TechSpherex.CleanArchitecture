@@ -20,5 +20,3 @@
 - `MarkDamaged` chỉ cập nhật `Condition`; không tự động đổi `Classification`.
 - Dùng constructor riêng và `private set` để bảo vệ trạng thái.
 - Các test tại thời điểm kết thúc ngày xác nhận các invariant đã triển khai.
-
-Chi tiết enum, factory và value object xem tại [tài liệu tham chiếu Tuần 1](codebase-structure-and-files.md).

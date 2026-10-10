@@ -20,5 +20,3 @@
 - Query ánh xạ entity sang DTO.
 - FluentValidation xử lý hình thức request; Domain giữ invariant.
 - Kết quả test tại cuối ngày được lưu như mốc lịch sử, không thay thế tổng số hiện tại.
-
-Chi tiết CQRS, record và TimeProvider xem tại [tài liệu tham chiếu Tuần 2](codebase-structure-and-files.md).

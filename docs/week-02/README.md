@@ -14,10 +14,6 @@ Tuần 2 xây tầng điều phối use case trên Domain bằng CQRS in-house, 
 | 6 | Rà soát Application và chuẩn bị Infrastructure | [day-06.md](day-06.md) |
 | 7 | Application workflow và architecture tests | [day-07.md](day-07.md) |
 
-## Tài Liệu Tham Chiếu
-
-[Cấu trúc Application và giải thích kỹ thuật](codebase-structure-and-files.md) tổng hợp CQRS, generic variance, record, reflection DI, validator, TimeProvider, handlers và giới hạn kiểm thử.
-
 ## Kết Quả Hiện Tại
 
 - 29 handlers và 17 validators.

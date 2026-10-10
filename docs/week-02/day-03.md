@@ -20,5 +20,3 @@
 - `MarkContainerDamaged` cập nhật `Condition`; `Classification` độc lập.
 - Yard handler ủy quyền sinh và thay đổi slot cho `YardBlock`.
 - Các test tại cuối ngày xác nhận use case container và cấu hình bãi.
-
-Chi tiết xem tại [tài liệu tham chiếu Tuần 2](codebase-structure-and-files.md).

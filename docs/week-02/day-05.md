@@ -20,5 +20,3 @@
 - Gate-Out gọi một lần `SaveChangesAsync` sau khi mọi rule đạt.
 - Đây là một ranh giới lưu thay đổi; ACID/rollback cần relational integration test.
 - Test tại cuối ngày xác nhận hành vi Application bằng `TestAppDbContext`.
-
-Chi tiết luồng xem tại [tài liệu tham chiếu Tuần 2](codebase-structure-and-files.md).

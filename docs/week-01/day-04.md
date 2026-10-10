@@ -19,5 +19,3 @@
 - Rule chỉ đánh giá và trả mã lỗi; không tự truy vấn hoặc lưu dữ liệu.
 - Test theo biên Bay/Tier và trạng thái slot giúp khóa hành vi.
 - Tại cuối ngày, bốn yard rules đã sẵn sàng cho tầng Application.
-
-Chi tiết tám rule của hệ thống xem tại [tài liệu tham chiếu Tuần 1](codebase-structure-and-files.md).

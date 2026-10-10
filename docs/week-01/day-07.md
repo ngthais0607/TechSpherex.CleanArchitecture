@@ -20,5 +20,3 @@
 - Bộ test hiện tại vẫn có 120 Domain tests; architecture suite đã được mở rộng trong Tuần 2.
 - Unit test không chứng minh foreign key, transaction hoặc concurrency của database quan hệ.
 - Domain sẵn sàng được sử dụng bởi các handler ở Application.
-
-Ma trận kiểm thử hiện tại xem tại [tài liệu tham chiếu Tuần 1](codebase-structure-and-files.md).

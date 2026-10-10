@@ -20,5 +20,3 @@
 - Đăng ký `IRuleEngine`, `TimeProvider`, handler và validator tại `AddApplication`.
 - `IAppDbContext` làm persistence boundary; không thêm `IUnitOfWork`.
 - Kết quả kiểm thử tại cuối ngày xác nhận nền tảng CQRS và architecture ban đầu.
-
-Chi tiết xem tại [tài liệu tham chiếu Tuần 2](codebase-structure-and-files.md).

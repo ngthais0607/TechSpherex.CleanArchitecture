@@ -20,5 +20,3 @@
 - Relocate kiểm tra đích trước khi hoàn tất thay đổi và khôi phục nguồn khi cần.
 - Remove kiểm tra container phía trên trước khi giải phóng slot.
 - Unit tests tại cuối ngày bao phủ các luồng đặt, dỡ, chuyển và tìm slot.
-
-Chi tiết rule và orchestration xem tại [tài liệu tham chiếu Tuần 2](codebase-structure-and-files.md).
