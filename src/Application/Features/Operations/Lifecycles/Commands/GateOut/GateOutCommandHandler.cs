@@ -101,7 +101,8 @@ public sealed class GateOutCommandHandler : ICommandHandler<GateOutCommand>
         var gateOutResult = lifecycle.GateOut(
             command.OutVehicleNumber,
             command.DeliveryOrderId,
-            _timeProvider.GetUtcNow().UtcDateTime);
+            _timeProvider.GetUtcNow().UtcDateTime,
+            command.VehicleType);
         if (gateOutResult.IsFailure)
         {
             return gateOutResult;

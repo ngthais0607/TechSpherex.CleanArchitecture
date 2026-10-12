@@ -92,6 +92,7 @@ public class GateOutCommandHandlerTests
         var lifecycleInDb = await _context.ContainerLifecycles.FindAsync(lifecycle.Id);
         lifecycleInDb!.Status.Should().Be(LifecycleStatus.GatedOut);
         lifecycleInDb.OutVehicleNumber.Should().Be("51C-22222");
+        lifecycleInDb.OutVehicleType.Should().Be(VehicleType.Truck);
         lifecycleInDb.OutDate.Should().Be(_utcNow.UtcDateTime);
         lifecycleInDb.DeliveryOrderId.Should().Be(order.Id);
 

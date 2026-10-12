@@ -64,7 +64,8 @@ public sealed class GateInCommandHandler : ICommandHandler<GateInCommand, Guid>
             command.Condition,
             command.InVehicleNumber,
             command.SlotId,
-            _timeProvider.GetUtcNow().UtcDateTime);
+            _timeProvider.GetUtcNow().UtcDateTime,
+            vehicleType: command.VehicleType);
 
         _context.ContainerLifecycles.Add(lifecycle);
 

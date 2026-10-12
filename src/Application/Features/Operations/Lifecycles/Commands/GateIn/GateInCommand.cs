@@ -8,4 +8,5 @@ public sealed record GateInCommand(
     string InVehicleNumber,
     Guid SlotId,
     Classification Classification = Classification.A,
-    ContainerCondition Condition = ContainerCondition.Normal) : ICommand<Guid>;
+    ContainerCondition Condition = ContainerCondition.Normal,
+    VehicleType VehicleType = VehicleType.Truck) : ICommand<Guid>;
