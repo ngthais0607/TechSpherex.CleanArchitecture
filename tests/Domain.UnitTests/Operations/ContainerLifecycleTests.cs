@@ -79,4 +79,27 @@ public sealed class ContainerLifecycleTests
         secondResult.IsFailure.Should().BeTrue();
         secondResult.Error.Code.Should().Be("Lifecycle.AlreadyGatedOut");
     }
+
+    [Fact]
+    public void GateIn_And_GateOut_ShouldRecordVehicleTypes()
+    {
+        var lifecycle = ContainerLifecycle.GateIn(
+            containerId: _containerId,
+            lineOperator: "MSC",
+            classification: Classification.A,
+            condition: ContainerCondition.Normal,
+            inVehicleNumber: "51C-12345",
+            slotId: _slotId,
+            utcNow: _gateInTime,
+            vehicleType: VehicleType.Truck);
+
+        lifecycle.InVehicleType.Should().Be(VehicleType.Truck);
+        lifecycle.OutVehicleType.Should().BeNull();
+
+        var result = lifecycle.GateOut("51D-99999", _deliveryOrderId, _gateOutTime, vehicleType: VehicleType.Barge);
+
+        result.IsSuccess.Should().BeTrue();
+        lifecycle.OutVehicleType.Should().Be(VehicleType.Barge);
+    }
 }
+

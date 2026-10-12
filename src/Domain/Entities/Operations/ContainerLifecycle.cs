@@ -13,9 +13,11 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
     public LifecycleStatus Status { get; private set; }
 
     public string InVehicleNumber { get; private set; } = string.Empty;
+    public VehicleType InVehicleType { get; private set; } = VehicleType.Truck;
     public DateTime InDate { get; private set; }
 
     public string? OutVehicleNumber { get; private set; }
+    public VehicleType? OutVehicleType { get; private set; }
     public DateTime? OutDate { get; private set; }
     public Guid? DeliveryOrderId { get; private set; }
 
@@ -33,7 +35,8 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
         string inVehicleNumber,
         Guid slotId,
         DateTime utcNow,
-        string tenantId = "")
+        string tenantId = "",
+        VehicleType vehicleType = VehicleType.Truck)
     {
         return new ContainerLifecycle
         {
@@ -43,13 +46,14 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
             Condition = condition,
             Status = LifecycleStatus.InYard,
             InVehicleNumber = inVehicleNumber.Trim().ToUpperInvariant(),
+            InVehicleType = vehicleType,
             InDate = utcNow,
             CurrentSlotId = slotId,
             TenantId = tenantId
         };
     }
 
-    public Result GateOut(string outVehicleNumber, Guid deliveryOrderId, DateTime utcNow)
+    public Result GateOut(string outVehicleNumber, Guid deliveryOrderId, DateTime utcNow, VehicleType vehicleType = VehicleType.Truck)
     {
         if (Status == LifecycleStatus.GatedOut || OutDate != null)
         {
@@ -65,6 +69,7 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
 
         Status = LifecycleStatus.GatedOut;
         OutVehicleNumber = outVehicleNumber.Trim().ToUpperInvariant();
+        OutVehicleType = vehicleType;
         OutDate = utcNow;
         DeliveryOrderId = deliveryOrderId;
         CurrentSlotId = null;
