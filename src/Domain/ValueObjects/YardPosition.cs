@@ -4,10 +4,12 @@ namespace SnpDepotManagement.Domain.ValueObjects;
 
 public sealed record YardPosition
 {
-    public string Block { get; }
-    public int Bay { get; }
-    public int Row { get; }
-    public int Tier { get; }
+    public string Block { get; private set; } = string.Empty;
+    public int Bay { get; private set; }
+    public int Row { get; private set; }
+    public int Tier { get; private set; }
+
+    private YardPosition() { }
 
     private YardPosition(string block, int bay, int row, int tier)
     {

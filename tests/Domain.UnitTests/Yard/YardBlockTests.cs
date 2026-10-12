@@ -78,4 +78,15 @@ public sealed class YardBlockTests
         block.MaxBays.Should().Be(5); // Dimensions unchanged
         block.Slots.Should().HaveCount(12);
     }
+
+    [Fact]
+    public void CreateStandard_ShouldAssignTenantIdAndYardPositionToSlots()
+    {
+        var block = YardBlock.CreateStandard("BLOCK-B", "Block B", bays: 3, rows: 2, tiers: 2, tenantId: "DEPOT-01");
+
+        block.TenantId.Should().Be("DEPOT-01");
+        block.Slots.All(s => s.TenantId == "DEPOT-01").Should().BeTrue();
+        block.Slots.All(s => s.Position != null).Should().BeTrue();
+        block.Slots.All(s => s.Position.Block == "BLOCK-B").Should().BeTrue();
+    }
 }

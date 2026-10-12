@@ -14,6 +14,9 @@ public sealed class ApplicationUser : AuditableEntity
     public DateTime? RefreshTokenExpiryTime { get; private set; }
     public bool IsActive { get; private set; } = true;
 
+    private readonly List<UserRole> _userRoles = new();
+    public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
+
     private ApplicationUser() { }
 
     public static Result<ApplicationUser> Create(
@@ -56,6 +59,14 @@ public sealed class ApplicationUser : AuditableEntity
     public void SetRole(string role)
     {
         Role = role.Trim();
+    }
+
+    public void AddRole(Guid roleId)
+    {
+        if (!_userRoles.Any(ur => ur.RoleId == roleId))
+        {
+            _userRoles.Add(new UserRole(Id, roleId));
+        }
     }
 
     public void SetRefreshToken(string refreshTokenHash, DateTime expiryTime)

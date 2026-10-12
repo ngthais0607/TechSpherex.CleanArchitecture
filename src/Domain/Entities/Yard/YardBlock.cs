@@ -68,7 +68,7 @@ public sealed class YardBlock : AuditableEntity, ITenantEntity
             {
                 for (int tier = 1; tier <= MaxTiers; tier++)
                 {
-                    _slots.Add(new YardSlot(Id, bay, row, tier));
+                    _slots.Add(new YardSlot(Id, bay, row, tier, Code, TenantId));
                 }
             }
         }
@@ -97,7 +97,7 @@ public sealed class YardBlock : AuditableEntity, ITenantEntity
                     bool exists = _slots.Any(s => s.Bay == bay && s.Row == row && s.Tier == tier);
                     if (!exists)
                     {
-                        _slots.Add(new YardSlot(Id, bay, row, tier));
+                        _slots.Add(new YardSlot(Id, bay, row, tier, Code, TenantId));
                     }
                 }
             }

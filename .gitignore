@@ -9,3 +9,7 @@ obj/
 *.sln.docstates
 TestResults/
 *.log
+
+## Superpowers
+.superpowers/
+docs/superpowers/
