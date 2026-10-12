@@ -1,41 +1,64 @@
+using Scalar.AspNetCore;
+using SnpDepotManagement.Api.Endpoints;
+using SnpDepotManagement.Application;
+using SnpDepotManagement.Infrastructure;
+using SnpDepotManagement.Infrastructure.Persistence.Seed;
+using SnpDepotManagement.Infrastructure.Tenancy;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Register application & infrastructure services
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// Add Authorization policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("YardPlanner", policy => policy.RequireRole("YardPlanner", "Admin"));
+    options.AddPolicy("OrderClerk", policy => policy.RequireRole("OrderClerk", "Admin"));
+    options.AddPolicy("GateClerk", policy => policy.RequireRole("GateClerk", "Admin"));
+});
+
+// Configure OpenAPI
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Seed Database automatically on startup (creates roles & admin user)
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<IAppDbSeeder>();
+        await seeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning(ex, "Seeding could not complete at startup (e.g. database not migrated or offline in current environment).");
+    }
+}
+
+// Configure HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// Multi-tenancy resolution middleware (reads X-Tenant-Id header)
+app.UseMiddleware<TenantMiddleware>();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Map Minimal API Endpoints
+app.MapIdentityEndpoints();
+app.MapContainerEndpoints();
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+public partial class Program { }
