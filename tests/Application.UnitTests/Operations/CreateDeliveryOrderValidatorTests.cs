@@ -83,4 +83,59 @@ public class CreateDeliveryOrderValidatorTests
         var result = _validator.TestValidate(command);
         result.IsValid.Should().BeFalse();
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Validate_WhenCustomerTaxCodeIsEmpty_ShouldHaveValidationError(string taxCode)
+    {
+        var command = new CreateDeliveryOrderCommand(
+            "DO-123456",
+            "MAEU",
+            taxCode,
+            "Cong Ty XNK A",
+            DateTime.UtcNow.AddDays(7),
+            "VESSEL-01",
+            new List<CreateDeliveryOrderItemInput> { new(ContainerSize.Ft20, ContainerType.Dry, 5) });
+
+        var result = _validator.TestValidate(command);
+        result.ShouldHaveValidationErrorFor(x => x.CustomerTaxCode);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Validate_WhenCustomerNameIsEmpty_ShouldHaveValidationError(string customerName)
+    {
+        var command = new CreateDeliveryOrderCommand(
+            "DO-123456",
+            "MAEU",
+            "0101234567",
+            customerName,
+            DateTime.UtcNow.AddDays(7),
+            "VESSEL-01",
+            new List<CreateDeliveryOrderItemInput> { new(ContainerSize.Ft20, ContainerType.Dry, 5) });
+
+        var result = _validator.TestValidate(command);
+        result.ShouldHaveValidationErrorFor(x => x.CustomerName);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Validate_WhenOutboundVesselIsEmpty_ShouldHaveValidationError(string vessel)
+    {
+        var command = new CreateDeliveryOrderCommand(
+            "DO-123456",
+            "MAEU",
+            "0101234567",
+            "Cong Ty XNK A",
+            DateTime.UtcNow.AddDays(7),
+            vessel,
+            new List<CreateDeliveryOrderItemInput> { new(ContainerSize.Ft20, ContainerType.Dry, 5) });
+
+        var result = _validator.TestValidate(command);
+        result.ShouldHaveValidationErrorFor(x => x.OutboundVessel);
+    }
 }
+

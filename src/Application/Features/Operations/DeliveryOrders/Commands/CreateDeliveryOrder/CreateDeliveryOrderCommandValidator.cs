@@ -14,6 +14,21 @@ public sealed class CreateDeliveryOrderCommandValidator : AbstractValidator<Crea
             .NotEmpty().WithMessage("Line operator is required.")
             .MaximumLength(10).WithMessage("Line operator cannot exceed 10 characters.");
 
+        RuleFor(x => x.CustomerTaxCode)
+            .NotEmpty().WithMessage("Customer tax code is required.")
+            .MaximumLength(20).WithMessage("Customer tax code cannot exceed 20 characters.");
+
+        RuleFor(x => x.CustomerName)
+            .NotEmpty().WithMessage("Customer name is required.")
+            .MaximumLength(200).WithMessage("Customer name cannot exceed 200 characters.");
+
+        RuleFor(x => x.OutboundVessel)
+            .NotEmpty().WithMessage("Outbound vessel is required.")
+            .MaximumLength(100).WithMessage("Outbound vessel cannot exceed 100 characters.");
+
+        RuleFor(x => x.ExpiryDate)
+            .NotEmpty().WithMessage("Expiry date is required.");
+
         RuleFor(x => x.Items)
             .NotEmpty().WithMessage("At least one item is required in a delivery order.");
 
