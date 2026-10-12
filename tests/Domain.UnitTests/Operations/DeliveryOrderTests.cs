@@ -59,4 +59,38 @@ public sealed class DeliveryOrderTests
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Be("DeliveryOrderItem.InvalidQuantity");
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void Create_WhenCustomerTaxCodeIsEmpty_ShouldReturnFailure(string? taxCode)
+    {
+        var result = DeliveryOrder.Create("DO-01", "MSK", taxCode!, "Customer A", DateTime.UtcNow.AddDays(7), "VESSEL-01");
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("DeliveryOrder.EmptyCustomerTaxCode");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void Create_WhenCustomerNameIsEmpty_ShouldReturnFailure(string? customerName)
+    {
+        var result = DeliveryOrder.Create("DO-01", "MSK", "0101234567", customerName!, DateTime.UtcNow.AddDays(7), "VESSEL-01");
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("DeliveryOrder.EmptyCustomerName");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void Create_WhenOutboundVesselIsEmpty_ShouldReturnFailure(string? vessel)
+    {
+        var result = DeliveryOrder.Create("DO-01", "MSK", "0101234567", "Customer A", DateTime.UtcNow.AddDays(7), vessel!);
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("DeliveryOrder.EmptyOutboundVessel");
+    }
 }
+

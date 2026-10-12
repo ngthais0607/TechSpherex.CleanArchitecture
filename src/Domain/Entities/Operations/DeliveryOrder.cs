@@ -41,14 +41,32 @@ public sealed class DeliveryOrder : AuditableEntity, ITenantEntity
                 Error.Validation("DeliveryOrder.EmptyLineOperator", "Line operator cannot be empty."));
         }
 
+        if (string.IsNullOrWhiteSpace(customerTaxCode))
+        {
+            return Result.Failure<DeliveryOrder>(
+                Error.Validation("DeliveryOrder.EmptyCustomerTaxCode", "Customer tax code cannot be empty."));
+        }
+
+        if (string.IsNullOrWhiteSpace(customerName))
+        {
+            return Result.Failure<DeliveryOrder>(
+                Error.Validation("DeliveryOrder.EmptyCustomerName", "Customer name cannot be empty."));
+        }
+
+        if (string.IsNullOrWhiteSpace(outboundVessel))
+        {
+            return Result.Failure<DeliveryOrder>(
+                Error.Validation("DeliveryOrder.EmptyOutboundVessel", "Outbound vessel cannot be empty."));
+        }
+
         return Result.Success(new DeliveryOrder
         {
             OrderNumber = orderNumber.Trim().ToUpperInvariant(),
             LineOperator = lineOperator.Trim().ToUpperInvariant(),
-            CustomerTaxCode = customerTaxCode?.Trim() ?? string.Empty,
-            CustomerName = customerName?.Trim() ?? string.Empty,
+            CustomerTaxCode = customerTaxCode.Trim(),
+            CustomerName = customerName.Trim(),
             ExpiryDate = expiryDate,
-            OutboundVessel = outboundVessel?.Trim() ?? string.Empty,
+            OutboundVessel = outboundVessel.Trim().ToUpperInvariant(),
             IsCompleted = false,
             TenantId = tenantId
         });
