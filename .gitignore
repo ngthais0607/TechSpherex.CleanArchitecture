@@ -13,3 +13,6 @@ TestResults/
 ## Superpowers
 .superpowers/
 docs/superpowers/
+
+## Environment variables
+.env
