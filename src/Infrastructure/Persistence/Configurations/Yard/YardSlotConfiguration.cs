@@ -12,6 +12,13 @@ public sealed class YardSlotConfiguration : IEntityTypeConfiguration<YardSlot>
 
         builder.HasKey(s => s.Id);
 
+        builder.Property(s => s.TenantId)
+            .HasMaxLength(50)
+            .IsRequired();
+
+        builder.Property(s => s.BlockId)
+            .IsRequired();
+
         builder.OwnsOne(s => s.Position, p =>
         {
             p.Property(x => x.Block).HasColumnName("position_block").HasMaxLength(20);
@@ -19,5 +26,19 @@ public sealed class YardSlotConfiguration : IEntityTypeConfiguration<YardSlot>
             p.Property(x => x.Row).HasColumnName("position_row");
             p.Property(x => x.Tier).HasColumnName("position_tier");
         });
+
+        builder.HasIndex(s => s.TenantId);
+        builder.HasIndex(s => s.BlockId);
+        // Note: Composite unique index on (tenant_id, block_id, position_bay, position_row, position_tier)
+        // is added at migration level because EF Core doesn't allow cross-entity owned navigation member access in HasIndex.
+
+        builder.Property(s => s.IsOccupied)
+            .IsRequired();
+
+        // Optimistic concurrency using PostgreSQL xmin system column
+        builder.Property<uint>("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
     }
 }

@@ -37,6 +37,10 @@ public sealed class ContainerConfiguration : IEntityTypeConfiguration<Container>
         builder.Property(c => c.MaxGrossWeight)
             .HasPrecision(10, 2);
 
+        builder.Property(c => c.TenantId)
+            .HasMaxLength(50)
+            .IsRequired();
+
         builder.Property(c => c.Size)
             .HasConversion<string>()
             .HasMaxLength(10);
@@ -44,5 +48,19 @@ public sealed class ContainerConfiguration : IEntityTypeConfiguration<Container>
         builder.Property(c => c.Type)
             .HasConversion<string>()
             .HasMaxLength(20);
+
+        builder.Property(c => c.Classification)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        builder.Property(c => c.Condition)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        builder.Property(c => c.CreatedBy)
+            .HasMaxLength(100);
+
+        builder.Property(c => c.LastModifiedBy)
+            .HasMaxLength(100);
     }
 }
