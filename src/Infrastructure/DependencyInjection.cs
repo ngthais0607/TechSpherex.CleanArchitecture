@@ -1,12 +1,19 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using SnpDepotManagement.Application.Abstractions.Caching;
 using SnpDepotManagement.Application.Abstractions.Data;
 using SnpDepotManagement.Application.Abstractions.Identity;
 using SnpDepotManagement.Application.Abstractions.Tenancy;
+using SnpDepotManagement.Infrastructure.Caching;
 using SnpDepotManagement.Infrastructure.Identity;
 using SnpDepotManagement.Infrastructure.Persistence;
+using SnpDepotManagement.Infrastructure.Persistence.Seed;
 using SnpDepotManagement.Infrastructure.Tenancy;
+using StackExchange.Redis;
 
 namespace SnpDepotManagement.Infrastructure;
 
@@ -21,8 +28,46 @@ public static class DependencyInjection
         services.AddScoped<ITenantProvider, TenantProvider>();
         services.AddTransient<TenantMiddleware>();
 
-        // 2. Identity
+        // 2. Identity & Security
         services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
+        var jwtSection = configuration.GetSection(JwtOptions.SectionName);
+        services.Configure<JwtOptions>(jwtSection);
+        var jwtSecret = configuration["Jwt:Secret"];
+        if (string.IsNullOrWhiteSpace(jwtSecret))
+        {
+            jwtSecret = "DefaultDevelopmentSuperSecretKeyForJwtAuthentication32Chars!";
+        }
+
+        var issuer = configuration["Jwt:Issuer"] ?? "SnpDepotManagement";
+        var audience = configuration["Jwt:Audience"] ?? "SnpDepotManagement";
+
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<ITokenService, TokenService>();
+
+        // Authentication & JWT Bearer
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+                ValidateIssuer = true,
+                ValidIssuer = issuer,
+                ValidateAudience = true,
+                ValidAudience = audience,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+        });
 
         // 3. Persistence (EF Core + PostgreSQL Npgsql)
         var connectionString = configuration.GetConnectionString("DefaultConnection")
@@ -39,6 +84,31 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddScoped<IAppDbSeeder, AppDbSeeder>();
+
+        // 4. Caching (.NET 9 HybridCache + Redis)
+#pragma warning disable EXTEXP0018
+        services.AddHybridCache();
+#pragma warning restore EXTEXP0018
+
+        var redisConnectionString = configuration.GetConnectionString("Redis")
+            ?? configuration["Redis:ConnectionString"];
+
+        if (!string.IsNullOrWhiteSpace(redisConnectionString))
+        {
+            try
+            {
+                var multiplexer = ConnectionMultiplexer.Connect(redisConnectionString);
+                services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+                services.AddStackExchangeRedisCache(opt => opt.Configuration = redisConnectionString);
+            }
+            catch
+            {
+                // In local or test environments where Redis is not running yet, continue gracefully
+            }
+        }
+
+        services.AddScoped<ICacheService, HybridCacheService>();
 
         return services;
     }
