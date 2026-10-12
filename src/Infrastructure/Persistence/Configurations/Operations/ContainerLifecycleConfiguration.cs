@@ -48,10 +48,19 @@ public sealed class ContainerLifecycleConfiguration : IEntityTypeConfiguration<C
             .HasMaxLength(20)
             .IsRequired();
 
+        builder.Property(c => c.InVehicleType)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.Property(c => c.InDate)
             .IsRequired();
 
         builder.Property(c => c.OutVehicleNumber)
+            .HasMaxLength(20);
+
+        builder.Property(c => c.OutVehicleType)
+            .HasConversion<string>()
             .HasMaxLength(20);
 
         builder.Property(c => c.OutDate);

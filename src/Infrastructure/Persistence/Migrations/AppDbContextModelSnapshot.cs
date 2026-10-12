@@ -505,6 +505,12 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("in_vehicle_number");
 
+                    b.Property<string>("InVehicleType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("in_vehicle_type");
+
                     b.Property<DateTime?>("LastModifiedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_modified_at");
@@ -528,6 +534,11 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("out_vehicle_number");
+
+                    b.Property<string>("OutVehicleType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("out_vehicle_type");
 
                     b.Property<string>("Status")
                         .IsRequired()
