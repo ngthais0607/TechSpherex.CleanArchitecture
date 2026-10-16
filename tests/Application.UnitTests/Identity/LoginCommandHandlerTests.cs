@@ -29,7 +29,7 @@ public class LoginCommandHandlerTests
     public async Task Handle_WhenCredentialsAreValid_ShouldReturnAuthResponseDto()
     {
         // Arrange
-        var user = ApplicationUser.Create("operator01", "op@snp.com.vn", "Nguyen", "Van A", Roles.YardPlanner, "hashed_pw").Value!;
+        var user = ApplicationUser.Create("operator01", "op@snp.com.vn", "Nguyen", "Van A", "DEPOT-A", Roles.YardPlanner, "hashed_pw").Value!;
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
@@ -75,7 +75,7 @@ public class LoginCommandHandlerTests
     public async Task Handle_WhenPasswordIsIncorrect_ShouldReturnValidationError()
     {
         // Arrange
-        var user = ApplicationUser.Create("operator02", "op2@snp.com.vn", "Tran", "Van B", Roles.GateClerk, "hashed_pw").Value!;
+        var user = ApplicationUser.Create("operator02", "op2@snp.com.vn", "Tran", "Van B", "DEPOT-A", Roles.GateClerk, "hashed_pw").Value!;
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 

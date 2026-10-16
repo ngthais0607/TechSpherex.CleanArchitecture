@@ -187,6 +187,12 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("role");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tenant_id");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -204,7 +210,10 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_application_users_user_name");
 
-                    b.ToTable("application_users", (string)null);
+                    b.ToTable("application_users", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_application_users_tenant_id", "length(trim(tenant_id)) > 0");
+                        });
                 });
 
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Identity.Role", b =>

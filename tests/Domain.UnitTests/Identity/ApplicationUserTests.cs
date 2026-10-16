@@ -5,11 +5,20 @@ namespace SnpDepotManagement.Domain.UnitTests.Identity;
 
 public sealed class ApplicationUserTests
 {
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Create_WithoutDepotAssignment_IsRejected(string tenantId)
+    {
+        var result = ApplicationUser.Create("operator", "operator@example.test", "A", "B", tenantId);
+        result.IsFailure.Should().BeTrue();
+    }
+
     [Fact]
     public void Create_WithValidData_ShouldReturnSuccess()
     {
         // Act
-        var result = ApplicationUser.Create("operator01", "operator01@snp.com.vn", "Nguyen", "Van A");
+        var result = ApplicationUser.Create("operator01", "operator01@snp.com.vn", "Nguyen", "Van A", "DEPOT-A");
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -29,7 +38,7 @@ public sealed class ApplicationUserTests
     public void Create_WithEmptyUserName_ShouldReturnFailure(string? userName)
     {
         // Act
-        var result = ApplicationUser.Create(userName!, "user@snp.com.vn", "Nguyen", "Van A");
+        var result = ApplicationUser.Create(userName!, "user@snp.com.vn", "Nguyen", "Van A", "DEPOT-A");
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -43,7 +52,7 @@ public sealed class ApplicationUserTests
     public void Create_WithEmptyEmail_ShouldReturnFailure(string? email)
     {
         // Act
-        var result = ApplicationUser.Create("operator01", email!, "Nguyen", "Van A");
+        var result = ApplicationUser.Create("operator01", email!, "Nguyen", "Van A", "DEPOT-A");
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -54,7 +63,7 @@ public sealed class ApplicationUserTests
     public void Create_ShouldNormalizeEmailToLowerCase()
     {
         // Act
-        var result = ApplicationUser.Create("operator01", "OPERATOR01@SNP.COM.VN", "Nguyen", "Van A");
+        var result = ApplicationUser.Create("operator01", "OPERATOR01@SNP.COM.VN", "Nguyen", "Van A", "DEPOT-A");
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -65,7 +74,7 @@ public sealed class ApplicationUserTests
     public void SetRefreshToken_ShouldUpdateTokenHashAndExpiryTime()
     {
         // Arrange
-        var user = ApplicationUser.Create("operator01", "op@snp.com.vn", "Nguyen", "A").Value!;
+        var user = ApplicationUser.Create("operator01", "op@snp.com.vn", "Nguyen", "A", "DEPOT-A").Value!;
         var expiry = DateTime.UtcNow.AddDays(7);
 
         // Act
@@ -80,7 +89,7 @@ public sealed class ApplicationUserTests
     public void RevokeRefreshToken_ShouldClearTokenHashAndExpiryTime()
     {
         // Arrange
-        var user = ApplicationUser.Create("operator01", "op@snp.com.vn", "Nguyen", "A").Value!;
+        var user = ApplicationUser.Create("operator01", "op@snp.com.vn", "Nguyen", "A", "DEPOT-A").Value!;
         user.SetRefreshToken("hashed_secret_token_123", DateTime.UtcNow.AddDays(7));
 
         // Act

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SnpDepotManagement.Api.Authorization;
+using SnpDepotManagement.Api.Extensions;
 using SnpDepotManagement.Application.Abstractions.Messaging;
 using SnpDepotManagement.Application.Features.Identity.Commands.Login;
 using SnpDepotManagement.Application.Features.Identity.Commands.RefreshToken;
@@ -14,7 +16,8 @@ public static class IdentityEndpoints
     public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/auth")
-            .WithTags("Authentication");
+            .WithTags("Authentication")
+            .AddEndpointFilter<ValidationFilter>();
 
         group.MapPost("/login", async (
             LoginCommand command,
@@ -22,9 +25,7 @@ public static class IdentityEndpoints
             CancellationToken cancellationToken) =>
         {
             var result = await handler.Handle(command, cancellationToken);
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(new { error = result.Error.Code, description = result.Error.Description });
+            return result.ToHttpResult();
         })
         .WithName("Login")
         .WithSummary("User login returning JWT and refresh tokens")
@@ -36,9 +37,7 @@ public static class IdentityEndpoints
             CancellationToken cancellationToken) =>
         {
             var result = await handler.Handle(command, cancellationToken);
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(new { error = result.Error.Code, description = result.Error.Description });
+            return result.ToHttpResult();
         })
         .WithName("RefreshToken")
         .WithSummary("Refresh expired JWT token using refresh token")
@@ -50,13 +49,11 @@ public static class IdentityEndpoints
             CancellationToken cancellationToken) =>
         {
             var result = await handler.Handle(command, cancellationToken);
-            return result.IsSuccess
-                ? Results.Ok(new { userId = result.Value })
-                : Results.BadRequest(new { error = result.Error.Code, description = result.Error.Description });
+            return result.ToHttpResult(id => Results.Created($"/api/auth/users/{id}", new { userId = id }));
         })
         .WithName("Register")
         .WithSummary("Register a new user in the system")
-        .RequireAuthorization("Admin");
+        .RequireAuthorization(Policies.Admin);
 
         return app;
     }

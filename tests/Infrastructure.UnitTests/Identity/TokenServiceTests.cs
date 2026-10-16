@@ -41,7 +41,7 @@ public sealed class TokenServiceTests
         timeProvider.GetUtcNow().Returns(fixedTime);
 
         var sut = new TokenService(Options.Create(_options), timeProvider);
-        var user = ApplicationUser.Create("planner", "planner@snp.com.vn", "Nguyen", "Van A", "YardPlanner", "hash").Value!;
+        var user = ApplicationUser.Create("planner", "planner@snp.com.vn", "Nguyen", "Van A", "DEPOT-A", "YardPlanner", "hash").Value!;
 
         var tokenString = sut.GenerateAccessToken(user);
 
@@ -65,6 +65,7 @@ public sealed class TokenServiceTests
         principal.FindFirst(ClaimTypes.NameIdentifier)!.Value.Should().Be(user.Id.ToString());
         principal.FindFirst(ClaimTypes.Name)!.Value.Should().Be(user.UserName);
         principal.FindFirst(ClaimTypes.Role)!.Value.Should().Be("YardPlanner");
+        principal.FindFirst("tenant_id")?.Value.Should().Be("DEPOT-A");
     }
 
     [Fact]

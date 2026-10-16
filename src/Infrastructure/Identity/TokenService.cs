@@ -38,6 +38,7 @@ public sealed class TokenService : ITokenService
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new("tenant_id", user.TenantId),
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, user.UserName),
             new(ClaimTypes.Name, user.UserName),
@@ -54,6 +55,8 @@ public sealed class TokenService : ITokenService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
+            IssuedAt = now,
+            NotBefore = now,
             Expires = expires,
             Issuer = _options.Issuer,
             Audience = _options.Audience,

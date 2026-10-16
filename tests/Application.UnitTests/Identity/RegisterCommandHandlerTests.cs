@@ -18,6 +18,7 @@ public class RegisterCommandHandlerTests
     {
         _context = TestAppDbContext.Create();
         _currentUser = Substitute.For<ICurrentUser>();
+        _currentUser.TenantId.Returns("DEPOT-A");
         _passwordHasher = Substitute.For<IPasswordHasher>();
 
         _handler = new RegisterCommandHandler(_context, _currentUser, _passwordHasher);
@@ -68,7 +69,7 @@ public class RegisterCommandHandlerTests
     {
         // Arrange
         _currentUser.Role.Returns(Roles.Admin);
-        var existingUser = ApplicationUser.Create("existinguser", "old@snp.com.vn", "A", "B", Roles.GateClerk, "hash").Value!;
+        var existingUser = ApplicationUser.Create("existinguser", "old@snp.com.vn", "A", "B", "DEPOT-A", Roles.GateClerk, "hash").Value!;
         _context.Users.Add(existingUser);
         await _context.SaveChangesAsync();
 

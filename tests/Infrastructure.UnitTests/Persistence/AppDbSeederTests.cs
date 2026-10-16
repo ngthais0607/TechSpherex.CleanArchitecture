@@ -37,6 +37,7 @@ public sealed class AppDbSeederTests
         var inMemoryConfig = new Dictionary<string, string?>
         {
             { "Admin:UserName", "superadmin" },
+            { "Admin:TenantId", "DEPOT-A" },
             { "Admin:Email", "admin@snp.com.vn" },
             { "Admin:Password", "AdminPassword@123" },
             { "Admin:FirstName", "Root" },

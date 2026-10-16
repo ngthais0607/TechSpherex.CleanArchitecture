@@ -29,7 +29,7 @@ public class RefreshTokenCommandHandlerTests
     public async Task Handle_WhenRefreshTokenIsValid_ShouldRotateTokensAndReturnSuccess()
     {
         // Arrange
-        var user = ApplicationUser.Create("operator01", "op@snp.com.vn", "Nguyen", "Van A", Roles.YardPlanner, "pw_hash").Value!;
+        var user = ApplicationUser.Create("operator01", "op@snp.com.vn", "Nguyen", "Van A", "DEPOT-A", Roles.YardPlanner, "pw_hash").Value!;
         user.SetRefreshToken("valid_stored_hash", _timeProvider.GetUtcNow().AddDays(3).UtcDateTime);
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
@@ -59,7 +59,7 @@ public class RefreshTokenCommandHandlerTests
     public async Task Handle_WhenRefreshTokenIsExpired_ShouldReturnValidationError()
     {
         // Arrange
-        var user = ApplicationUser.Create("operator02", "op2@snp.com.vn", "Tran", "Van B", Roles.GateClerk, "pw_hash").Value!;
+        var user = ApplicationUser.Create("operator02", "op2@snp.com.vn", "Tran", "Van B", "DEPOT-A", Roles.GateClerk, "pw_hash").Value!;
         user.SetRefreshToken("expired_hash", _timeProvider.GetUtcNow().AddDays(-1).UtcDateTime); // Expired yesterday
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
@@ -78,7 +78,7 @@ public class RefreshTokenCommandHandlerTests
     public async Task Handle_WhenRefreshTokenHashDoesNotMatch_ShouldReturnValidationError()
     {
         // Arrange
-        var user = ApplicationUser.Create("operator03", "op3@snp.com.vn", "Hoang", "Van C", Roles.OrderClerk, "pw_hash").Value!;
+        var user = ApplicationUser.Create("operator03", "op3@snp.com.vn", "Hoang", "Van C", "DEPOT-A", Roles.OrderClerk, "pw_hash").Value!;
         user.SetRefreshToken("correct_stored_hash", _timeProvider.GetUtcNow().AddDays(2).UtcDateTime);
         _context.Users.Add(user);
         await _context.SaveChangesAsync();

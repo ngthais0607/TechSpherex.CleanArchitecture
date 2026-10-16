@@ -35,13 +35,13 @@ public static class DependencyInjection
         var jwtSection = configuration.GetSection(JwtOptions.SectionName);
         services.Configure<JwtOptions>(jwtSection);
         var jwtSecret = configuration["Jwt:Secret"];
-        if (string.IsNullOrWhiteSpace(jwtSecret))
-        {
-            jwtSecret = "DefaultDevelopmentSuperSecretKeyForJwtAuthentication32Chars!";
-        }
+        if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret.Length < 32)
+            throw new InvalidOperationException("Jwt:Secret must be configured with at least 32 characters.");
 
-        var issuer = configuration["Jwt:Issuer"] ?? "SnpDepotManagement";
-        var audience = configuration["Jwt:Audience"] ?? "SnpDepotManagement";
+        var issuer = configuration["Jwt:Issuer"];
+        var audience = configuration["Jwt:Audience"];
+        if (string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(audience))
+            throw new InvalidOperationException("Jwt:Issuer and Jwt:Audience must be configured.");
 
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<ITokenService, TokenService>();
@@ -72,7 +72,7 @@ public static class DependencyInjection
         // 3. Persistence (EF Core + PostgreSQL Npgsql)
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? configuration["Database:ConnectionString"]
-            ?? "Host=localhost;Port=5432;Database=snp_depot_db;Username=postgres;Password=postgres_password_123";
+            ?? throw new InvalidOperationException("A database connection string must be configured.");
 
         services.AddDbContext<AppDbContext>(options =>
         {

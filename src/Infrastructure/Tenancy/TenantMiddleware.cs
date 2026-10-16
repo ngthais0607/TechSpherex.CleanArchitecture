@@ -1,4 +1,4 @@
-using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using SnpDepotManagement.Application.Abstractions.Tenancy;
 
@@ -15,42 +15,43 @@ public sealed class TenantMiddleware : IMiddleware
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var path = context.Request.Path.Value ?? string.Empty;
-
-        // Skip tenant check for anonymous endpoints, documentation and healthchecks
-        if (IsWhitelistedPath(path))
+        if (context.GetEndpoint()?.Metadata.GetMetadata<IAllowAnonymous>() is not null)
         {
             await next(context);
             return;
         }
 
-        var tenantId = _tenantProvider.GetCurrentTenantId();
-        if (string.IsNullOrWhiteSpace(tenantId))
+        if (context.User.Identity?.IsAuthenticated != true)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "application/json";
+            await Reject(context, 401, "Auth.Unauthorized", "Authentication is required.");
+            return;
+        }
 
-            var response = new
-            {
-                type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-                title = "Bad Request",
-                status = 400,
-                detail = "Tenant identifier is missing. Provide 'X-Tenant-Id' header or authentic tenant claim."
-            };
+        var tenantId = context.User.FindFirst(TenantProvider.TenantClaimType)?.Value?.Trim();
+        if (string.IsNullOrWhiteSpace(tenantId) || tenantId.Length > 50)
+        {
+            await Reject(context, 403, "Tenant.Invalid", "A valid depot assignment is required.");
+            return;
+        }
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        if (context.Request.Headers.TryGetValue(TenantProvider.TenantHeaderName, out var header)
+            && !string.Equals(header.ToString().Trim(), tenantId, StringComparison.Ordinal))
+        {
+            await Reject(context, 403, "Tenant.Mismatch", "The requested depot is not authorized.");
+            return;
+        }
+
+        if (_tenantProvider.GetCurrentTenantId() != tenantId)
+        {
+            await Reject(context, 403, "Tenant.Invalid", "A valid depot assignment is required.");
             return;
         }
 
         await next(context);
     }
 
-    private static bool IsWhitelistedPath(string path)
-    {
-        return path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase) ||
-               path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase) ||
-               path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase) ||
-               path.StartsWith("/health", StringComparison.OrdinalIgnoreCase) ||
-               path.Equals("/api/v1/auth/login", StringComparison.OrdinalIgnoreCase);
-    }
+    private static Task Reject(HttpContext context, int status, string code, string detail) =>
+        Results.Problem(statusCode: status, title: status == 401 ? "Unauthorized" : "Forbidden",
+            detail: detail, extensions: new Dictionary<string, object?>
+            { ["code"] = code, ["traceId"] = context.TraceIdentifier }).ExecuteAsync(context);
 }

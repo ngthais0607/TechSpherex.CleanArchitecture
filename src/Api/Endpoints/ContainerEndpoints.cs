@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SnpDepotManagement.Api.Authorization;
+using SnpDepotManagement.Api.Contracts;
+using SnpDepotManagement.Api.Extensions;
 using SnpDepotManagement.Application.Abstractions.Messaging;
 using SnpDepotManagement.Application.Features.Containers.Commands.RegisterContainer;
 using SnpDepotManagement.Application.Features.Containers.Dtos;
@@ -16,14 +19,14 @@ public static class ContainerEndpoints
     {
         var group = app.MapGroup("/api/containers")
             .WithTags("Containers")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .AddEndpointFilter<ValidationFilter>();
 
         group.MapGet("/", async (
             string? ownerCode,
             ContainerSize? size,
             ContainerCondition? condition,
-            int? pageIndex,
-            int? pageSize,
+            PaginationRequest pagination,
             IQueryHandler<GetContainersQuery, PagedResult<ContainerDto>> handler,
             CancellationToken cancellationToken) =>
         {
@@ -31,14 +34,13 @@ public static class ContainerEndpoints
                 OwnerCode: ownerCode,
                 Size: size,
                 Condition: condition,
-                PageIndex: pageIndex ?? 1,
-                PageSize: pageSize ?? 20);
+                PageIndex: pagination.PageIndex,
+                PageSize: pagination.PageSize);
 
             var result = await handler.Handle(query, cancellationToken);
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.BadRequest(new { error = result.Error.Code, description = result.Error.Description });
+            return result.ToHttpResult();
         })
+        .RequireAuthorization(Policies.ReadContainers)
         .WithName("GetContainers")
         .WithSummary("Retrieve paged list of containers in current depot");
 
@@ -48,10 +50,9 @@ public static class ContainerEndpoints
             CancellationToken cancellationToken) =>
         {
             var result = await handler.Handle(command, cancellationToken);
-            return result.IsSuccess
-                ? Results.Created($"/api/containers/{result.Value}", new { id = result.Value })
-                : Results.BadRequest(new { error = result.Error.Code, description = result.Error.Description });
+            return result.ToHttpResult(id => Results.Created($"/api/containers/{id}", new { id }));
         })
+        .RequireAuthorization(Policies.RegisterContainer)
         .WithName("RegisterContainer")
         .WithSummary("Register a new container into the system");
 

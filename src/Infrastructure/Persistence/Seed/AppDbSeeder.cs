@@ -67,7 +67,10 @@ public sealed class AppDbSeeder : IAppDbSeeder
     {
         var adminUserName = _configuration["Admin:UserName"] ?? "admin";
         var adminEmail = _configuration["Admin:Email"] ?? "admin@snp.com.vn";
-        var adminPassword = _configuration["Admin:Password"] ?? "Admin@123456";
+        var adminPassword = _configuration["Admin:Password"];
+        var adminTenantId = _configuration["Admin:TenantId"];
+        if (string.IsNullOrWhiteSpace(adminPassword) || string.IsNullOrWhiteSpace(adminTenantId))
+            throw new InvalidOperationException("Admin:Password and Admin:TenantId must be configured.");
         var adminFirstName = _configuration["Admin:FirstName"] ?? "System";
         var adminLastName = _configuration["Admin:LastName"] ?? "Administrator";
 
@@ -90,6 +93,7 @@ public sealed class AppDbSeeder : IAppDbSeeder
             adminEmail,
             adminFirstName,
             adminLastName,
+            adminTenantId,
             adminRole.Name,
             passwordHash);
 

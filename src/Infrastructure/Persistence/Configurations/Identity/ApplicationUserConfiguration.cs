@@ -11,6 +11,8 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
         builder.ToTable("application_users");
 
         builder.HasKey(u => u.Id);
+        builder.Property(u => u.TenantId).HasMaxLength(50).IsRequired();
+        builder.ToTable(t => t.HasCheckConstraint("ck_application_users_tenant_id", "length(trim(tenant_id)) > 0"));
 
         builder.Property(u => u.UserName)
             .HasMaxLength(100)

@@ -43,6 +43,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure.IntegrationT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SnpDepotManagement.Infrastructure.IntegrationTests", "tests\Infrastructure.IntegrationTests\SnpDepotManagement.Infrastructure.IntegrationTests.csproj", "{84093AAD-CA2F-4794-A7E0-B8DA498DCF3C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api.IntegrationTests", "Api.IntegrationTests", "{1F7D4CDE-290E-3473-D392-7D5A8F01EDEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SnpDepotManagement.Api.IntegrationTests", "tests\Api.IntegrationTests\SnpDepotManagement.Api.IntegrationTests.csproj", "{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -161,6 +165,18 @@ Global
 		{84093AAD-CA2F-4794-A7E0-B8DA498DCF3C}.Release|x64.Build.0 = Release|Any CPU
 		{84093AAD-CA2F-4794-A7E0-B8DA498DCF3C}.Release|x86.ActiveCfg = Release|Any CPU
 		{84093AAD-CA2F-4794-A7E0-B8DA498DCF3C}.Release|x86.Build.0 = Release|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Debug|x64.Build.0 = Debug|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Debug|x86.Build.0 = Debug|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Release|x64.ActiveCfg = Release|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Release|x64.Build.0 = Release|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Release|x86.ActiveCfg = Release|Any CPU
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -184,5 +200,7 @@ Global
 		{6257F7B5-2718-437C-A314-5F3772A3C82E} = {D7975C75-3F55-F906-3D0A-556F739409A4}
 		{155CDD18-40B6-EB86-23A6-514FC9164BAA} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{84093AAD-CA2F-4794-A7E0-B8DA498DCF3C} = {155CDD18-40B6-EB86-23A6-514FC9164BAA}
+		{1F7D4CDE-290E-3473-D392-7D5A8F01EDEC} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{1137E0B4-CE49-4BEB-B3CD-6B6CFE77D4BC} = {1F7D4CDE-290E-3473-D392-7D5A8F01EDEC}
 	EndGlobalSection
 EndGlobal

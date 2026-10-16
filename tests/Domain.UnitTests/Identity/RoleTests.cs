@@ -31,7 +31,7 @@ public sealed class RoleTests
     [Fact]
     public void ApplicationUser_AddRole_ShouldAddUserRole()
     {
-        var user = ApplicationUser.Create("admin", "admin@snp.com", "Admin", "User", "Admin").Value!;
+        var user = ApplicationUser.Create("admin", "admin@snp.com", "Admin", "User", "DEPOT-A", "Admin").Value!;
         var roleId = Guid.NewGuid();
 
         user.AddRole(roleId);

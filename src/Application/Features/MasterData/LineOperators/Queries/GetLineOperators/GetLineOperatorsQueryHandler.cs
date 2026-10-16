@@ -6,7 +6,7 @@ using SnpDepotManagement.Domain.Common;
 
 namespace SnpDepotManagement.Application.Features.MasterData.LineOperators.Queries.GetLineOperators;
 
-public sealed class GetLineOperatorsQueryHandler : IQueryHandler<GetLineOperatorsQuery, IReadOnlyList<LineOperatorDto>>
+public sealed class GetLineOperatorsQueryHandler : IQueryHandler<GetLineOperatorsQuery, PagedResult<LineOperatorDto>>
 {
     private readonly IAppDbContext _context;
 
@@ -15,14 +15,17 @@ public sealed class GetLineOperatorsQueryHandler : IQueryHandler<GetLineOperator
         _context = context;
     }
 
-    public async Task<Result<IReadOnlyList<LineOperatorDto>>> Handle(GetLineOperatorsQuery query, CancellationToken cancellationToken = default)
+    public async Task<Result<PagedResult<LineOperatorDto>>> Handle(GetLineOperatorsQuery query, CancellationToken cancellationToken = default)
     {
+        var total = await _context.LineOperators.CountAsync(cancellationToken);
         var list = await _context.LineOperators
             .AsNoTracking()
             .OrderBy(l => l.Code)
+            .ThenBy(l => l.Id)
+            .Skip((query.PageIndex - 1) * query.PageSize).Take(query.PageSize)
             .Select(l => new LineOperatorDto(l.Id, l.Code, l.Name))
             .ToListAsync(cancellationToken);
 
-        return Result.Success<IReadOnlyList<LineOperatorDto>>(list);
+        return Result.Success(PagedResult<LineOperatorDto>.Create(list, total, query.PageIndex, query.PageSize));
     }
 }

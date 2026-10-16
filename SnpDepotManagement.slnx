@@ -13,6 +13,9 @@
     <Project Path="src/Infrastructure/SnpDepotManagement.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/" />
+  <Folder Name="/tests/Api.IntegrationTests/">
+    <Project Path="tests/Api.IntegrationTests/SnpDepotManagement.Api.IntegrationTests.csproj" />
+  </Folder>
   <Folder Name="/tests/Application.UnitTests/">
     <Project Path="tests/Application.UnitTests/SnpDepotManagement.Application.UnitTests.csproj" />
   </Folder>
@@ -21,5 +24,11 @@
   </Folder>
   <Folder Name="/tests/Domain.UnitTests/">
     <Project Path="tests/Domain.UnitTests/SnpDepotManagement.Domain.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Infrastructure.UnitTests/">
+    <Project Path="tests/Infrastructure.UnitTests/SnpDepotManagement.Infrastructure.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Infrastructure.IntegrationTests/">
+    <Project Path="tests/Infrastructure.IntegrationTests/SnpDepotManagement.Infrastructure.IntegrationTests.csproj" />
   </Folder>
 </Solution>

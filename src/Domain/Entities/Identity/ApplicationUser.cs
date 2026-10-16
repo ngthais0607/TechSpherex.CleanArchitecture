@@ -5,6 +5,7 @@ namespace SnpDepotManagement.Domain.Entities.Identity;
 public sealed class ApplicationUser : AuditableEntity
 {
     public string UserName { get; private set; } = string.Empty;
+    public string TenantId { get; private set; } = string.Empty;
     public string Email { get; private set; } = string.Empty;
     public string FirstName { get; private set; } = string.Empty;
     public string LastName { get; private set; } = string.Empty;
@@ -24,6 +25,7 @@ public sealed class ApplicationUser : AuditableEntity
         string email,
         string firstName,
         string lastName,
+        string tenantId,
         string role = "",
         string passwordHash = "")
     {
@@ -39,9 +41,16 @@ public sealed class ApplicationUser : AuditableEntity
                 Error.Validation("User.EmptyEmail", "Email cannot be empty."));
         }
 
+        if (string.IsNullOrWhiteSpace(tenantId) || tenantId.Trim().Length > 50)
+        {
+            return Result.Failure<ApplicationUser>(
+                Error.Validation("User.InvalidTenant", "A depot assignment of up to 50 characters is required."));
+        }
+
         return Result.Success(new ApplicationUser
         {
             UserName = userName.Trim(),
+            TenantId = tenantId.Trim(),
             Email = email.Trim().ToLowerInvariant(),
             FirstName = firstName.Trim(),
             LastName = lastName.Trim(),

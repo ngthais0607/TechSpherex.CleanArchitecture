@@ -33,6 +33,9 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Gu
                 Error.Conflict("Auth.Forbidden", "Only Admin can register new users."));
         }
 
+        if (string.IsNullOrWhiteSpace(_currentUser.TenantId))
+            return Result.Failure<Guid>(Error.Validation("User.InvalidTenant", "A depot assignment is required."));
+
         var normalizedUserName = command.UserName.Trim();
         var normalizedEmail = command.Email.Trim().ToLowerInvariant();
 
@@ -52,6 +55,7 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Gu
             normalizedEmail,
             command.FirstName.Trim(),
             command.LastName.Trim(),
+            _currentUser.TenantId,
             command.Role.Trim(),
             passwordHash);
 
