@@ -1,6 +1,6 @@
 # Tuần 4 — Ngày 1: nền API và danh mục
 
-Trạng thái: daily gate đã xanh ngày 2026-10-16; chuẩn bị commit ngày 1.
+Trạng thái: daily gate xanh ngày 2026-10-16; commit `01a1766`.
 
 ## Đã triển khai
 

@@ -75,6 +75,7 @@ app.MapMasterDataEndpoints();
 app.MapYardEndpoints();
 app.MapDeliveryOrderEndpoints();
 app.MapGateEndpoints();
+app.MapReportEndpoints();
 
 app.Run();
 

@@ -1,6 +1,6 @@
 # Ngày 2 — API nghiệp vụ và lịch sử nguyên tử
 
-Trạng thái: daily gate xanh ngày 2026-10-16, commit theo mốc ngày 2.
+Trạng thái: daily gate xanh ngày 2026-10-16; commit `0d523c4`.
 
 Minimal APIs cho block, vị trí, lệnh giao hàng, Gate-In/Gate-Out và container gọi trực tiếp interface handler Application. Ma trận quyền và danh sách route ở [endpoint-role-matrix.md](endpoint-role-matrix.md). Endpoint không truy cập DbContext.
 

@@ -20,5 +20,5 @@ public sealed class DeliveryOrderNotExpiredRule : IBusinessRule
 
     public string Message => Error.Description;
 
-    public bool IsBroken() => _dispatchDate.Date > _expiryDate.Date;
+    public bool IsBroken() => DepotCalendar.GetBusinessDate(_dispatchDate) > DepotCalendar.GetBusinessDate(_expiryDate);
 }

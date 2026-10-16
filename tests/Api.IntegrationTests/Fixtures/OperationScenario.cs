@@ -10,7 +10,7 @@ internal sealed record OperationScenario(YardBlock Block, Container First, Conta
 {
     private static int _serial = 400000;
 
-    public static Container NewContainer()
+    public static Container NewContainer(string owner = "MSK", string tenant = "DEPOT-A", ContainerSize size = ContainerSize.Ft20)
     {
         var value = $"MSKU{Interlocked.Increment(ref _serial):D6}";
         var sum = 0;
@@ -21,7 +21,7 @@ internal sealed record OperationScenario(YardBlock Block, Container First, Conta
             sum += n * (1 << i);
         }
         var number = ContainerNumber.Create(value + (sum % 11 % 10)).Value!;
-        return Container.Create(number, "22G1", ContainerSize.Ft20, ContainerType.Dry, 2000, 30000, null, "MSK", "DEPOT-A").Value!;
+        return Container.Create(number, size == ContainerSize.Ft20 ? "22G1" : "42G1", size, ContainerType.Dry, 2000, 30000, null, owner, tenant).Value!;
     }
 
     public static async Task<OperationScenario> CreateAsync(ApiFactory factory, bool placeFirst = true, bool placeSecond = false)

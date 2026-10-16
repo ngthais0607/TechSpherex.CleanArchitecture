@@ -4,7 +4,15 @@ namespace SnpDepotManagement.Domain.UnitTests.Rules;
 
 public sealed class DeliveryOrderNotExpiredRuleTests
 {
-    private readonly DateTime _expiryDate = new(2026, 10, 10, 23, 59, 59, DateTimeKind.Utc);
+    [Fact]
+    public void PreviousBusinessDayExpiresEvenWhenUtcDateIsStillTheSame()
+    {
+        var expiry = new DateTime(2026, 10, 15, 12, 0, 0, DateTimeKind.Utc);
+        var dispatch = new DateTime(2026, 10, 15, 17, 30, 0, DateTimeKind.Utc);
+        new DeliveryOrderNotExpiredRule(expiry, dispatch).IsBroken().Should().BeTrue();
+    }
+
+    private readonly DateTime _expiryDate = new(2026, 10, 10, 12, 0, 0, DateTimeKind.Utc);
 
     [Fact]
     public void IsBroken_WhenDispatchDateBeforeExpiryDate_ShouldBeFalse()
