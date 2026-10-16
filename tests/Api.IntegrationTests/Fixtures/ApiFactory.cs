@@ -58,6 +58,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     public HttpClient Client() => CreateClient(new WebApplicationFactoryClientOptions
         { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = false });
 
+    public Task StopDatabaseAsync(CancellationToken cancellationToken) => _postgres.StopAsync(cancellationToken);
+
     public AppDbContext Context(string tenantId)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()

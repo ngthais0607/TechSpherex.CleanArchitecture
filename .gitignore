@@ -16,6 +16,9 @@ docs/superpowers/
 
 ## Environment variables
 .env
+.env.prod
+backups/
+migration-input/
 
 ## Local docs
 *codebase-structure-and-files.md

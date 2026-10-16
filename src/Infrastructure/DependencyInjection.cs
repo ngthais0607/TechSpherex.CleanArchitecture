@@ -10,6 +10,7 @@ using SnpDepotManagement.Application.Abstractions.Identity;
 using SnpDepotManagement.Application.Abstractions.Tenancy;
 using SnpDepotManagement.Infrastructure.Caching;
 using SnpDepotManagement.Infrastructure.Identity;
+using SnpDepotManagement.Infrastructure.Health;
 using SnpDepotManagement.Infrastructure.Persistence;
 using SnpDepotManagement.Infrastructure.Persistence.Seed;
 using SnpDepotManagement.Infrastructure.Tenancy;
@@ -35,8 +36,8 @@ public static class DependencyInjection
         var jwtSection = configuration.GetSection(JwtOptions.SectionName);
         services.Configure<JwtOptions>(jwtSection);
         var jwtSecret = configuration["Jwt:Secret"];
-        if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret.Length < 32)
-            throw new InvalidOperationException("Jwt:Secret must be configured with at least 32 characters.");
+        if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret.Length < 32 || jwtSecret.StartsWith("REPLACE_", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Jwt:Secret must be configured with at least 32 characters and must not be an example placeholder.");
 
         var issuer = configuration["Jwt:Issuer"];
         var audience = configuration["Jwt:Audience"];
@@ -73,6 +74,8 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? configuration["Database:ConnectionString"]
             ?? throw new InvalidOperationException("A database connection string must be configured.");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("A database connection string must be configured.");
 
         services.AddDbContext<AppDbContext>(options =>
         {
@@ -96,19 +99,17 @@ public static class DependencyInjection
 
         if (!string.IsNullOrWhiteSpace(redisConnectionString))
         {
-            try
+            services.AddSingleton<IConnectionMultiplexer>(_ =>
             {
-                var multiplexer = ConnectionMultiplexer.Connect(redisConnectionString);
-                services.AddSingleton<IConnectionMultiplexer>(multiplexer);
-                services.AddStackExchangeRedisCache(opt => opt.Configuration = redisConnectionString);
-            }
-            catch
-            {
-                // In local or test environments where Redis is not running yet, continue gracefully
-            }
+                var options = ConfigurationOptions.Parse(redisConnectionString);
+                options.AbortOnConnectFail = false;
+                return ConnectionMultiplexer.Connect(options);
+            });
+            services.AddStackExchangeRedisCache(opt => opt.Configuration = redisConnectionString);
         }
 
         services.AddScoped<ICacheService, HybridCacheService>();
+        services.AddHealthChecks().AddCheck<DependencyHealthCheck>("dependencies", timeout: TimeSpan.FromSeconds(5));
 
         return services;
     }

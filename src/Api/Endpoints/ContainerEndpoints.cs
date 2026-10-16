@@ -52,7 +52,7 @@ public static class ContainerEndpoints
             CancellationToken cancellationToken) =>
         {
             var result = await handler.Handle(command, cancellationToken);
-            return result.ToHttpResult(id => Results.Created($"/api/containers/{id}", new { id }));
+            return result.ToHttpResult(id => Results.Created($"/api/containers/by-number/{Uri.EscapeDataString(command.ContainerNumber)}", new { id }));
         })
         .RequireAuthorization(Policies.RegisterContainer)
         .WithName("RegisterContainer")

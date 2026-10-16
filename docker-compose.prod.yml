@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  migrate:
+    build:
+      context: .
+      target: migrate
+    restart: "no"
+    environment:
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      PGHOST: postgres
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      MIGRATION_MODE: ${MIGRATION_MODE:-fresh}
+    volumes:
+      - ${MIGRATION_INPUT_DIR:-./migration-input}:/migration:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+  api:
+    build:
+      context: .
+      target: api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Redis: redis:6379,abortConnect=false,connectTimeout=2000,asyncTimeout=2000
+      Redis__Required: ${Redis__Required:-true}
+      Jwt__Secret: ${Jwt__Secret:?Set Jwt__Secret}
+      Jwt__Issuer: ${Jwt__Issuer:?Set Jwt__Issuer}
+      Jwt__Audience: ${Jwt__Audience:?Set Jwt__Audience}
+      Admin__TenantId: ${Admin__TenantId:?Set Admin__TenantId}
+      Admin__UserName: ${Admin__UserName:?Set Admin__UserName}
+      Admin__Password: ${Admin__Password:?Set Admin__Password}
+      Cors__AllowedOrigins__0: ${Cors__AllowedOrigins__0:?Set an explicit CORS origin}
+      ReverseProxy__TrustedProxy: ${ReverseProxy__TrustedProxy:-}
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+  backup:
+    image: postgres:17-alpine
+    profiles: ["tools"]
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_RETENTION: ${BACKUP_RETENTION:-7}
+    volumes:
+      - ./scripts:/scripts:ro
+      - ${BACKUP_HOST_DIR:-./backups}:/backups
+    entrypoint: ["sh", "/scripts/backup-db.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  postgres_data:

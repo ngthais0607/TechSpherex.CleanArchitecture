@@ -9,6 +9,21 @@ namespace SnpDepotManagement.Api.IntegrationTests.Endpoints;
 [Collection("Api")]
 public sealed class OperationalEndpointTests(ApiFactory factory)
 {
+    [Fact]
+    public async Task RegisteredContainerLocationResolvesToTheCreatedResource()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await ApiTestClient.LoginAsync(factory);
+        var number = OperationScenario.NewContainer().ContainerNumber.Value;
+        var created = await client.PostAsJsonAsync("/api/containers", new
+        { ContainerNumber = number, IsoCode = "22G1", Size = 20, Type = 85, TareWeight = 2000, MaxGrossWeight = 30000, OwnerCode = "MSK" }, ct);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        Assert.NotNull(created.Headers.Location);
+        using var resource = await client.GetAsync(created.Headers.Location, ct);
+        Assert.Equal(HttpStatusCode.OK, resource.StatusCode);
+        Assert.Equal(number, (await resource.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("containerNumber").GetString());
+    }
+
     [Theory]
     [InlineData(999, 85)]
     [InlineData(20, 999)]

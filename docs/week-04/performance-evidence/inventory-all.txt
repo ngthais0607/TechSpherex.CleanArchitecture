@@ -17,44 +17,44 @@ LEFT JOIN (
     WHERE y1.tenant_id = @__ef_filter__p_0
 ) AS y2 ON y0."BlockId" = y2.id
 WHERE c.tenant_id = @__ef_filter__p_0 AND c.status = 'InYard' AND c.out_date IS NULL
-Aggregate  (cost=1982.93..1982.95 rows=1 width=4) (actual time=26.093..26.100 rows=1 loops=1)
+Aggregate  (cost=1982.93..1982.95 rows=1 width=4) (actual time=22.276..22.281 rows=1 loops=1)
   Buffers: shared hit=808
-  ->  Hash Right Join  (cost=1866.20..1975.90 rows=2812 width=0) (actual time=21.307..25.420 rows=7500 loops=1)
+  ->  Hash Right Join  (cost=1866.20..1975.90 rows=2812 width=0) (actual time=18.794..21.766 rows=7500 loops=1)
         Hash Cond: (y.container_id = c0.id)
         Buffers: shared hit=808
-        ->  HashAggregate  (cost=448.28..520.66 rows=7238 width=32) (actual time=5.567..6.907 rows=6000 loops=1)
+        ->  HashAggregate  (cost=448.28..520.66 rows=7238 width=32) (actual time=4.370..5.407 rows=6000 loops=1)
               Group Key: y.container_id, y.block_id
               Batches: 1  Memory Usage: 721kB
               Buffers: shared hit=115
-              ->  Bitmap Heap Scan on yard_slots y  (cost=94.28..408.28 rows=8000 width=32) (actual time=0.311..2.068 rows=8000 loops=1)
+              ->  Bitmap Heap Scan on yard_slots y  (cost=94.28..408.28 rows=8000 width=32) (actual time=0.308..1.798 rows=8000 loops=1)
                     Recheck Cond: ((tenant_id)::text = 'DEPOT-A'::text)
                     Filter: (is_occupied AND (container_id IS NOT NULL))
                     Heap Blocks: exact=107
                     Buffers: shared hit=115
-                    ->  Bitmap Index Scan on ix_yard_slots_tenant_id  (cost=0.00..92.28 rows=8000 width=0) (actual time=0.274..0.275 rows=8000 loops=1)
+                    ->  Bitmap Index Scan on ix_yard_slots_tenant_id  (cost=0.00..92.28 rows=8000 width=0) (actual time=0.252..0.253 rows=8000 loops=1)
                           Index Cond: ((tenant_id)::text = 'DEPOT-A'::text)
                           Buffers: shared hit=8
-        ->  Hash  (cost=1382.77..1382.77 rows=2812 width=16) (actual time=15.697..15.700 rows=7500 loops=1)
+        ->  Hash  (cost=1382.77..1382.77 rows=2812 width=16) (actual time=14.377..14.380 rows=7500 loops=1)
               Buckets: 8192 (originally 4096)  Batches: 1 (originally 1)  Memory Usage: 416kB
               Buffers: shared hit=693
-              ->  Hash Join  (cost=683.00..1382.77 rows=2812 width=16) (actual time=6.280..13.374 rows=7500 loops=1)
+              ->  Hash Join  (cost=683.00..1382.77 rows=2812 width=16) (actual time=6.562..12.511 rows=7500 loops=1)
                     Hash Cond: (c.container_id = c0.id)
                     Buffers: shared hit=693
-                    ->  Seq Scan on container_lifecycles c  (cost=0.00..685.00 rows=5625 width=16) (actual time=0.018..5.081 rows=7500 loops=1)
+                    ->  Seq Scan on container_lifecycles c  (cost=0.00..685.00 rows=5625 width=16) (actual time=0.018..4.383 rows=7500 loops=1)
                           Filter: ((out_date IS NULL) AND ((tenant_id)::text = 'DEPOT-A'::text) AND ((status)::text = 'InYard'::text))
                           Rows Removed by Filter: 12500
                           Buffers: shared hit=385
-                    ->  Hash  (cost=558.00..558.00 rows=10000 width=16) (actual time=6.139..6.140 rows=10000 loops=1)
+                    ->  Hash  (cost=558.00..558.00 rows=10000 width=16) (actual time=6.426..6.427 rows=10000 loops=1)
                           Buckets: 16384  Batches: 1  Memory Usage: 597kB
                           Buffers: shared hit=308
-                          ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=16) (actual time=0.006..3.599 rows=10000 loops=1)
+                          ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=16) (actual time=0.007..3.535 rows=10000 loops=1)
                                 Filter: ((tenant_id)::text = 'DEPOT-A'::text)
                                 Rows Removed by Filter: 10000
                                 Buffers: shared hit=308
 Planning:
   Buffers: shared hit=141
-Planning Time: 2.905 ms
-Execution Time: 27.025 ms
+Planning Time: 2.829 ms
+Execution Time: 23.143 ms
 
 -- Parameters: [{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"}]
 SELECT count(*)::int
@@ -79,58 +79,58 @@ FROM (
     WHERE c.tenant_id = @__ef_filter__p_0 AND c.status = 'InYard' AND c.out_date IS NULL
     GROUP BY c.line_operator, c1.size, c1.type, c1.condition, y2.id, y2.code
 ) AS s
-Aggregate  (cost=2019.72..2019.73 rows=1 width=4) (actual time=35.247..35.335 rows=1 loops=1)
+Aggregate  (cost=2019.72..2019.73 rows=1 width=4) (actual time=29.116..29.129 rows=1 loops=1)
   Buffers: shared hit=809
-  ->  HashAggregate  (cost=2019.63..2019.67 rows=4 width=48) (actual time=35.239..35.328 rows=5 loops=1)
+  ->  HashAggregate  (cost=2019.63..2019.67 rows=4 width=48) (actual time=29.109..29.123 rows=5 loops=1)
         Group Key: c.line_operator, c0.size, c0.type, c0.condition, y1.id
         Batches: 1  Memory Usage: 24kB
         Buffers: shared hit=809
-        ->  Hash Left Join  (cost=1867.24..1984.48 rows=2812 width=44) (actual time=24.018..30.474 rows=7500 loops=1)
+        ->  Hash Left Join  (cost=1867.24..1984.48 rows=2812 width=44) (actual time=19.969..24.798 rows=7500 loops=1)
               Hash Cond: (y.block_id = y1.id)
               Buffers: shared hit=809
-              ->  Hash Right Join  (cost=1866.20..1975.90 rows=2812 width=36) (actual time=23.923..28.355 rows=7500 loops=1)
+              ->  Hash Right Join  (cost=1866.20..1975.90 rows=2812 width=36) (actual time=19.903..23.115 rows=7500 loops=1)
                     Hash Cond: (y.container_id = c0.id)
                     Buffers: shared hit=808
-                    ->  HashAggregate  (cost=448.28..520.66 rows=7238 width=32) (actual time=5.287..6.606 rows=6000 loops=1)
+                    ->  HashAggregate  (cost=448.28..520.66 rows=7238 width=32) (actual time=4.462..5.400 rows=6000 loops=1)
                           Group Key: y.container_id, y.block_id
                           Batches: 1  Memory Usage: 721kB
                           Buffers: shared hit=115
-                          ->  Bitmap Heap Scan on yard_slots y  (cost=94.28..408.28 rows=8000 width=32) (actual time=0.441..2.100 rows=8000 loops=1)
+                          ->  Bitmap Heap Scan on yard_slots y  (cost=94.28..408.28 rows=8000 width=32) (actual time=0.303..1.828 rows=8000 loops=1)
                                 Recheck Cond: ((tenant_id)::text = 'DEPOT-A'::text)
                                 Filter: (is_occupied AND (container_id IS NOT NULL))
                                 Heap Blocks: exact=107
                                 Buffers: shared hit=115
-                                ->  Bitmap Index Scan on ix_yard_slots_tenant_id  (cost=0.00..92.28 rows=8000 width=0) (actual time=0.401..0.401 rows=8000 loops=1)
+                                ->  Bitmap Index Scan on ix_yard_slots_tenant_id  (cost=0.00..92.28 rows=8000 width=0) (actual time=0.269..0.269 rows=8000 loops=1)
                                       Index Cond: ((tenant_id)::text = 'DEPOT-A'::text)
                                       Buffers: shared hit=8
-                    ->  Hash  (cost=1382.77..1382.77 rows=2812 width=36) (actual time=18.597..18.600 rows=7500 loops=1)
+                    ->  Hash  (cost=1382.77..1382.77 rows=2812 width=36) (actual time=15.344..15.346 rows=7500 loops=1)
                           Buckets: 8192 (originally 4096)  Batches: 1 (originally 1)  Memory Usage: 563kB
                           Buffers: shared hit=693
-                          ->  Hash Join  (cost=683.00..1382.77 rows=2812 width=36) (actual time=7.368..15.535 rows=7500 loops=1)
+                          ->  Hash Join  (cost=683.00..1382.77 rows=2812 width=36) (actual time=6.623..12.866 rows=7500 loops=1)
                                 Hash Cond: (c.container_id = c0.id)
                                 Buffers: shared hit=693
-                                ->  Seq Scan on container_lifecycles c  (cost=0.00..685.00 rows=5625 width=20) (actual time=0.018..5.701 rows=7500 loops=1)
+                                ->  Seq Scan on container_lifecycles c  (cost=0.00..685.00 rows=5625 width=20) (actual time=0.018..4.396 rows=7500 loops=1)
                                       Filter: ((out_date IS NULL) AND ((tenant_id)::text = 'DEPOT-A'::text) AND ((status)::text = 'InYard'::text))
                                       Rows Removed by Filter: 12500
                                       Buffers: shared hit=385
-                                ->  Hash  (cost=558.00..558.00 rows=10000 width=32) (actual time=7.225..7.226 rows=10000 loops=1)
+                                ->  Hash  (cost=558.00..558.00 rows=10000 width=32) (actual time=6.489..6.489 rows=10000 loops=1)
                                       Buckets: 16384  Batches: 1  Memory Usage: 753kB
                                       Buffers: shared hit=308
-                                      ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=32) (actual time=0.007..4.189 rows=10000 loops=1)
+                                      ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=32) (actual time=0.006..3.709 rows=10000 loops=1)
                                             Filter: ((tenant_id)::text = 'DEPOT-A'::text)
                                             Rows Removed by Filter: 10000
                                             Buffers: shared hit=308
-              ->  Hash  (cost=1.02..1.02 rows=1 width=24) (actual time=0.028..0.110 rows=1 loops=1)
+              ->  Hash  (cost=1.02..1.02 rows=1 width=24) (actual time=0.024..0.033 rows=1 loops=1)
                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
                     Buffers: shared hit=1
-                    ->  Seq Scan on yard_blocks y1  (cost=0.00..1.02 rows=1 width=24) (actual time=0.011..0.012 rows=1 loops=1)
+                    ->  Seq Scan on yard_blocks y1  (cost=0.00..1.02 rows=1 width=24) (actual time=0.009..0.010 rows=1 loops=1)
                           Filter: ((tenant_id)::text = 'DEPOT-A'::text)
                           Rows Removed by Filter: 1
                           Buffers: shared hit=1
 Planning:
   Buffers: shared hit=37
-Planning Time: 1.357 ms
-Execution Time: 36.589 ms
+Planning Time: 1.264 ms
+Execution Time: 30.246 ms
 
 -- Parameters: [{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__p_1","Type":"Integer","Value":20},{"Name":"@__p_0","Type":"Integer","Value":0}]
 SELECT c.line_operator, c1.size, c1.type, c1.condition, y2.id, y2.code, count(*)::int
@@ -154,60 +154,60 @@ WHERE c.tenant_id = @__ef_filter__p_0 AND c.status = 'InYard' AND c.out_date IS 
 GROUP BY c.line_operator, c1.size, c1.type, c1.condition, y2.id, y2.code
 ORDER BY c.line_operator, c1.size, c1.type, c1.condition, y2.id
 LIMIT @__p_1 OFFSET @__p_0
-Limit  (cost=2026.75..2026.76 rows=4 width=48) (actual time=36.953..36.961 rows=5 loops=1)
+Limit  (cost=2026.75..2026.76 rows=4 width=48) (actual time=28.024..28.030 rows=5 loops=1)
   Buffers: shared hit=809
-  ->  Sort  (cost=2026.75..2026.76 rows=4 width=48) (actual time=36.951..36.957 rows=5 loops=1)
+  ->  Sort  (cost=2026.75..2026.76 rows=4 width=48) (actual time=28.022..28.027 rows=5 loops=1)
         Sort Key: c.line_operator, c0.size, c0.type, c0.condition, y1.id
         Sort Method: quicksort  Memory: 25kB
         Buffers: shared hit=809
-        ->  HashAggregate  (cost=2026.66..2026.71 rows=4 width=48) (actual time=36.877..36.884 rows=5 loops=1)
+        ->  HashAggregate  (cost=2026.66..2026.71 rows=4 width=48) (actual time=27.921..27.927 rows=5 loops=1)
               Group Key: c.line_operator, c0.size, c0.type, c0.condition, y1.id
               Batches: 1  Memory Usage: 24kB
               Buffers: shared hit=809
-              ->  Hash Left Join  (cost=1867.24..1984.48 rows=2812 width=44) (actual time=25.409..31.970 rows=7500 loops=1)
+              ->  Hash Left Join  (cost=1867.24..1984.48 rows=2812 width=44) (actual time=19.258..23.881 rows=7500 loops=1)
                     Hash Cond: (y.block_id = y1.id)
                     Buffers: shared hit=809
-                    ->  Hash Right Join  (cost=1866.20..1975.90 rows=2812 width=36) (actual time=25.352..29.827 rows=7500 loops=1)
+                    ->  Hash Right Join  (cost=1866.20..1975.90 rows=2812 width=36) (actual time=19.204..22.256 rows=7500 loops=1)
                           Hash Cond: (y.container_id = c0.id)
                           Buffers: shared hit=808
-                          ->  HashAggregate  (cost=448.28..520.66 rows=7238 width=32) (actual time=4.904..6.201 rows=6000 loops=1)
+                          ->  HashAggregate  (cost=448.28..520.66 rows=7238 width=32) (actual time=4.336..5.251 rows=6000 loops=1)
                                 Group Key: y.container_id, y.block_id
                                 Batches: 1  Memory Usage: 721kB
                                 Buffers: shared hit=115
-                                ->  Bitmap Heap Scan on yard_slots y  (cost=94.28..408.28 rows=8000 width=32) (actual time=0.347..1.945 rows=8000 loops=1)
+                                ->  Bitmap Heap Scan on yard_slots y  (cost=94.28..408.28 rows=8000 width=32) (actual time=0.267..1.766 rows=8000 loops=1)
                                       Recheck Cond: ((tenant_id)::text = 'DEPOT-A'::text)
                                       Filter: (is_occupied AND (container_id IS NOT NULL))
                                       Heap Blocks: exact=107
                                       Buffers: shared hit=115
-                                      ->  Bitmap Index Scan on ix_yard_slots_tenant_id  (cost=0.00..92.28 rows=8000 width=0) (actual time=0.303..0.304 rows=8000 loops=1)
+                                      ->  Bitmap Index Scan on ix_yard_slots_tenant_id  (cost=0.00..92.28 rows=8000 width=0) (actual time=0.238..0.238 rows=8000 loops=1)
                                             Index Cond: ((tenant_id)::text = 'DEPOT-A'::text)
                                             Buffers: shared hit=8
-                          ->  Hash  (cost=1382.77..1382.77 rows=2812 width=36) (actual time=20.407..20.410 rows=7500 loops=1)
+                          ->  Hash  (cost=1382.77..1382.77 rows=2812 width=36) (actual time=14.805..14.807 rows=7500 loops=1)
                                 Buckets: 8192 (originally 4096)  Batches: 1 (originally 1)  Memory Usage: 563kB
                                 Buffers: shared hit=693
-                                ->  Hash Join  (cost=683.00..1382.77 rows=2812 width=36) (actual time=8.268..16.904 rows=7500 loops=1)
+                                ->  Hash Join  (cost=683.00..1382.77 rows=2812 width=36) (actual time=6.504..12.423 rows=7500 loops=1)
                                       Hash Cond: (c.container_id = c0.id)
                                       Buffers: shared hit=693
-                                      ->  Seq Scan on container_lifecycles c  (cost=0.00..685.00 rows=5625 width=20) (actual time=0.021..5.749 rows=7500 loops=1)
+                                      ->  Seq Scan on container_lifecycles c  (cost=0.00..685.00 rows=5625 width=20) (actual time=0.014..4.105 rows=7500 loops=1)
                                             Filter: ((out_date IS NULL) AND ((tenant_id)::text = 'DEPOT-A'::text) AND ((status)::text = 'InYard'::text))
                                             Rows Removed by Filter: 12500
                                             Buffers: shared hit=385
-                                      ->  Hash  (cost=558.00..558.00 rows=10000 width=32) (actual time=8.115..8.116 rows=10000 loops=1)
+                                      ->  Hash  (cost=558.00..558.00 rows=10000 width=32) (actual time=6.374..6.374 rows=10000 loops=1)
                                             Buckets: 16384  Batches: 1  Memory Usage: 753kB
                                             Buffers: shared hit=308
-                                            ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=32) (actual time=0.012..4.591 rows=10000 loops=1)
+                                            ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=32) (actual time=0.010..3.650 rows=10000 loops=1)
                                                   Filter: ((tenant_id)::text = 'DEPOT-A'::text)
                                                   Rows Removed by Filter: 10000
                                                   Buffers: shared hit=308
-                    ->  Hash  (cost=1.02..1.02 rows=1 width=24) (actual time=0.028..0.029 rows=1 loops=1)
+                    ->  Hash  (cost=1.02..1.02 rows=1 width=24) (actual time=0.025..0.025 rows=1 loops=1)
                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
                           Buffers: shared hit=1
-                          ->  Seq Scan on yard_blocks y1  (cost=0.00..1.02 rows=1 width=24) (actual time=0.013..0.015 rows=1 loops=1)
+                          ->  Seq Scan on yard_blocks y1  (cost=0.00..1.02 rows=1 width=24) (actual time=0.011..0.012 rows=1 loops=1)
                                 Filter: ((tenant_id)::text = 'DEPOT-A'::text)
                                 Rows Removed by Filter: 1
                                 Buffers: shared hit=1
 Planning:
   Buffers: shared hit=16
-Planning Time: 1.694 ms
-Execution Time: 38.510 ms
+Planning Time: 0.813 ms
+Execution Time: 29.155 ms
 

@@ -3,13 +3,13 @@ SELECT c.id
 FROM containers AS c
 WHERE c.tenant_id = @__ef_filter__p_0 AND c.container_number = @__parsed_Value_0
 LIMIT 2
-Limit  (cost=0.29..8.31 rows=1 width=16) (actual time=0.084..0.086 rows=1 loops=1)
+Limit  (cost=0.29..8.31 rows=1 width=16) (actual time=0.098..0.101 rows=1 loops=1)
   Buffers: shared hit=3
-  ->  Index Scan using ix_containers_tenant_id_container_number on containers c  (cost=0.29..8.31 rows=1 width=16) (actual time=0.082..0.084 rows=1 loops=1)
+  ->  Index Scan using ix_containers_tenant_id_container_number on containers c  (cost=0.29..8.31 rows=1 width=16) (actual time=0.096..0.098 rows=1 loops=1)
         Index Cond: (((tenant_id)::text = 'DEPOT-A'::text) AND ((container_number)::text = 'MSKU6016334'::text))
         Buffers: shared hit=3
-Planning Time: 0.121 ms
-Execution Time: 0.130 ms
+Planning Time: 0.275 ms
+Execution Time: 0.156 ms
 
 -- Parameters: [{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__containerId_0","Type":"Uuid","Value":"000c9253-5d94-acdd-7f8e-63e6294a9ccd"}]
 SELECT count(*)::int
@@ -26,34 +26,34 @@ FROM (
     FROM container_lifecycles AS c1
     WHERE c1.tenant_id = @__ef_filter__p_0 AND c1.container_id = @__containerId_0 AND c1.movement_history_version = 0 AND c1.out_date IS NOT NULL
 ) AS u0
-Aggregate  (cost=24.98..24.99 rows=1 width=4) (actual time=0.169..0.172 rows=1 loops=1)
+Aggregate  (cost=24.98..24.99 rows=1 width=4) (actual time=0.115..0.118 rows=1 loops=1)
   Buffers: shared hit=9
-  ->  Append  (cost=0.29..24.97 rows=3 width=0) (actual time=0.074..0.165 rows=1 loops=1)
+  ->  Append  (cost=0.29..24.97 rows=3 width=0) (actual time=0.053..0.112 rows=1 loops=1)
         Buffers: shared hit=9
-        ->  Subquery Scan on "*SELECT* 1"  (cost=0.29..8.32 rows=1 width=0) (actual time=0.073..0.075 rows=1 loops=1)
+        ->  Subquery Scan on "*SELECT* 1"  (cost=0.29..8.32 rows=1 width=0) (actual time=0.052..0.054 rows=1 loops=1)
               Buffers: shared hit=3
-              ->  Index Only Scan using ix_container_movements_tenant_id_container_id_occurred_at_utc_ on container_movements c  (cost=0.29..8.31 rows=1 width=4) (actual time=0.072..0.073 rows=1 loops=1)
+              ->  Index Only Scan using ix_container_movements_tenant_id_container_id_occurred_at_utc_ on container_movements c  (cost=0.29..8.31 rows=1 width=4) (actual time=0.051..0.052 rows=1 loops=1)
                     Index Cond: ((tenant_id = 'DEPOT-A'::text) AND (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid))
                     Heap Fetches: 1
                     Buffers: shared hit=3
-        ->  Subquery Scan on "*SELECT* 2"  (cost=0.29..8.32 rows=1 width=0) (actual time=0.053..0.054 rows=0 loops=1)
+        ->  Subquery Scan on "*SELECT* 2"  (cost=0.29..8.32 rows=1 width=0) (actual time=0.036..0.036 rows=0 loops=1)
               Buffers: shared hit=3
-              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c0  (cost=0.29..8.31 rows=1 width=4) (actual time=0.053..0.053 rows=0 loops=1)
+              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c0  (cost=0.29..8.31 rows=1 width=4) (actual time=0.036..0.036 rows=0 loops=1)
                     Index Cond: (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid)
                     Filter: (((tenant_id)::text = 'DEPOT-A'::text) AND (movement_history_version = 0))
                     Rows Removed by Filter: 1
                     Buffers: shared hit=3
-        ->  Subquery Scan on "*SELECT* 3"  (cost=0.29..8.32 rows=1 width=0) (actual time=0.032..0.033 rows=0 loops=1)
+        ->  Subquery Scan on "*SELECT* 3"  (cost=0.29..8.32 rows=1 width=0) (actual time=0.019..0.020 rows=0 loops=1)
               Buffers: shared hit=3
-              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c1  (cost=0.29..8.31 rows=1 width=4) (actual time=0.032..0.032 rows=0 loops=1)
+              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c1  (cost=0.29..8.31 rows=1 width=4) (actual time=0.019..0.019 rows=0 loops=1)
                     Index Cond: (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid)
                     Filter: ((out_date IS NOT NULL) AND ((tenant_id)::text = 'DEPOT-A'::text) AND (movement_history_version = 0))
                     Rows Removed by Filter: 1
                     Buffers: shared hit=3
 Planning:
   Buffers: shared hit=50
-Planning Time: 2.041 ms
-Execution Time: 0.382 ms
+Planning Time: 1.940 ms
+Execution Time: 0.265 ms
 
 -- Parameters: [{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__containerId_0","Type":"Uuid","Value":"000c9253-5d94-acdd-7f8e-63e6294a9ccd"},{"Name":"@__p_2","Type":"Integer","Value":20},{"Name":"@__p_1","Type":"Integer","Value":0}]
 SELECT u0."Id", u0."Source", u0."LifecycleId", u0."OccurredAtUtc", u0."EventType", u0."ActorUserId", u0."VehicleNumber", u0."VehicleType", u0."DeliveryOrderId", u0."FromBlockId", u0."FromBlockCode", u0."FromBay", u0."FromRow", u0."FromTier", u0."ToBlockId", u0."ToBlockCode", u0."ToBay", u0."ToRow", u0."ToTier"
@@ -78,29 +78,29 @@ FROM (
 ) AS u0
 ORDER BY u0."OccurredAtUtc", u0."Source", u0."Id", u0."EventType"
 LIMIT @__p_2 OFFSET @__p_1
-Limit  (cost=24.98..24.98 rows=3 width=255) (actual time=0.231..0.234 rows=1 loops=1)
+Limit  (cost=24.98..24.98 rows=3 width=255) (actual time=0.132..0.134 rows=1 loops=1)
   Buffers: shared hit=9
-  ->  Sort  (cost=24.98..24.98 rows=3 width=255) (actual time=0.229..0.231 rows=1 loops=1)
+  ->  Sort  (cost=24.98..24.98 rows=3 width=255) (actual time=0.130..0.132 rows=1 loops=1)
         Sort Key: c.occurred_at_utc, ('Movement'::text), c.id, (CASE WHEN ((c.event_type)::text = 'GateIn'::text) THEN 'GateIn'::text WHEN ((c.event_type)::text = 'Place'::text) THEN 'Place'::text WHEN ((c.event_type)::text = 'Relocate'::text) THEN 'Relocate'::text WHEN ((c.event_type)::text = 'Remove'::text) THEN 'Remove'::text ELSE 'GateOut'::text END)
         Sort Method: quicksort  Memory: 25kB
         Buffers: shared hit=9
-        ->  Append  (cost=0.29..24.95 rows=3 width=255) (actual time=0.065..0.131 rows=1 loops=1)
+        ->  Append  (cost=0.29..24.95 rows=3 width=255) (actual time=0.047..0.094 rows=1 loops=1)
               Buffers: shared hit=9
-              ->  Index Scan using ix_container_movements_tenant_id_container_id_occurred_at_utc_ on container_movements c  (cost=0.29..8.32 rows=1 width=223) (actual time=0.063..0.065 rows=1 loops=1)
+              ->  Index Scan using ix_container_movements_tenant_id_container_id_occurred_at_utc_ on container_movements c  (cost=0.29..8.32 rows=1 width=223) (actual time=0.046..0.047 rows=1 loops=1)
                     Index Cond: (((tenant_id)::text = 'DEPOT-A'::text) AND (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid))
                     Buffers: shared hit=3
-              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c0  (cost=0.29..8.31 rows=1 width=271) (actual time=0.034..0.034 rows=0 loops=1)
+              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c0  (cost=0.29..8.31 rows=1 width=271) (actual time=0.027..0.027 rows=0 loops=1)
                     Index Cond: (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid)
                     Filter: (((tenant_id)::text = 'DEPOT-A'::text) AND (movement_history_version = 0))
                     Rows Removed by Filter: 1
                     Buffers: shared hit=3
-              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c1  (cost=0.29..8.31 rows=1 width=272) (actual time=0.028..0.028 rows=0 loops=1)
+              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c1  (cost=0.29..8.31 rows=1 width=272) (actual time=0.018..0.018 rows=0 loops=1)
                     Index Cond: (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid)
                     Filter: ((out_date IS NOT NULL) AND ((tenant_id)::text = 'DEPOT-A'::text) AND (movement_history_version = 0))
                     Rows Removed by Filter: 1
                     Buffers: shared hit=3
 Planning:
   Buffers: shared hit=71
-Planning Time: 1.931 ms
-Execution Time: 0.543 ms
+Planning Time: 2.896 ms
+Execution Time: 0.384 ms
 

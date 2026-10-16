@@ -10,7 +10,10 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
     public AppDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-        optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=snp_depot;Username=postgres;Password=postgres")
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("Set ConnectionStrings__DefaultConnection before running EF tools.");
+        optionsBuilder.UseNpgsql(connectionString)
             .UseSnakeCaseNamingConvention();
 
         return new AppDbContext(

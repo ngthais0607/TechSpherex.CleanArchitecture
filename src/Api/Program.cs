@@ -2,6 +2,9 @@ using Scalar.AspNetCore;
 using FluentValidation;
 using SnpDepotManagement.Api.Contracts;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Net;
 using SnpDepotManagement.Api.Authorization;
 using SnpDepotManagement.Api.Endpoints;
 using SnpDepotManagement.Api.Extensions;
@@ -11,6 +14,20 @@ using SnpDepotManagement.Infrastructure.Persistence.Seed;
 using SnpDepotManagement.Infrastructure.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
+var trustedProxy = builder.Configuration["ReverseProxy:TrustedProxy"];
+if (!string.IsNullOrWhiteSpace(trustedProxy))
+{
+    if (!IPAddress.TryParse(trustedProxy, out var proxyAddress))
+        throw new InvalidOperationException("ReverseProxy:TrustedProxy must be an IP address.");
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = 1;
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+        options.KnownProxies.Add(proxyAddress);
+    });
+}
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1024 * 1024);
 builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = true);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -51,6 +68,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
+if (!string.IsNullOrWhiteSpace(trustedProxy)) app.UseForwardedHeaders();
 app.UseStatusCodePages(async statusContext =>
 {
     var http = statusContext.HttpContext;
@@ -65,8 +83,16 @@ if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<TenantMiddleware>();
-app.MapHealthChecks("/health/live").WithName("Liveness").WithTags("Health").AllowAnonymous();
-app.MapHealthChecks("/health/ready").WithName("Readiness").WithTags("Health").RequireAuthorization(Policies.Admin);
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false })
+    .WithName("Liveness").WithTags("Health").AllowAnonymous();
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    ResponseWriter = (http, report) => http.Response.WriteAsJsonAsync(new
+    {
+        status = report.Status.ToString(),
+        checks = report.Entries.Select(e => new { name = e.Key, status = e.Value.Status.ToString(), description = e.Value.Description })
+    }, cancellationToken: http.RequestAborted)
+}).WithName("Readiness").WithTags("Health").RequireAuthorization(Policies.Admin);
 
 // Map Minimal API Endpoints
 app.MapIdentityEndpoints();

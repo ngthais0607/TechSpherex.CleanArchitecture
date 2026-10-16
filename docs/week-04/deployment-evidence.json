@@ -1,0 +1,37 @@
+{
+  "latestApiImage": "sha256:d013c1f9fae88e3143ac6a5f1094f9609e773810f5fa4c9ebb345a86c4fce593",
+  "efBundleOrSourceInApi": false,
+  "runtime": [
+    "Microsoft.AspNetCore.App 10.0.13 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]",
+    "Microsoft.NETCore.App 10.0.13 [/usr/share/dotnet/shared/Microsoft.NETCore.App]"
+  ],
+  "placeholderJwtRejected": true,
+  "upgrade": {
+    "validMap": "Passed",
+    "repeat": "Passed",
+    "invalidMap": "Rejected",
+    "migrations": 5,
+    "project": "snp_week4_smoke",
+    "database": "snp_upgrade_retry",
+    "measuredAtUtc": "2026-10-16T06:54:49.5654573Z",
+    "missingMap": "Rejected"
+  },
+  "smoke": {
+    "health": "Passed",
+    "restoreGuards": "Passed",
+    "startup": "Passed",
+    "apiUid": "1654",
+    "project": "snp_week4_smoke",
+    "retention": "Passed",
+    "cors": "Passed",
+    "requestLimit": "Passed",
+    "failedDumpPreservesBackups": "Passed",
+    "sourceHash": "180D730CAD6A6E4486E6D6D7E90D320D541B611C2B2E083A8CD4605E13B6BAF8",
+    "targetHash": "180D730CAD6A6E4486E6D6D7E90D320D541B611C2B2E083A8CD4605E13B6BAF8",
+    "port": 18084,
+    "missingSecret": "Passed",
+    "measuredAtUtc": "2026-10-16T06:47:50.216074Z",
+    "backupRestore": "Passed"
+  },
+  "sdkInRuntime": false
+}
