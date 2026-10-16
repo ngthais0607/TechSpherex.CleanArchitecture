@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SnpDepotManagement.Application.Abstractions.Data;
+using SnpDepotManagement.Application.Abstractions.Identity;
+using SnpDepotManagement.Application.Features.Operations.Lifecycles;
 using SnpDepotManagement.Application.Abstractions.Messaging;
 using SnpDepotManagement.Application.Abstractions.Rules;
 using SnpDepotManagement.Domain.Common;
@@ -13,11 +15,15 @@ public sealed class PlaceContainerCommandHandler : ICommandHandler<PlaceContaine
 {
     private readonly IAppDbContext _context;
     private readonly IRuleEngine _ruleEngine;
+    private readonly TimeProvider _timeProvider;
+    private readonly ICurrentUser? _currentUser;
 
-    public PlaceContainerCommandHandler(IAppDbContext context, IRuleEngine ruleEngine)
+    public PlaceContainerCommandHandler(IAppDbContext context, IRuleEngine ruleEngine, TimeProvider? timeProvider = null, ICurrentUser? currentUser = null)
     {
         _context = context;
         _ruleEngine = ruleEngine;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _currentUser = currentUser;
     }
 
     public async Task<Result> Handle(PlaceContainerCommand command, CancellationToken cancellationToken = default)
@@ -56,6 +62,11 @@ public sealed class PlaceContainerCommandHandler : ICommandHandler<PlaceContaine
                 Error.Conflict("YardSlot.ContainerAlreadyPlaced", "Container is already placed in a yard slot."));
         }
 
+        var lifecycle = await _context.ContainerLifecycles.FirstOrDefaultAsync(
+            l => l.ContainerId == container.Id && l.Status == LifecycleStatus.InYard, cancellationToken);
+        if (lifecycle is null)
+            return Result.Failure(Error.Conflict("Lifecycle.NotInYard", "Container is not currently in the depot."));
+
         var rules = new IBusinessRule[]
         {
             new ValidBayContainerSizeRule(command.Bay, container.Size, block.MaxBays),
@@ -83,6 +94,11 @@ public sealed class PlaceContainerCommandHandler : ICommandHandler<PlaceContaine
             slot2.Occupy(container.Id);
         }
 
+        var lowerBay = container.Size == ContainerSize.Ft40 ? command.Bay - 1 : command.Bay;
+        var currentSlot = block.Slots.First(s => s.Bay == lowerBay && s.Row == command.Row && s.Tier == command.Tier);
+        lifecycle.SetCurrentSlot(currentSlot.Id);
+        MovementHistory.Append(_context, lifecycle, ContainerMovementType.Place, _timeProvider.GetUtcNow().UtcDateTime,
+            _currentUser?.UserId, null, MovementHistory.Position(block, command.Bay, command.Row, command.Tier));
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

@@ -45,6 +45,7 @@ public sealed class GetDeliveryOrdersQueryHandler : IQueryHandler<GetDeliveryOrd
 
         var orders = await dbQuery
             .OrderByDescending(o => o.CreatedAt)
+            .ThenBy(o => o.Id)
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);

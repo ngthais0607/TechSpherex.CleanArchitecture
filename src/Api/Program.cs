@@ -1,4 +1,6 @@
 using Scalar.AspNetCore;
+using FluentValidation;
+using SnpDepotManagement.Api.Contracts;
 using Microsoft.AspNetCore.Routing;
 using SnpDepotManagement.Api.Authorization;
 using SnpDepotManagement.Api.Endpoints;
@@ -20,6 +22,7 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
     if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod();
 }));
 builder.Services.AddHealthChecks();
+builder.Services.AddTransient<IValidator<YardBlockSizeRequest>, YardBlockSizeRequestValidator>();
 
 // Register application & infrastructure services
 builder.Services.AddApplication();
@@ -69,6 +72,9 @@ app.MapHealthChecks("/health/ready").WithName("Readiness").WithTags("Health").Re
 app.MapIdentityEndpoints();
 app.MapContainerEndpoints();
 app.MapMasterDataEndpoints();
+app.MapYardEndpoints();
+app.MapDeliveryOrderEndpoints();
+app.MapGateEndpoints();
 
 app.Run();
 

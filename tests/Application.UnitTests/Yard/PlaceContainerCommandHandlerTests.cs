@@ -51,6 +51,7 @@ public class PlaceContainerCommandHandlerTests
         var container = CreateValidContainer("CSQ", "305438", ContainerSize.Ft20);
         _context.YardBlocks.Add(block);
         _context.Containers.Add(container);
+        YardLifecycleFixture.TrackActiveLifecycles(_context);
         await _context.SaveChangesAsync();
 
         var command = new PlaceContainerCommand(block.Id, 1, 1, 1, container.Id);
@@ -75,6 +76,7 @@ public class PlaceContainerCommandHandlerTests
         var container = CreateValidContainer("MSK", "100001", ContainerSize.Ft40);
         _context.YardBlocks.Add(block);
         _context.Containers.Add(container);
+        YardLifecycleFixture.TrackActiveLifecycles(_context);
         await _context.SaveChangesAsync();
 
         var command = new PlaceContainerCommand(block.Id, 2, 1, 1, container.Id);
@@ -103,6 +105,7 @@ public class PlaceContainerCommandHandlerTests
         var container = CreateValidContainer("CSQ", "305438", ContainerSize.Ft20);
         _context.YardBlocks.Add(block);
         _context.Containers.Add(container);
+        YardLifecycleFixture.TrackActiveLifecycles(_context);
         await _context.SaveChangesAsync();
 
         var command = new PlaceContainerCommand(block.Id, 1, 1, 2, container.Id);
@@ -126,6 +129,7 @@ public class PlaceContainerCommandHandlerTests
 
         _context.YardBlocks.Add(block);
         _context.Containers.AddRange(c1, c2);
+        YardLifecycleFixture.TrackActiveLifecycles(_context);
         await _context.SaveChangesAsync();
 
         var command = new PlaceContainerCommand(block.Id, 1, 1, 1, c2.Id);
@@ -146,6 +150,7 @@ public class PlaceContainerCommandHandlerTests
         var container = CreateValidContainer("CSQ", "305438", ContainerSize.Ft20);
         _context.YardBlocks.Add(block);
         _context.Containers.Add(container);
+        YardLifecycleFixture.TrackActiveLifecycles(_context);
         await _context.SaveChangesAsync();
 
         var command = new PlaceContainerCommand(block.Id, 2, 1, 1, container.Id);
@@ -168,6 +173,7 @@ public class PlaceContainerCommandHandlerTests
 
         _context.YardBlocks.Add(block);
         _context.Containers.Add(container);
+        YardLifecycleFixture.TrackActiveLifecycles(_context);
         await _context.SaveChangesAsync();
 
         // Try to place the same container into another slot (Bay 3)

@@ -20,6 +20,8 @@ public static class ResultExtensions
         Add(404, "Container.NotFound DeliveryOrder.NotFound YardBlock.NotFound YardSlot.NotFound YardSlot.SlotNotOccupied");
         Add(409, "Conflict.ConcurrentUpdate Conflict.Duplicate Container.AlreadyExists Customer.AlreadyExists LineOperator.AlreadyExists Vehicle.AlreadyExists Voyage.AlreadyExists DeliveryOrder.AlreadyExists User.AlreadyExists YardBlock.AlreadyExists Lifecycle.ContainerAlreadyInYard Lifecycle.AlreadyGatedOut Lifecycle.NotInYard YardSlot.SlotAlreadyOccupied YardSlot.ContainerAlreadyPlaced YardRule.SlotAlreadyOccupied");
         Add(422, "YardBlock.CannotPlaceInVirtual YardSlot.CannotRemoveWithContainersAbove YardBlock.CannotShrinkOccupiedSlots YardBlock.InvalidExpansion YardBlock.InvalidShrink YardBlock.VirtualCannotExpand YardBlock.VirtualCannotShrink DeliveryOrder.AlreadyCompleted DeliveryOrderItem.QuantityExceeded OrderRule.LineOperatorMismatch LifecycleRule.ContainerNotInYard OrderRule.NoRemainingQuantity OrderRule.DeliveryOrderExpired YardRule.SlotBelowNotOccupied YardRule.SlotNotFound YardRule.TierExceedsBlockLimit YardRule.InvalidBayForSize");
+        Add(409, "YardSlot.InvalidFootprint");
+        Add(400, "Movement.InvalidData");
         return map;
     }
 

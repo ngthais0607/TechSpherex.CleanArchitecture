@@ -15,6 +15,7 @@ public interface IAppDbContext
     DbSet<DeliveryOrder> DeliveryOrders { get; }
     DbSet<DeliveryOrderItem> DeliveryOrderItems { get; }
     DbSet<ContainerLifecycle> ContainerLifecycles { get; }
+    DbSet<ContainerMovement> ContainerMovements { get; }
     DbSet<LineOperator> LineOperators { get; }
     DbSet<Customer> Customers { get; }
     DbSet<Voyage> Voyages { get; }

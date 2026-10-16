@@ -9,6 +9,7 @@ using SnpDepotManagement.Domain.Entities.Identity;
 using SnpDepotManagement.Domain.Entities.MasterData;
 using SnpDepotManagement.Domain.Entities.Operations;
 using SnpDepotManagement.Domain.Entities.Yard;
+using SnpDepotManagement.Domain.ValueObjects;
 
 namespace SnpDepotManagement.Infrastructure.Persistence;
 
@@ -38,6 +39,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<DeliveryOrder> DeliveryOrders => Set<DeliveryOrder>();
     public DbSet<DeliveryOrderItem> DeliveryOrderItems => Set<DeliveryOrderItem>();
     public DbSet<ContainerLifecycle> ContainerLifecycles => Set<ContainerLifecycle>();
+    public DbSet<ContainerMovement> ContainerMovements => Set<ContainerMovement>();
     public DbSet<LineOperator> LineOperators => Set<LineOperator>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Voyage> Voyages => Set<Voyage>();
@@ -77,6 +79,8 @@ public class AppDbContext : DbContext, IAppDbContext
 
         foreach (var entry in ChangeTracker.Entries())
         {
+            if ((entry.Entity is ContainerMovement or MovementPosition) && entry.State is EntityState.Modified or EntityState.Deleted)
+                throw new InvalidOperationException("Container movement history is append-only.");
             if (entry.Entity is ITenantEntity tenantEntity && entry.State == EntityState.Added)
             {
                 if (string.IsNullOrWhiteSpace(tenantEntity.TenantId) && !string.IsNullOrWhiteSpace(currentTenantId))

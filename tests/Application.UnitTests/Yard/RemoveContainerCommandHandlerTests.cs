@@ -2,6 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using SnpDepotManagement.Application.Features.Yard.Commands.RemoveContainer;
 using SnpDepotManagement.Application.UnitTests.Common;
 using SnpDepotManagement.Domain.Entities.Yard;
+using SnpDepotManagement.Domain.Entities.Containers;
+using SnpDepotManagement.Domain.Entities.Operations;
+using SnpDepotManagement.Domain.Enums;
+using SnpDepotManagement.Domain.ValueObjects;
 
 namespace SnpDepotManagement.Application.UnitTests.Yard;
 
@@ -21,7 +25,7 @@ public class RemoveContainerCommandHandlerTests
     {
         // Arrange
         var block = YardBlock.CreateStandard("BLK-REM", "Block", 5, 3, 4);
-        var containerId = Guid.NewGuid();
+        var containerId = SeedActiveContainer(block, ContainerSize.Ft20);
         block.Slots.First(s => s.Bay == 1 && s.Row == 1 && s.Tier == 1).Occupy(containerId);
 
         _context.YardBlocks.Add(block);
@@ -46,7 +50,7 @@ public class RemoveContainerCommandHandlerTests
     {
         // Arrange (40ft at Bay 2 occupies slots 1 and 3)
         var block = YardBlock.CreateStandard("BLK-REM40", "Block 40", 5, 3, 4);
-        var containerId = Guid.NewGuid();
+        var containerId = SeedActiveContainer(block, ContainerSize.Ft40);
         block.Slots.First(s => s.Bay == 1 && s.Row == 1 && s.Tier == 1).Occupy(containerId);
         block.Slots.First(s => s.Bay == 3 && s.Row == 1 && s.Tier == 1).Occupy(containerId);
 
@@ -66,6 +70,17 @@ public class RemoveContainerCommandHandlerTests
         var slot2 = updatedBlock.Slots.First(s => s.Bay == 3 && s.Row == 1 && s.Tier == 1);
         slot1.IsOccupied.Should().BeFalse();
         slot2.IsOccupied.Should().BeFalse();
+    }
+
+    private Guid SeedActiveContainer(YardBlock block, ContainerSize size)
+    {
+        var container = Container.Create(ContainerNumber.Create("CSQU3054383").Value!, "22G1", size,
+            ContainerType.Dry, 2000, 30000, null, "CSQ", "TEST-DEPOT").Value!;
+        _context.Containers.Add(container);
+        _context.ContainerLifecycles.Add(ContainerLifecycle.GateIn(container.Id, "CSQ", Classification.A,
+            ContainerCondition.Normal, "TEST-TRUCK", block.Slots.First(s => s.Bay == 1 && s.Row == 1 && s.Tier == 1).Id,
+            DateTime.UtcNow, "TEST-DEPOT"));
+        return container.Id;
     }
 
     [Fact]

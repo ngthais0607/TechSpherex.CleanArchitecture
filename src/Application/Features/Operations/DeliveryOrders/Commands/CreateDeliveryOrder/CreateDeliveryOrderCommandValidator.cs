@@ -34,6 +34,8 @@ public sealed class CreateDeliveryOrderCommandValidator : AbstractValidator<Crea
 
         RuleForEach(x => x.Items).ChildRules(item =>
         {
+            item.RuleFor(i => i.Size).IsInEnum();
+            item.RuleFor(i => i.Type).IsInEnum();
             item.RuleFor(i => i.Quantity)
                 .GreaterThan(0).WithMessage("Item quantity must be greater than zero.");
         });

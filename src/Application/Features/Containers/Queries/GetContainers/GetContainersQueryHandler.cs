@@ -42,6 +42,7 @@ public sealed class GetContainersQueryHandler : IQueryHandler<GetContainersQuery
 
         var items = await dbQuery
             .OrderBy(c => c.IsoCode)
+            .ThenBy(c => c.Id)
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
             .Select(c => new ContainerDto(

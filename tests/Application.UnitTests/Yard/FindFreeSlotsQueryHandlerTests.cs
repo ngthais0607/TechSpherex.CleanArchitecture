@@ -32,12 +32,12 @@ public class FindFreeSlotsQueryHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
+        result.Value.Items.Should().NotBeNull();
 
         // Tier 2 slots are NOT available yet because Tier 1 is empty (violates SlotBelowMustBeOccupiedRule)
         // Only Tier 1 slots (Bay 1 and Bay 3) are valid free slots
-        result.Value.Should().HaveCount(2);
-        result.Value.Should().AllSatisfy(p => p.Tier.Should().Be(1));
+        result.Value.Items.Should().HaveCount(2);
+        result.Value.Items.Should().AllSatisfy(p => p.Tier.Should().Be(1));
     }
 
     [Fact]
@@ -56,10 +56,10 @@ public class FindFreeSlotsQueryHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-        result.Value.Should().HaveCount(1);
-        result.Value.First().Bay.Should().Be(2);
-        result.Value.First().Tier.Should().Be(1);
+        result.Value.Items.Should().NotBeNull();
+        result.Value.Items.Should().HaveCount(1);
+        result.Value.Items.First().Bay.Should().Be(2);
+        result.Value.Items.First().Tier.Should().Be(1);
     }
 
     [Fact]
@@ -79,11 +79,11 @@ public class FindFreeSlotsQueryHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
+        result.Value.Items.Should().NotBeNull();
         // Tier 1 is occupied -> only Tier 2 is free and valid!
-        result.Value.Should().HaveCount(1);
-        result.Value.First().Tier.Should().Be(2);
-        result.Value.First().Bay.Should().Be(1);
+        result.Value.Items.Should().HaveCount(1);
+        result.Value.Items.First().Tier.Should().Be(2);
+        result.Value.Items.First().Bay.Should().Be(1);
     }
 
     [Fact]
@@ -101,6 +101,6 @@ public class FindFreeSlotsQueryHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
+        result.Value.Items.Should().BeEmpty();
     }
 }

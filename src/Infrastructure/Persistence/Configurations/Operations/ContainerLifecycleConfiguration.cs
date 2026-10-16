@@ -68,6 +68,7 @@ public sealed class ContainerLifecycleConfiguration : IEntityTypeConfiguration<C
         builder.Property(c => c.DeliveryOrderId);
 
         builder.Property(c => c.CurrentSlotId);
+        builder.Property(c => c.MovementHistoryVersion).HasDefaultValue(0);
 
         builder.Property(c => c.CreatedBy)
             .HasMaxLength(100);

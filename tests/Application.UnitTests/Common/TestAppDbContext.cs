@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SnpDepotManagement.Application.Abstractions.Data;
+using SnpDepotManagement.Domain.Common;
 using SnpDepotManagement.Domain.Entities.Containers;
 using SnpDepotManagement.Domain.Entities.Identity;
 using SnpDepotManagement.Domain.Entities.MasterData;
@@ -18,6 +19,7 @@ public class TestAppDbContext : DbContext, IAppDbContext
     public DbSet<DeliveryOrder> DeliveryOrders => Set<DeliveryOrder>();
     public DbSet<DeliveryOrderItem> DeliveryOrderItems => Set<DeliveryOrderItem>();
     public DbSet<ContainerLifecycle> ContainerLifecycles => Set<ContainerLifecycle>();
+    public DbSet<ContainerMovement> ContainerMovements => Set<ContainerMovement>();
     public DbSet<LineOperator> LineOperators => Set<LineOperator>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Voyage> Voyages => Set<Voyage>();
@@ -29,6 +31,11 @@ public class TestAppDbContext : DbContext, IAppDbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<ContainerMovement>(builder =>
+        {
+            builder.OwnsOne(m => m.FromPosition);
+            builder.OwnsOne(m => m.ToPosition);
+        });
 
         modelBuilder.Entity<Container>(builder =>
         {
@@ -78,6 +85,8 @@ public class TestAppDbContext : DbContext, IAppDbContext
     {
         foreach (var entry in ChangeTracker.Entries())
         {
+            if (entry.State == EntityState.Added && entry.Entity is ITenantEntity tenant && string.IsNullOrWhiteSpace(tenant.TenantId))
+                tenant.TenantId = "TEST-DEPOT";
             if (entry.State == EntityState.Modified && entry.GetDatabaseValues() == null)
             {
                 entry.State = EntityState.Added;

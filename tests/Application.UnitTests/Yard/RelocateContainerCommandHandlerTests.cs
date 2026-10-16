@@ -53,6 +53,7 @@ public class RelocateContainerCommandHandlerTests
 
         _context.YardBlocks.Add(block);
         _context.Containers.Add(container);
+        YardLifecycleFixture.TrackActiveLifecycles(_context);
         await _context.SaveChangesAsync();
 
         var command = new RelocateContainerCommand(block.Id, 1, 1, 1, 3, 1, 1);
@@ -84,6 +85,7 @@ public class RelocateContainerCommandHandlerTests
 
         _context.YardBlocks.Add(block);
         _context.Containers.AddRange(c1, c2);
+        YardLifecycleFixture.TrackActiveLifecycles(_context);
         await _context.SaveChangesAsync();
 
         // Attempt to move c1 to bay 3 where c2 already is

@@ -535,6 +535,12 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("line_operator");
 
+                    b.Property<int>("MovementHistoryVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("movement_history_version");
+
                     b.Property<DateTime?>("OutDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("out_date");
@@ -582,6 +588,73 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasFilter("\"status\" = 'InYard'");
 
                     b.ToTable("container_lifecycles", (string)null);
+                });
+
+            modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.ContainerMovement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_user_id");
+
+                    b.Property<Guid>("ContainerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("container_id");
+
+                    b.Property<Guid>("ContainerLifecycleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("container_lifecycle_id");
+
+                    b.Property<Guid?>("DeliveryOrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("delivery_order_id");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("event_type");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at_utc");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("VehicleNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("vehicle_number");
+
+                    b.Property<string>("VehicleType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("vehicle_type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_container_movements");
+
+                    b.HasIndex("ContainerId")
+                        .HasDatabaseName("ix_container_movements_container_id");
+
+                    b.HasIndex("ContainerLifecycleId")
+                        .HasDatabaseName("ix_container_movements_container_lifecycle_id");
+
+                    b.HasIndex("TenantId", "ContainerLifecycleId")
+                        .HasDatabaseName("ix_container_movements_tenant_id_container_lifecycle_id");
+
+                    b.HasIndex("TenantId", "ContainerId", "OccurredAtUtc", "Id")
+                        .HasDatabaseName("ix_container_movements_tenant_id_container_id_occurred_at_utc_");
+
+                    b.ToTable("container_movements", (string)null);
                 });
 
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.DeliveryOrder", b =>
@@ -855,6 +928,101 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_container_lifecycles_containers_container_id");
+                });
+
+            modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.ContainerMovement", b =>
+                {
+                    b.HasOne("SnpDepotManagement.Domain.Entities.Containers.Container", null)
+                        .WithMany()
+                        .HasForeignKey("ContainerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_container_movements_containers_container_id");
+
+                    b.HasOne("SnpDepotManagement.Domain.Entities.Operations.ContainerLifecycle", null)
+                        .WithMany()
+                        .HasForeignKey("ContainerLifecycleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_container_movements_container_lifecycles_container_lifecycl");
+
+                    b.OwnsOne("SnpDepotManagement.Domain.ValueObjects.MovementPosition", "FromPosition", b1 =>
+                        {
+                            b1.Property<Guid>("ContainerMovementId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<int>("Bay")
+                                .HasColumnType("integer")
+                                .HasColumnName("from_position_bay");
+
+                            b1.Property<string>("BlockCode")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("from_position_block_code");
+
+                            b1.Property<Guid>("BlockId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("from_position_block_id");
+
+                            b1.Property<int>("Row")
+                                .HasColumnType("integer")
+                                .HasColumnName("from_position_row");
+
+                            b1.Property<int>("Tier")
+                                .HasColumnType("integer")
+                                .HasColumnName("from_position_tier");
+
+                            b1.HasKey("ContainerMovementId");
+
+                            b1.ToTable("container_movements");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ContainerMovementId")
+                                .HasConstraintName("fk_container_movements_container_movements_id");
+                        });
+
+                    b.OwnsOne("SnpDepotManagement.Domain.ValueObjects.MovementPosition", "ToPosition", b1 =>
+                        {
+                            b1.Property<Guid>("ContainerMovementId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<int>("Bay")
+                                .HasColumnType("integer")
+                                .HasColumnName("to_position_bay");
+
+                            b1.Property<string>("BlockCode")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("to_position_block_code");
+
+                            b1.Property<Guid>("BlockId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("to_position_block_id");
+
+                            b1.Property<int>("Row")
+                                .HasColumnType("integer")
+                                .HasColumnName("to_position_row");
+
+                            b1.Property<int>("Tier")
+                                .HasColumnType("integer")
+                                .HasColumnName("to_position_tier");
+
+                            b1.HasKey("ContainerMovementId");
+
+                            b1.ToTable("container_movements");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ContainerMovementId")
+                                .HasConstraintName("fk_container_movements_container_movements_id");
+                        });
+
+                    b.Navigation("FromPosition");
+
+                    b.Navigation("ToPosition");
                 });
 
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.DeliveryOrderItem", b =>

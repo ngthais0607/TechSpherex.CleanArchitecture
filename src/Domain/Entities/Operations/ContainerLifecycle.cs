@@ -22,6 +22,7 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
     public Guid? DeliveryOrderId { get; private set; }
 
     public Guid? CurrentSlotId { get; private set; }
+    public int MovementHistoryVersion { get; private set; }
 
     public bool IsInDepot => Status == LifecycleStatus.InYard && OutDate == null;
 
@@ -49,8 +50,15 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
             InVehicleType = vehicleType,
             InDate = utcNow,
             CurrentSlotId = slotId,
+            MovementHistoryVersion = 1,
             TenantId = tenantId
         };
+    }
+
+    public void SetCurrentSlot(Guid? slotId)
+    {
+        if (!IsInDepot) throw new InvalidOperationException("Only an active lifecycle can change yard position.");
+        CurrentSlotId = slotId;
     }
 
     public Result GateOut(string outVehicleNumber, Guid deliveryOrderId, DateTime utcNow, VehicleType vehicleType = VehicleType.Truck)

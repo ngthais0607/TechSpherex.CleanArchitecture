@@ -4,86 +4,45 @@ using SnpDepotManagement.Application.Abstractions.Messaging;
 using SnpDepotManagement.Application.Abstractions.Rules;
 using SnpDepotManagement.Application.Features.Yard.Dtos;
 using SnpDepotManagement.Domain.Common;
-using SnpDepotManagement.Domain.Common.Rules;
 using SnpDepotManagement.Domain.Enums;
-using SnpDepotManagement.Domain.Rules;
 
 namespace SnpDepotManagement.Application.Features.Yard.Queries.FindFreeSlots;
 
-public sealed class FindFreeSlotsQueryHandler : IQueryHandler<FindFreeSlotsQuery, List<YardPositionDto>>
+public sealed class FindFreeSlotsQueryHandler(IAppDbContext context, IRuleEngine ruleEngine)
+    : IQueryHandler<FindFreeSlotsQuery, PagedResult<YardPositionDto>>
 {
-    private readonly IAppDbContext _context;
-    private readonly IRuleEngine _ruleEngine;
-
-    public FindFreeSlotsQueryHandler(IAppDbContext context, IRuleEngine ruleEngine)
+    public async Task<Result<PagedResult<YardPositionDto>>> Handle(FindFreeSlotsQuery query, CancellationToken cancellationToken = default)
     {
-        _context = context;
-        _ruleEngine = ruleEngine;
-    }
-
-    public async Task<Result<List<YardPositionDto>>> Handle(FindFreeSlotsQuery query, CancellationToken cancellationToken = default)
-    {
-        var block = await _context.YardBlocks
-            .Include(b => b.Slots)
-            .FirstOrDefaultAsync(b => b.Id == query.BlockId, cancellationToken);
-
+        _ = ruleEngine; // Constructor retained for existing consumers; predicates below execute at the database.
+        var block = await context.YardBlocks.AsNoTracking().FirstOrDefaultAsync(b => b.Id == query.BlockId, cancellationToken);
         if (block is null)
-        {
-            return Result.Failure<List<YardPositionDto>>(
-                Error.NotFound("YardBlock.NotFound", "Yard block not found."));
-        }
-
+            return Result.Failure<PagedResult<YardPositionDto>>(Error.NotFound("YardBlock.NotFound", "Yard block not found."));
         if (block.IsVirtual)
-        {
-            return Result.Success(new List<YardPositionDto>());
-        }
+            return Result.Success(PagedResult<YardPositionDto>.Create([], 0, query.PageIndex, query.PageSize));
 
-        var availablePositions = new List<YardPositionDto>();
+        var slots = context.YardSlots.AsNoTracking().Where(s => s.BlockId == query.BlockId);
+        var candidates = slots.Where(s => !s.IsOccupied && (s.Position.Tier == 1 || slots.Any(below =>
+                below.Position.Bay == s.Position.Bay && below.Position.Row == s.Position.Row &&
+                below.Position.Tier == s.Position.Tier - 1 && below.IsOccupied)))
+            .Select(s => new { Bay = s.Position.Bay, Row = s.Position.Row, Tier = s.Position.Tier });
 
-        // Prioritize bottom tiers first (Tier 1 -> Tier 2 -> ...)
-        for (int tier = 1; tier <= block.MaxTiers; tier++)
-        {
-            for (int row = 1; row <= block.MaxRows; row++)
-            {
-                if (query.Size == ContainerSize.Ft20)
-                {
-                    for (int bay = 1; bay <= block.MaxBays; bay += 2)
-                    {
-                        var rules = new IBusinessRule[]
-                        {
-                            new ValidBayContainerSizeRule(bay, query.Size, block.MaxBays),
-                            new TierWithinBlockLimitRule(tier, block.MaxTiers),
-                            new SlotIsFreeRule(query.Size, bay, row, tier, block.Slots),
-                            new SlotBelowMustBeOccupiedRule(tier, query.Size, bay, row, block.Slots)
-                        };
+        if (query.Size == ContainerSize.Ft40)
+            candidates = from lower in slots
+                         from upper in slots
+                         where !lower.IsOccupied && !upper.IsOccupied &&
+                             upper.Position.Bay == lower.Position.Bay + 2 &&
+                             upper.Position.Row == lower.Position.Row && upper.Position.Tier == lower.Position.Tier &&
+                             (lower.Position.Tier == 1 ||
+                              (slots.Any(b => b.Position.Bay == lower.Position.Bay && b.Position.Row == lower.Position.Row &&
+                                              b.Position.Tier == lower.Position.Tier - 1 && b.IsOccupied) &&
+                               slots.Any(b => b.Position.Bay == upper.Position.Bay && b.Position.Row == upper.Position.Row &&
+                                              b.Position.Tier == upper.Position.Tier - 1 && b.IsOccupied)))
+                         select new { Bay = lower.Position.Bay + 1, Row = lower.Position.Row, Tier = lower.Position.Tier };
 
-                        if (_ruleEngine.Evaluate(rules).IsSuccess)
-                        {
-                            availablePositions.Add(new YardPositionDto(bay, row, tier));
-                        }
-                    }
-                }
-                else if (query.Size == ContainerSize.Ft40)
-                {
-                    for (int bay = 2; bay <= block.MaxBays; bay += 2)
-                    {
-                        var rules = new IBusinessRule[]
-                        {
-                            new ValidBayContainerSizeRule(bay, query.Size, block.MaxBays),
-                            new TierWithinBlockLimitRule(tier, block.MaxTiers),
-                            new SlotIsFreeRule(query.Size, bay, row, tier, block.Slots),
-                            new SlotBelowMustBeOccupiedRule(tier, query.Size, bay, row, block.Slots)
-                        };
-
-                        if (_ruleEngine.Evaluate(rules).IsSuccess)
-                        {
-                            availablePositions.Add(new YardPositionDto(bay, row, tier));
-                        }
-                    }
-                }
-            }
-        }
-
-        return Result.Success(availablePositions);
+        var total = await candidates.CountAsync(cancellationToken);
+        var positions = await candidates.OrderBy(p => p.Tier).ThenBy(p => p.Row).ThenBy(p => p.Bay)
+            .Skip((query.PageIndex - 1) * query.PageSize).Take(query.PageSize)
+            .Select(p => new YardPositionDto(p.Bay, p.Row, p.Tier)).ToListAsync(cancellationToken);
+        return Result.Success(PagedResult<YardPositionDto>.Create(positions, total, query.PageIndex, query.PageSize));
     }
 }

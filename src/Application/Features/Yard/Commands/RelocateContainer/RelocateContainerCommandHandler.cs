@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SnpDepotManagement.Application.Abstractions.Data;
+using SnpDepotManagement.Application.Abstractions.Identity;
+using SnpDepotManagement.Application.Features.Operations.Lifecycles;
 using SnpDepotManagement.Application.Abstractions.Messaging;
 using SnpDepotManagement.Application.Abstractions.Rules;
 using SnpDepotManagement.Domain.Common;
@@ -14,11 +16,15 @@ public sealed class RelocateContainerCommandHandler : ICommandHandler<RelocateCo
 {
     private readonly IAppDbContext _context;
     private readonly IRuleEngine _ruleEngine;
+    private readonly TimeProvider _timeProvider;
+    private readonly ICurrentUser? _currentUser;
 
-    public RelocateContainerCommandHandler(IAppDbContext context, IRuleEngine ruleEngine)
+    public RelocateContainerCommandHandler(IAppDbContext context, IRuleEngine ruleEngine, TimeProvider? timeProvider = null, ICurrentUser? currentUser = null)
     {
         _context = context;
         _ruleEngine = ruleEngine;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _currentUser = currentUser;
     }
 
     public async Task<Result> Handle(RelocateContainerCommand command, CancellationToken cancellationToken = default)
@@ -104,6 +110,14 @@ public sealed class RelocateContainerCommandHandler : ICommandHandler<RelocateCo
                 Error.NotFound("Container.NotFound", "Container not found."));
         }
 
+        if (isSource40Ft != (container.Size == ContainerSize.Ft40) || (sourceSlot2 is not null && sourceSlot2.ContainerId != container.Id))
+            return Result.Failure(Error.Conflict("YardSlot.InvalidFootprint", "The source slots do not represent one container of the requested size."));
+
+        var lifecycle = await _context.ContainerLifecycles.FirstOrDefaultAsync(
+            l => l.ContainerId == container.Id && l.Status == LifecycleStatus.InYard, cancellationToken);
+        if (lifecycle is null)
+            return Result.Failure(Error.Conflict("Lifecycle.NotInYard", "Container is not currently in the depot."));
+
         // Temporarily release source slot(s) in memory for evaluation
         sourceSlot1.Release();
         sourceSlot2?.Release();
@@ -153,6 +167,11 @@ public sealed class RelocateContainerCommandHandler : ICommandHandler<RelocateCo
             targetSlot2.Occupy(containerId);
         }
 
+        var lowerBay = container.Size == ContainerSize.Ft40 ? command.TargetBay - 1 : command.TargetBay;
+        lifecycle.SetCurrentSlot(block.Slots.First(s => s.Bay == lowerBay && s.Row == command.TargetRow && s.Tier == command.TargetTier).Id);
+        MovementHistory.Append(_context, lifecycle, ContainerMovementType.Relocate, _timeProvider.GetUtcNow().UtcDateTime,
+            _currentUser?.UserId, MovementHistory.Position(block, command.SourceBay, command.SourceRow, command.SourceTier),
+            MovementHistory.Position(block, command.TargetBay, command.TargetRow, command.TargetTier));
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
