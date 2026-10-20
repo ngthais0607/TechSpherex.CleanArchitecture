@@ -1,6 +1,6 @@
 # Thiết kế demo Angular SNP Depot Management
 
-Ngày: 20/10/2026. Trạng thái: chờ người dùng duyệt đặc tả viết.
+Ngày: 20/10/2026. Trạng thái: người dùng đã duyệt đặc tả viết trong cuộc trao đổi ngày 20/10/2026.
 
 ## 1. Mục tiêu và quyết định đã thống nhất
 
