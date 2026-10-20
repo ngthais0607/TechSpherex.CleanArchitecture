@@ -50,3 +50,12 @@ Tự rà soát còn sửa hai điểm: nút đóng footer dùng chung quy trình
 | Dùng dữ liệu local, thêm chế độ trống | Đúng lựa chọn demo. Seed backend chưa tự hiện trên UI; chưa có xác thực/phân quyền thật hoặc chứng nhận nghiệp vụ production. |
 
 Review không đánh giá lại các quyết định kiến trúc đã ghi nhận, quy tắc production backend hay xác thực thật vì ngoài phạm vi. Các quyết định này được giữ; không có phát hiện Minor bị hoãn. Không push, merge hoặc publish.
+
+## Cập nhật bảng màu theo ảnh mẫu
+
+Áp dụng sidebar navy `#10253b`, mục chọn navy sáng hơn với vạch cyan, nền nội dung `#f4f8fc`, nút chính teal `#007f9b`, biểu đồ cyan/indigo và nhãn xu hướng xanh nhạt. Chỉ đổi style, giữ bố cục và nghiệp vụ.
+
+- Production build mới thành công: initial bundle 347,95 kB (ước tính truyền 97,21 kB).
+- 3 kiểm tra Chromium liên quan đều pass: điều hướng toàn bộ trang/không tràn viewport, form tablet, dialog dài với focus/footer ở bốn viewport. Không chạy lại unit test nghiệp vụ trong lượt chỉ đổi màu này.
+- Tương phản đo trên các cặp màu: chữ trắng/nút chính 4,66:1; chữ menu/navy 10,13:1; chữ phụ/navy 7,26:1.
+- Ảnh Tổng quan, Cổng, Sơ đồ bãi, Tồn bãi và bốn ảnh form được chụp lại. Đã mở ảnh Tổng quan để kiểm tra trực quan sidebar và bảng màu mới.

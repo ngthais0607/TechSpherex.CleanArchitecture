@@ -42,11 +42,11 @@ import { dayKey } from '../../demo/rules/container-rules';
       max-width: 32%;
       min-height: 3px;
       border-radius: 4px 4px 0 0;
-      background: #0095ad;
+      background: var(--chart-in);
       position: relative;
     }
     .bar.out {
-      background: #bdc8f3;
+      background: var(--chart-out);
     }
     .chart-column small {
       font-size: 10px;
@@ -65,10 +65,10 @@ import { dayKey } from '../../demo/rules/container-rules';
       height: 9px;
       border-radius: 3px;
       margin-right: 5px;
-      background: #0095ad;
+      background: var(--chart-in);
     }
     .legend i.out {
-      background: #bdc8f3;
+      background: var(--chart-out);
     }
     .block-line {
       margin-bottom: 22px;
