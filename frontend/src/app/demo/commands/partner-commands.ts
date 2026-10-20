@@ -90,7 +90,10 @@ export function deactivatePartner(
   if (
     kind === 'operator' &&
     s.lifecycles.some(
-      (l) => !l.outAt && s.containers.find((c) => c.number === l.number)?.operatorId === id,
+      (l) =>
+        !l.outAt &&
+        !l.cancelled &&
+        s.containers.find((c) => c.number === l.number)?.operatorId === id,
     )
   )
     return fail('DEMO_PARTNER', 'Hãng còn container đang trong bãi.');

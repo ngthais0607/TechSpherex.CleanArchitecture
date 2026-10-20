@@ -12,14 +12,25 @@ export class DemoRepository {
   readonly toast = signal('');
   readonly readError = signal(false);
   readonly loading = signal(true);
+  readonly needsRecovery = signal(false);
   readonly containers = computed(() => this.state().containers);
   constructor() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const r = assertSnapshot(JSON.parse(raw));
-        if (r.ok) this.state.set(r.value);
-        else this.warning.set(r.error.message);
+        try {
+          const r = assertSnapshot(JSON.parse(raw));
+          if (r.ok) this.state.set(r.value);
+          else {
+            this.warning.set(r.error.message);
+            this.needsRecovery.set(true);
+          }
+        } catch {
+          this.warning.set(
+            'Bản lưu không đọc được. Hãy xác nhận khôi phục mẫu hoặc dữ liệu trống trước khi ghi.',
+          );
+          this.needsRecovery.set(true);
+        }
       }
     } catch {
       this.warning.set('Không đọc được dữ liệu đã lưu. Bạn có thể khôi phục dữ liệu mẫu.');
@@ -31,6 +42,7 @@ export class DemoRepository {
   }
   refresh() {
     this.now.set(new Date());
+    if (this.needsRecovery()) return;
     const next = structuredClone(this.state());
     expire(next, this.now());
     if (JSON.stringify(next.bookings) !== JSON.stringify(this.state().bookings)) {
@@ -39,6 +51,12 @@ export class DemoRepository {
     }
   }
   run<T>(fn: (draft: DepotSnapshot) => Result<T>, message = 'Đã lưu thay đổi.'): Result<T> {
+    if (this.needsRecovery())
+      return fail(
+        'DEMO_RECOVERY',
+        'Bản lưu bị hỏng. Hãy khôi phục dữ liệu bằng Công cụ demo trước khi lưu thay đổi.',
+      );
+    this.now.set(new Date());
     const draft = structuredClone(this.state());
     expire(draft, this.now());
     const r = fn(draft);
@@ -60,6 +78,7 @@ export class DemoRepository {
       next.movements = [];
     }
     this.state.set(next);
+    this.needsRecovery.set(false);
     this.warning.set('');
     this.persist(next);
     this.notify(empty ? 'Đã chuyển sang dữ liệu trống.' : 'Đã khôi phục dữ liệu mẫu.');
@@ -90,7 +109,8 @@ export class DemoRepository {
   status(number: string) {
     const s = this.state(),
       life = activeLife(s, number);
-    if (!life) return s.lifecycles.some((l) => l.number === number) ? 'Đã xuất' : 'Chờ nhập';
+    if (!life)
+      return s.lifecycles.some((l) => l.number === number && !l.cancelled) ? 'Đã xuất' : 'Chờ nhập';
     if (reserved(s, number, this.now())) return 'Chờ xuất';
     return life.position?.kind === 'virtual' ? 'Chờ phân vị trí' : 'Trong bãi';
   }

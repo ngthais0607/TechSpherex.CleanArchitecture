@@ -52,7 +52,9 @@ export class PartnersPage {
       .state()
       .lifecycles.filter(
         (l) =>
-          !l.outAt && this.store.containers().find((c) => c.number === l.number)?.operatorId === id,
+          !l.outAt &&
+          !l.cancelled &&
+          this.store.containers().find((c) => c.number === l.number)?.operatorId === id,
       ).length;
   }
   fields(): Field[] {

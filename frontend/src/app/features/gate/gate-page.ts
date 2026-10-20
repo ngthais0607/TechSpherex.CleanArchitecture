@@ -407,6 +407,9 @@ export class GatePage {
     else this.editing.set(false);
   }
   positionText = positionText;
+  hasUnsavedChanges() {
+    return this.form.dirty;
+  }
   orderNumber(id: string) {
     return this.store.state().orders.find((o) => o.id === id)?.number || '—';
   }

@@ -185,12 +185,15 @@ export function cancelGate(s: DepotSnapshot, id: string, now: Date): Result<void
   const l = s.lifecycles.find((l) => l.id === tx.lifecycleId)!,
     c = s.containers.find((c) => c.number === tx.number)!;
   if (tx.direction === 'In') {
+    if (isBlocked(s, c.number))
+      return fail('Y5', 'Không thể hủy nhập khi container đang đỡ container khác.');
     if (
       reserved(s, c.number, now) ||
       s.movements.some((m) => m.number === c.number && m.at >= tx.at)
     )
       return fail('G9', 'Gỡ đặt chỗ hoặc xử lý di chuyển trước khi hủy nhập.');
-    s.lifecycles = s.lifecycles.filter((x) => x.id !== l.id);
+    l.cancelled = true;
+    delete l.position;
   } else {
     if (!tx.previousPosition) return fail('G9', 'Không tìm thấy vị trí trước khi xuất.');
     const r = placeCheck(s, c.number, tx.previousPosition);
@@ -207,8 +210,7 @@ export function cancelGate(s: DepotSnapshot, id: string, now: Date): Result<void
     }
   }
   tx.status = 'Cancelled';
-  c.grade = tx.previousGrade;
-  c.condition = tx.previousCondition;
+  restoreCurrentAttributes(s, c.number);
   return ok(undefined);
 }
 export function editGate(
@@ -232,13 +234,16 @@ export function editGate(
       });
   }
   Object.assign(tx, input);
-  const latest = s.gateTransactions
-    .filter((t) => t.number === tx.number && t.status === 'Active')
-    .at(-1);
-  if (latest?.id === id) {
-    const c = s.containers.find((c) => c.number === tx.number)!;
-    c.grade = input.grade;
-    c.condition = input.condition;
-  }
+  restoreCurrentAttributes(s, tx.number);
   return ok(undefined);
+}
+function restoreCurrentAttributes(s: DepotSnapshot, number: string) {
+  const c = s.containers.find((c) => c.number === number)!;
+  const events = s.gateTransactions
+    .filter((t) => t.number === number)
+    .sort((a, b) => a.at.localeCompare(b.at));
+  const latest = events.filter((t) => t.status === 'Active').at(-1),
+    first = events[0];
+  c.grade = latest?.grade ?? first?.previousGrade ?? c.grade;
+  c.condition = latest?.condition ?? first?.previousCondition ?? c.condition;
 }

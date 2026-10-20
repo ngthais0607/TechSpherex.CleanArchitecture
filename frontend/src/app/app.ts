@@ -35,9 +35,8 @@ export class App {
         );
     });
   }
-  logout() {
-    this.session.logout();
-    this.router.navigateByUrl('/login');
+  async logout() {
+    if (await this.router.navigateByUrl('/login')) this.session.logout();
   }
   reset(empty: boolean) {
     if (

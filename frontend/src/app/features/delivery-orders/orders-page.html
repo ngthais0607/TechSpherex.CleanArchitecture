@@ -105,7 +105,7 @@
   <app-modal
     title="Thêm lệnh giao"
     [width]="1040"
-    [dirty]="form.dirty"
+    [dirty]="form.dirty || linesChanged()"
     (closed)="showCreate.set(false)"
     ><app-form #form [fields]="fields()" [errors]="errors()" (saved)="save($event)" />
     <div class="panel-header section-gap" style="padding: 14px 0">
@@ -144,7 +144,7 @@
       <p class="field-error" role="alert">{{ error() }} {{ errors()['lines'] }}</p>
     }
     <div footer>
-      <button class="button" (click)="cancelCreate(form.dirty)">Hủy</button
+      <button class="button" (click)="cancelCreate(form.dirty || linesChanged())">Hủy</button
       ><button class="button primary" form="entry-form" type="submit">Tạo lệnh giao</button>
     </div></app-modal
   >

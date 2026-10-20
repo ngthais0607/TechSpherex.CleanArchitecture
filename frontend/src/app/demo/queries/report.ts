@@ -36,7 +36,10 @@ export function report(s: DepotSnapshot, f: Filters, now: Date) {
       in: a.in,
       out: a.out,
       stored: s.lifecycles.filter(
-        (l) => !l.outAt && s.containers.find((c) => c.number === l.number)?.operatorId === o.id,
+        (l) =>
+          !l.outAt &&
+          !l.cancelled &&
+          s.containers.find((c) => c.number === l.number)?.operatorId === o.id,
       ).length,
       total: subset.length,
     };

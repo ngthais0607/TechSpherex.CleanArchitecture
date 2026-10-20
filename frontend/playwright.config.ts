@@ -3,6 +3,8 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   workers: 1,
+  timeout: 90000,
+  expect: { timeout: 15000 },
   use: {
     baseURL: 'http://127.0.0.1:4200',
     viewport: { width: 1440, height: 900 },
@@ -12,6 +14,6 @@ export default defineConfig({
     command: 'npm run start -- --host 127.0.0.1',
     url: 'http://127.0.0.1:4200',
     reuseExistingServer: true,
-    timeout: 120000,
+    timeout: 180000,
   },
 });

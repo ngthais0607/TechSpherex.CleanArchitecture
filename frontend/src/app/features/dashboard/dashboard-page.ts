@@ -156,7 +156,7 @@ export class DashboardPage {
       .map((b) => {
         const used = this.store
           .state()
-          .lifecycles.filter((l) => !l.outAt && l.position?.blockId === b.id)
+          .lifecycles.filter((l) => !l.outAt && !l.cancelled && l.position?.blockId === b.id)
           .reduce(
             (v, l) =>
               v + (this.store.containers().find((c) => c.number === l.number)!.size === 40 ? 2 : 1),

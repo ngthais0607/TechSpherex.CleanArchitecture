@@ -56,7 +56,7 @@ export function register(s: DepotSnapshot, input: Container, now: Date): Result<
   return ok(c);
 }
 export const activeLife = (s: DepotSnapshot, number: string) =>
-  s.lifecycles.find((l) => l.number === normalizeNumber(number) && !l.outAt);
+  s.lifecycles.find((l) => l.number === normalizeNumber(number) && !l.outAt && !l.cancelled);
 export const positionText = (p?: import('../../core/models/entities').Position) =>
   !p
     ? 'Ngoài bãi'

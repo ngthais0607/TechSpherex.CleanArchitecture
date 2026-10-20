@@ -2,7 +2,7 @@ import { DepotSnapshot, Filters } from '../../core/models/entities';
 import { dayKey } from '../rules/container-rules';
 export function inventory(s: DepotSnapshot, f: Filters, now: Date) {
   const rows = s.lifecycles
-    .filter((l) => !l.outAt)
+    .filter((l) => !l.outAt && !l.cancelled)
     .map((l) => ({
       ...l,
       container: s.containers.find((c) => c.number === l.number)!,
@@ -34,7 +34,7 @@ export function inventory(s: DepotSnapshot, f: Filters, now: Date) {
   };
 }
 export function dashboard(s: DepotSnapshot, now: Date) {
-  const current = s.lifecycles.filter((l) => !l.outAt),
+  const current = s.lifecycles.filter((l) => !l.outAt && !l.cancelled),
     real = current.filter((l) => l.position?.kind === 'physical');
   const usedTeu = real.reduce(
       (v, l) => v + (s.containers.find((c) => c.number === l.number)!.size === 40 ? 2 : 1),
@@ -60,7 +60,10 @@ export function dashboard(s: DepotSnapshot, now: Date) {
   const previousTime = now.getTime() - 86400000,
     previousDay = dayKey(new Date(previousTime));
   const priorLives = s.lifecycles.filter(
-    (l) => Date.parse(l.inAt) <= previousTime && (!l.outAt || Date.parse(l.outAt) > previousTime),
+    (l) =>
+      !l.cancelled &&
+      Date.parse(l.inAt) <= previousTime &&
+      (!l.outAt || Date.parse(l.outAt) > previousTime),
   );
   const priorTeu = priorLives.reduce((n, l) => {
     const p =

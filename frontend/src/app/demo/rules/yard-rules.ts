@@ -12,6 +12,7 @@ export function isBlocked(s: DepotSnapshot, number: string): boolean {
   return s.lifecycles.some(
     (l) =>
       !l.outAt &&
+      !l.cancelled &&
       l.position?.kind === 'physical' &&
       l.position.blockId === p.blockId &&
       l.position.row === p.row &&
@@ -49,6 +50,7 @@ export function placeCheck(s: DepotSnapshot, number: string, p: Position): Resul
   const peers = s.lifecycles.filter(
     (l) =>
       !l.outAt &&
+      !l.cancelled &&
       l.number !== number &&
       l.position?.kind === 'physical' &&
       l.position.blockId === p.blockId &&
@@ -130,6 +132,7 @@ export function resize(
   const blocker = s.lifecycles.find(
     (l) =>
       !l.outAt &&
+      !l.cancelled &&
       l.position?.kind === 'physical' &&
       l.position.blockId === b.id &&
       (slots(l.position, s.containers.find((c) => c.number === l.number)!.size).some(

@@ -215,7 +215,11 @@
   được đặt trên hai 20ft hoặc một 40ft cùng vị trí; không đặt 20ft lên 40ft.
 </div>
 @if (moving()) {
-  <app-modal title="Di chuyển container" [dirty]="form.dirty" (closed)="moving.set(false)"
+  <app-modal
+    #moveDialog
+    title="Di chuyển container"
+    [dirty]="form.dirty"
+    (closed)="moving.set(false)"
     ><app-form
       #form
       formId="move-form"
@@ -227,13 +231,14 @@
       <p class="banner error section-gap" role="alert">{{ error() }}</p>
     }
     <div footer>
-      <button class="button" (click)="moving.set(false)">Đóng</button
+      <button class="button" (click)="moveDialog.requestClose()">Đóng</button
       ><button class="button primary" type="submit" form="move-form">Xác nhận di chuyển</button>
     </div></app-modal
   >
 }
 @if (resizing()) {
   <app-modal
+    #resizeDialog
     title="Mở rộng / thu hẹp block"
     [dirty]="resizeForm.dirty"
     (closed)="resizing.set(false)"
@@ -249,7 +254,7 @@
       <p class="banner error section-gap" role="alert">{{ error() }}</p>
     }
     <div footer>
-      <button class="button" (click)="resizing.set(false)">Đóng</button
+      <button class="button" (click)="resizeDialog.requestClose()">Đóng</button
       ><button class="button primary" type="submit" form="resize-form">Lưu kích thước</button>
     </div></app-modal
   >

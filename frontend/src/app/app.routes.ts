@@ -1,10 +1,12 @@
 import { inject } from '@angular/core';
-import { Routes, Router, CanActivateFn } from '@angular/router';
+import { Routes, Router, CanActivateFn, CanDeactivateFn } from '@angular/router';
 import { DemoSession } from './core/session/demo-session';
 const guard: CanActivateFn = (_, state) =>
   inject(DemoSession).currentUser()
     ? true
     : inject(Router).createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+const pendingGateGuard: CanDeactivateFn<{ hasUnsavedChanges(): boolean }> = (component) =>
+  !component.hasUnsavedChanges() || confirm('Bỏ nội dung phiếu cổng chưa ghi nhận?');
 
 export const routes: Routes = [
   {
@@ -30,6 +32,7 @@ export const routes: Routes = [
   {
     path: 'gate',
     canActivate: [guard],
+    canDeactivate: [pendingGateGuard],
     loadComponent: () => import('./features/gate/gate-page').then((m) => m.GatePage),
   },
   {

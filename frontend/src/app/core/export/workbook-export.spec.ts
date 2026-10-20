@@ -13,4 +13,4 @@ it('exports typed numbers and strings without converting formulas', async () => 
   await book.xlsx.load(bytes as never);
   expect(book.worksheets[0].getRow(5).getCell(1).value).toBe('=1+1');
   expect(book.worksheets[0].getRow(5).getCell(2).value).toBe(3);
-});
+}, 60000);

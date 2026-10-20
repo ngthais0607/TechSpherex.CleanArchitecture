@@ -230,4 +230,7 @@ export class OrdersPage {
   cancelCreate(dirty: boolean) {
     if (!dirty || confirm('Bỏ các thay đổi chưa lưu?')) this.showCreate.set(false);
   }
+  linesChanged() {
+    return JSON.stringify(this.lines) !== JSON.stringify([{ type: 'Dry', size: 20, quantity: 1 }]);
+  }
 }

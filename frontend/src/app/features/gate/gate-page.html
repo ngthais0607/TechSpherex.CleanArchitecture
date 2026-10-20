@@ -370,7 +370,11 @@
   >
 }
 @if (editing()) {
-  <app-modal title="Sửa giao dịch cổng" [dirty]="editForm.dirty" (closed)="editing.set(false)"
+  <app-modal
+    #editDialog
+    title="Sửa giao dịch cổng"
+    [dirty]="editForm.dirty"
+    (closed)="editing.set(false)"
     ><p class="banner">
       Chỉ sửa phương tiện, người điều khiển, phân loại và tình trạng. Sai container hoặc loại giao
       dịch: hủy và tạo lại.
@@ -383,7 +387,7 @@
       (saved)="saveEdit($event)"
     />
     <div footer>
-      <button class="button" (click)="editing.set(false)">Đóng</button
+      <button class="button" (click)="editDialog.requestClose()">Đóng</button
       ><button class="button primary" type="submit" form="gate-edit">Lưu thay đổi</button>
     </div></app-modal
   >

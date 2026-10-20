@@ -51,4 +51,17 @@ describe('persistent demo transactions', () => {
     expect(store.warning()).not.toBe('');
     expect(localStorage.getItem(STORAGE_KEY)).toBe('{bad-json');
   });
+  it('does not overwrite a corrupt snapshot through a later write before recovery', () => {
+    localStorage.setItem(STORAGE_KEY, '{bad-json');
+    const store = new DemoRepository();
+    expect(
+      store.run((s) => {
+        s.containers[0].condition = 'Móp';
+        return ok(undefined);
+      }).ok,
+    ).toBe(false);
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('{bad-json');
+    store.reset();
+    expect(store.run(() => ok(undefined)).ok).toBe(true);
+  });
 });

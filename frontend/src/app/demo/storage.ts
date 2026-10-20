@@ -32,7 +32,7 @@ export function assertSnapshot(raw: unknown): Result<DepotSnapshot> {
       holds = new Set<string>();
     for (const l of s.lifecycles) {
       if (!s.containers.some((c) => c.number === l.number)) throw Error();
-      if (l.outAt) continue;
+      if (l.outAt || l.cancelled) continue;
       if (active.has(l.number)) throw Error();
       active.add(l.number);
       if (!l.position || !s.blocks.some((b) => b.id === l.position!.blockId)) throw Error();
@@ -57,7 +57,7 @@ export function assertSnapshot(raw: unknown): Result<DepotSnapshot> {
         holds.add(b.number);
       }
     }
-    for (const l of s.lifecycles.filter((l) => !l.outAt)) {
+    for (const l of s.lifecycles.filter((l) => !l.outAt && !l.cancelled)) {
       if (!placeCheck(s, l.number, l.position!).ok) throw Error();
     }
     return ok(s);

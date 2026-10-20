@@ -75,6 +75,7 @@ export interface Lifecycle {
   number: string;
   inAt: string;
   outAt?: string;
+  cancelled?: boolean;
   position?: Position;
 }
 export interface Block {
