@@ -1,0 +1,142 @@
+<section class="page-header">
+  <div>
+    <span class="eyebrow">TRUNG TÂM VẬN HÀNH</span>
+    <h1>Chào buổi {{ store.now().getHours() < 12 ? 'sáng' : 'chiều' }}, Minh</h1>
+    <p>Tình hình hoạt động tại Depot Cát Lái hôm nay, {{ store.now() | date: 'dd/MM/yyyy' }}.</p>
+  </div>
+  <a class="button primary" routerLink="/gate"><app-icon name="plus" />Tạo lệnh cổng</a>
+</section>
+<div class="kpis">
+  @for (m of metrics(); track m.label) {
+    <div class="metric">
+      <div class="metric-top">
+        <span class="metric-icon"><app-icon [name]="m.icon" /></span
+        ><span class="metric-trend">{{ changes()[$index] }}</span>
+      </div>
+      <div class="metric-value">{{ m.value }}</div>
+      <div class="metric-label">{{ m.label }}</div>
+      <div class="metric-note">{{ m.note }}</div>
+    </div>
+  }
+</div>
+<section class="panel" style="margin-bottom: 22px">
+  <div class="panel-header">
+    <div>
+      <h2>Lệnh cần lưu ý</h2>
+      <p>
+        {{ expiring().length }} lệnh cần xử lý · {{ heldExpiring() }} container giữ chỗ cho lệnh sắp
+        hết hạn.
+      </p>
+    </div>
+    <a class="button small" routerLink="/delivery-orders" [queryParams]="{ status: 'Sắp hết hạn' }"
+      >Xem lệnh giao <app-icon name="arrow"
+    /></a>
+  </div>
+  @for (o of expiring().slice(0, 3); track o.id) {
+    <div class="expiry-row">
+      <a class="mono" routerLink="/delivery-orders" [queryParams]="{ order: o.id }">{{
+        o.number
+      }}</a
+      ><span class="customer">{{ store.customer(o.customerId) }}</span
+      ><app-badge [value]="store.orderStatus(o.id)" /><span class="muted" style="font-size: 11px"
+        >Hạn {{ o.expiry | date: 'dd/MM/yyyy' }}</span
+      >
+    </div>
+  } @empty {
+    <div class="empty" style="padding: 22px">Không có lệnh cần lưu ý.</div>
+  }
+</section>
+<div class="split">
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>Lưu lượng qua cổng</h2>
+        <p>Hoạt động nhập và xuất trong 7 ngày gần nhất.</p>
+      </div>
+      <span class="pill">7 NGÀY</span>
+    </div>
+    <div class="panel-body">
+      <div class="legend">
+        <span><i></i>Nhập bãi</span><span><i class="out"></i>Xuất bãi</span>
+      </div>
+      <div class="traffic-chart" role="img" aria-label="Biểu đồ lưu lượng cổng 7 ngày">
+        @for (t of data().traffic; track t.date) {
+          <div class="chart-column">
+            <div class="chart-bars">
+              <div
+                class="bar"
+                tabindex="0"
+                [style.height.%]="(t.in / maxTraffic()) * 100"
+                [title]="'Nhập: ' + t.in"
+                [attr.aria-label]="t.date + ' nhập ' + t.in"
+              ></div>
+              <div
+                class="bar out"
+                tabindex="0"
+                [style.height.%]="(t.out / maxTraffic()) * 100"
+                [title]="'Xuất: ' + t.out"
+                [attr.aria-label]="t.date + ' xuất ' + t.out"
+              ></div>
+            </div>
+            <small>{{ t.date | date: 'dd/MM' }}</small>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>Công suất bãi</h2>
+        <p>Theo đơn vị TEU · Không gồm block ảo</p>
+      </div>
+      <app-icon name="map" />
+    </div>
+    <div class="panel-body">
+      @for (b of blockMetrics(); track b.id) {
+        <div class="block-line">
+          <div class="stat-line">
+            <a routerLink="/yard" [queryParams]="{ block: b.id }">{{ b.name }}</a
+            ><span>{{ b.percent | number: '1.0-1' }}%</span>
+          </div>
+          <div class="progress" [class.warning]="b.percent > 80">
+            <span [style.width.%]="b.percent"></span>
+          </div>
+          <small class="muted">{{ b.used }} / {{ b.total }} TEU</small>
+        </div>
+      }
+    </div>
+  </section>
+</div>
+<div class="split">
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>Hoạt động gần đây</h2>
+        <p>5 giao dịch cổng mới nhất</p>
+      </div>
+      <a routerLink="/gate" [queryParams]="{ tab: 'history' }" class="text-button">Xem tất cả</a>
+    </div>
+    @for (t of recent(); track t.id) {
+      <a class="activity" routerLink="/gate" [queryParams]="{ tab: 'history', transaction: t.id }"
+        ><span class="activity-icon"
+          ><app-icon [name]="t.direction === 'In' ? 'gate' : 'truck'" /></span
+        ><span class="activity-copy"
+          ><strong>{{ t.direction === 'In' ? 'Nhập bãi' : 'Xuất bãi' }}</strong> ·
+          <span class="mono">{{ t.number }}</span
+          ><small>{{ t.vehicleNo }} · {{ t.createdBy }}</small></span
+        ><time>{{ t.at | date: 'HH:mm dd/MM' }}</time></a
+      >
+    } @empty {
+      <div class="empty">Chưa có hoạt động qua cổng.</div>
+    }
+  </section>
+  <section class="panel">
+    <div class="panel-header"><h2>Truy cập nhanh</h2></div>
+    <div class="quick-note">
+      <a routerLink="/yard"><span>Tra cứu vị trí container</span><app-icon name="map" /></a
+      ><a routerLink="/inventory"><span>Container lưu bãi lâu ngày</span><app-icon name="box" /></a
+      ><a routerLink="/reports"><span>Báo cáo hoạt động depot</span><app-icon name="chart" /></a>
+    </div>
+  </section>
+</div>

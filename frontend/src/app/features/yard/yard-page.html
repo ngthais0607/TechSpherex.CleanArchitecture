@@ -1,0 +1,256 @@
+<section class="page-header">
+  <div>
+    <span class="eyebrow">KHAI THÁC BÃI</span>
+    <h1>Sơ đồ vị trí bãi</h1>
+    <p>Theo dõi container theo đúng Block, Bay, Row và Tier.</p>
+  </div>
+  <button class="button" (click)="error.set(''); moving.set(true)">
+    <app-icon name="truck" />Di chuyển
+  </button>
+</section>
+<div class="yard-toolbar">
+  <div class="search-box">
+    <app-icon name="search" /><input
+      aria-label="Tìm vị trí container"
+      placeholder="Tìm số container và nhấn Enter..."
+      [(ngModel)]="search"
+      (keydown.enter)="find()"
+    />
+  </div>
+  <button class="button" (click)="find()">Tìm vị trí</button>
+  <div class="tabs" style="margin: 0">
+    <button [class.active]="view() === 'grid'" (click)="view.set('grid')">2D</button
+    ><button [class.active]="view() === 'list'" (click)="view.set('list')">Danh sách</button>
+  </div>
+</div>
+@if (error() && !moving() && !resizing()) {
+  <p class="banner warning" role="alert">{{ error() }}</p>
+}
+<div class="block-cards">
+  @for (b of store.state().blocks; track b.id) {
+    <button
+      class="block-card"
+      [class.active]="blockId() === b.id"
+      [class.virtual]="b.virtual"
+      (click)="chooseBlock(b.id)"
+    >
+      <div>
+        <strong>{{ b.name }}</strong
+        ><b>{{
+          b.virtual ? stats(b.id).count + ' cont' : (stats(b.id).percent | number: '1.0-0') + '%'
+        }}</b>
+      </div>
+      <small>{{
+        b.virtual
+          ? 'Không quản lý Bay, Row, Tier'
+          : b.oddBays + ' bay lẻ · ' + b.rows + ' Row · ' + b.tiers + ' Tier'
+      }}</small>
+      @if (!b.virtual) {
+        <div class="progress"><span [style.width.%]="stats(b.id).percent"></span></div>
+      }
+    </button>
+  }
+</div>
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>{{ block().name }} {{ block().virtual ? '' : '— Mặt bằng Bay' }}</h2>
+      <p>
+        {{ stats(blockId()).count }} container ·
+        {{
+          block().virtual
+            ? 'Chờ phân vị trí'
+            : block().oddBays + ' bay lẻ × ' + block().rows + ' Row × ' + block().tiers + ' Tier'
+        }}
+      </p>
+    </div>
+    @if (!block().virtual) {
+      <button class="button small" (click)="error.set(''); resizing.set(true)">Mở / thu hẹp</button>
+    }
+  </div>
+  @if (!block().virtual && view() === 'grid') {
+    <div class="yard-colors">
+      <div class="legend">
+        @for (l of legend(); track l.label) {
+          <span><i [style.background]="l.color"></i>{{ l.label }}</span>
+        }
+        <span><i class="empty-color"></i>Còn trống</span>
+      </div>
+      <select aria-label="Chế độ màu" [ngModel]="mode()" (ngModelChange)="mode.set($event)">
+        <option value="size">Kích thước</option>
+        <option value="type">Loại container</option>
+        <option value="operator">Hãng khai thác</option>
+        <option value="booking">Theo đặt chỗ</option>
+      </select>
+    </div>
+    <div class="tier-tabs">
+      @for (t of tiers(); track t) {
+        <button class="button" [class.active]="tier() === t" (click)="chooseTier(t)">
+          Tier {{ t }}
+        </button>
+      }
+    </div>
+    <div class="yard-workspace">
+      <div class="yard-scroll">
+        <div
+          class="yard-grid"
+          [style.grid-template-columns]="'36px repeat(' + block().oddBays + ', minmax(108px, 1fr))'"
+        >
+          <span></span>
+          @for (b of bays(); track b) {
+            <span class="bay-label">Bay {{ b < 10 ? '0' : '' }}{{ b }}</span>
+          }
+          <span></span>
+          <div class="bay-note" [style.grid-column]="'2 / span ' + block().oddBays">
+            Bay chẵn nằm giữa hai bay lẻ liền kề, dành cho container 40ft
+          </div>
+          @for (row of rows(); track row) {
+            <div class="row-label">{{ row }}</div>
+            @for (cell of cells(row); track cell.slot) {
+              @if (cell.container; as c) {
+                <button
+                  class="yard-cell"
+                  [class.selected]="selected() === c.number"
+                  [style.background]="color(c)"
+                  [style.grid-column]="'span ' + cell.span"
+                  (click)="choose(c.number)"
+                >
+                  <strong class="mono">{{ c.number.slice(0, 4) }} {{ c.number.slice(4) }}</strong
+                  ><small>{{ c.size }}ft · {{ c.type }}</small
+                  ><small>{{ store.operator(c.operatorId) }}</small>
+                </button>
+              } @else {
+                <div class="yard-cell free"><span>Trống</span></div>
+              }
+            }
+          }
+        </div>
+      </div>
+      <aside class="slot-detail">
+        @if (container(); as c) {
+          <span class="eyebrow">VỊ TRÍ ĐANG CHỌN</span>
+          <h2 class="mono">{{ store.location(c.number) }}</h2>
+          <div class="slot-card">
+            <a class="mono" routerLink="/containers" [queryParams]="{ container: c.number }">{{
+              c.number
+            }}</a
+            ><app-badge [value]="store.status(c.number)" />
+            <div class="detail-item">
+              <span>Loại · Kích thước</span><strong>{{ c.type }} · {{ c.size }}ft</strong>
+            </div>
+            <div class="detail-item">
+              <span>Hãng khai thác</span><strong>{{ store.operator(c.operatorId) }}</strong>
+            </div>
+            <div class="detail-item">
+              <span>Lệnh giao</span>
+              @if (order(c.number); as o) {
+                <a routerLink="/delivery-orders" [queryParams]="{ order: o.id }"
+                  >{{ o.number }}<small>{{ store.customer(o.customerId) }}</small></a
+                >
+              } @else {
+                <strong>Chưa gán lệnh</strong>
+              }
+            </div>
+            @if (blocked(store.state(), c.number)) {
+              <p class="banner warning section-gap">Container đang bị đè.</p>
+            }
+            <button class="button section-gap" (click)="error.set(''); moving.set(true)">
+              Di chuyển container
+            </button>
+          </div>
+        } @else {
+          <div class="empty">
+            <app-icon name="map" />
+            <h3>Chọn một vị trí</h3>
+            <p>Bấm container trong sơ đồ để xem thông tin.</p>
+          </div>
+        }
+      </aside>
+    </div>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Container</th>
+            <th>Loại · ISO</th>
+            <th>Kích thước</th>
+            <th>Hãng khai thác</th>
+            <th>Vị trí</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of blockContainers(); track c.number) {
+            <tr>
+              <td>
+                <a class="mono" routerLink="/containers" [queryParams]="{ container: c.number }">{{
+                  c.number
+                }}</a>
+              </td>
+              <td>
+                {{ c.type }}<small>{{ c.iso }}</small>
+              </td>
+              <td>{{ c.size }}ft</td>
+              <td>{{ store.operator(c.operatorId) }}</td>
+              <td class="mono">{{ store.location(c.number) }}</td>
+              <td>
+                <button class="text-button" (click)="selected.set(c.number); moving.set(true)">
+                  Phân vị trí / di chuyển
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty">Block này chưa có container.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+<div class="banner section-gap">
+  Quy tắc xếp bãi: Bay lẻ cho 20ft, bay chẵn cho 40ft. Tầng trên phải được đỡ hết. Container 40ft
+  được đặt trên hai 20ft hoặc một 40ft cùng vị trí; không đặt 20ft lên 40ft.
+</div>
+@if (moving()) {
+  <app-modal title="Di chuyển container" [dirty]="form.dirty" (closed)="moving.set(false)"
+    ><app-form
+      #form
+      formId="move-form"
+      [fields]="moveFields()"
+      [value]="moveValue()"
+      (saved)="move($event)"
+    />
+    @if (error()) {
+      <p class="banner error section-gap" role="alert">{{ error() }}</p>
+    }
+    <div footer>
+      <button class="button" (click)="moving.set(false)">Đóng</button
+      ><button class="button primary" type="submit" form="move-form">Xác nhận di chuyển</button>
+    </div></app-modal
+  >
+}
+@if (resizing()) {
+  <app-modal
+    title="Mở rộng / thu hẹp block"
+    [dirty]="resizeForm.dirty"
+    (closed)="resizing.set(false)"
+    ><p class="banner">Thu hẹp bị chặn nếu vẫn còn container nằm ngoài vùng mới.</p>
+    <app-form
+      #resizeForm
+      formId="resize-form"
+      [fields]="resizeFields"
+      [value]="resizeValue()"
+      (saved)="resize($event)"
+    />
+    @if (error()) {
+      <p class="banner error section-gap" role="alert">{{ error() }}</p>
+    }
+    <div footer>
+      <button class="button" (click)="resizing.set(false)">Đóng</button
+      ><button class="button primary" type="submit" form="resize-form">Lưu kích thước</button>
+    </div></app-modal
+  >
+}

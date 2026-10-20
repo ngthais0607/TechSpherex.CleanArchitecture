@@ -8,6 +8,8 @@ Hệ thống quản lý depot container vỏ rỗng được xây dựng theo Cl
 
 ## Trạng Thái Kiểm Thử
 
+Frontend Angular demo đã được bổ sung tại [frontend](frontend/README.md): có đầy đủ màn vận hành, dữ liệu mẫu hoặc trạng thái trống, lưu dữ liệu trong trình duyệt và xuất Excel. Chạy `npm.cmd start` trong `frontend/`, đăng nhập `demo` / `Demo@123`. Bản demo chưa nối API; seed backend chưa tự phản ánh vào dữ liệu local của frontend.
+
 - Final gate sau khi hoàn thành toàn bộ T0–T8: **503 passed, 0 failed, 0 skipped** (Domain: 148, Application: 178, Architecture: 8, Infrastructure Unit: 35, Infrastructure Integration: 17, API Integration: 117 bao gồm 14 kịch bản nghiệm thu Acceptance Tests); build 0 lỗi.
 - Postman: **88 requests** với per-role tokens và không có hardcoded secrets.
 

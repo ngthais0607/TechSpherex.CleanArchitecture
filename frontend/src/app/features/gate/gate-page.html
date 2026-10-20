@@ -1,0 +1,390 @@
+<section class="page-header">
+  <div>
+    <span class="eyebrow">ĐIỀU PHỐI CỔNG</span>
+    <h1>Ghi nhận nhập / xuất cổng</h1>
+    <p>Kiểm tra container, phương tiện, lệnh giao và vị trí trước khi hoàn tất giao dịch.</p>
+  </div>
+</section>
+<div class="tabs">
+  @for (
+    t of [
+      { id: 'in', label: 'Nhập bãi' },
+      { id: 'out', label: 'Xuất bãi' },
+      { id: 'history', label: 'Lịch sử' },
+    ];
+    track t.id
+  ) {
+    <button [class.active]="tab() === t.id" (click)="setTab(t.id)">{{ t.label }}</button>
+  }
+</div>
+@if (error()) {
+  <div class="banner error" role="alert">{{ error() }}</div>
+}
+@if (tab() !== 'history') {
+  <div class="gate-layout">
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Phiếu {{ tab() === 'in' ? 'nhập' : 'xuất' }} bãi</h2>
+          <p>Các trường có dấu * là bắt buộc</p>
+        </div>
+        <span class="pill">{{ tab() === 'in' ? 'GATE IN' : 'GATE OUT' }}</span>
+      </div>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        @if (tab() === 'out') {
+          <div class="gate-section">
+            <h3>1. Lệnh giao</h3>
+            <div class="field">
+              <label for="gate-order">Số lệnh giao *</label
+              ><select id="gate-order" formControlName="orderId">
+                <option value="">Chọn lệnh giao...</option>
+                @for (o of store.state().orders; track o.id) {
+                  @if (['Còn hạn', 'Sắp hết hạn'].includes(store.orderStatus(o.id))) {
+                    <option [value]="o.id">
+                      {{ o.number }} · {{ store.customer(o.customerId) }}
+                    </option>
+                  }
+                }
+              </select>
+            </div>
+            @if (order(); as o) {
+              <div class="banner section-gap" style="margin-bottom: 0">
+                {{ store.customer(o.customerId) }} · {{ o.voyage }} · Hạn
+                {{ o.expiry | date: 'dd/MM/yyyy' }}
+              </div>
+            }
+          </div>
+        }
+        <div class="gate-section">
+          <h3>{{ tab() === 'in' ? '1' : '2' }}. Container</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label for="gate-number">Số container *</label
+              ><input id="gate-number" formControlName="number" placeholder="VD: CSQU 305438 3" />
+            </div>
+            <div class="field">
+              <label for="gate-operator">Hãng khai thác</label
+              ><input id="gate-operator" readonly [value]="operator()" />
+            </div>
+          </div>
+          @if (tab() === 'out' && store.booking(input().number); as b) {
+            <p class="banner section-gap" style="margin-bottom: 0">
+              Container đã giữ chỗ cho lệnh {{ orderNumber(b.orderId) }}.
+            </p>
+          }
+        </div>
+        <div class="gate-section">
+          <h3>{{ tab() === 'in' ? '2' : '3' }}. Phương tiện vận chuyển</h3>
+          <div class="vehicle-toggle">
+            <button
+              type="button"
+              class="button"
+              [class.active]="form.controls.vehicleType.value === 'Truck'"
+              (click)="form.controls.vehicleType.setValue('Truck')"
+            >
+              Xe đầu kéo</button
+            ><button
+              type="button"
+              class="button"
+              [class.active]="form.controls.vehicleType.value === 'Barge'"
+              (click)="form.controls.vehicleType.setValue('Barge')"
+            >
+              Sà lan
+            </button>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="gate-vehicle"
+                >{{
+                  form.controls.vehicleType.value === 'Truck' ? 'Biển số xe' : 'Số hiệu sà lan'
+                }}
+                *</label
+              ><input id="gate-vehicle" formControlName="vehicleNo" />
+            </div>
+            <div class="field">
+              <label for="gate-driver"
+                >{{
+                  form.controls.vehicleType.value === 'Truck' ? 'Tài xế' : 'Người điều khiển'
+                }}
+                *</label
+              ><input id="gate-driver" formControlName="driver" />
+            </div>
+          </div>
+        </div>
+        <div class="gate-section">
+          <h3>{{ tab() === 'in' ? '3' : '4' }}. Kiểm tra & điều phối</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label for="gate-grade">Phân loại container *</label
+              ><select id="gate-grade" formControlName="grade">
+                <option>A</option>
+                <option>B</option>
+                <option>C</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="gate-condition">Tình trạng *</label
+              ><select id="gate-condition" formControlName="condition">
+                @for (c of conditions; track c) {
+                  <option>{{ c }}</option>
+                }
+              </select>
+            </div>
+            @if (tab() === 'in') {
+              <div class="field">
+                <label for="gate-block">Block dự kiến *</label
+                ><select id="gate-block" formControlName="blockId">
+                  @for (b of store.state().blocks; track b.id) {
+                    <option [value]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+              </div>
+              <div style="align-self: end">
+                <button
+                  class="button"
+                  type="button"
+                  (click)="suggest()"
+                  [disabled]="!input().number"
+                >
+                  Gợi ý vị trí trống
+                </button>
+              </div>
+            }
+          </div>
+          @if (tab() === 'in' && !block()?.virtual) {
+            <div class="position-grid">
+              <div class="field">
+                <label for="gate-bay">Bay *</label
+                ><select id="gate-bay" formControlName="bay">
+                  @for (b of bays(); track b) {
+                    <option [ngValue]="b">{{ b }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label for="gate-row">Row *</label
+                ><select id="gate-row" formControlName="row">
+                  @for (r of rows(); track r) {
+                    <option>{{ r }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label for="gate-tier">Tier *</label
+                ><select id="gate-tier" formControlName="tier">
+                  @for (t of tiers(); track t) {
+                    <option [ngValue]="t">{{ t }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          }
+        </div>
+        <div class="gate-actions">
+          <button class="button" type="button" (click)="clear()">Xóa nội dung</button
+          ><button class="button primary" type="submit" [disabled]="!valid()">
+            Ghi nhận {{ tab() === 'in' ? 'nhập' : 'xuất' }} bãi
+          </button>
+        </div>
+      </form>
+    </section>
+    <aside class="gate-checks">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Kiểm tra nghiệp vụ</h2>
+            <p>
+              {{ checking() ? 'Đang đối chiếu...' : 'Tự động đối chiếu theo thông tin đã nhập' }}
+            </p>
+          </div>
+        </div>
+        <div class="panel-body">
+          @for (c of checks(); track c.code) {
+            <div
+              class="check"
+              [class.pass]="c.state === 'pass' && !checking()"
+              [class.error]="c.state === 'error' && !checking()"
+            >
+              <span>{{
+                checking() ? '…' : c.state === 'pass' ? '✓' : c.state === 'error' ? '!' : '…'
+              }}</span>
+              <div>
+                <strong>{{ c.label }}</strong
+                ><small>{{ checking() ? 'Đang kiểm tra' : c.detail }}</small>
+                @if (c.state === 'error') {
+                  <small>{{ c.code }}</small>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+      <div class="rule-note">
+        Nút Ghi nhận được bật khi mọi kiểm tra đều đạt và đã nhập đủ thông tin bắt buộc.
+      </div>
+    </aside>
+  </div>
+} @else {
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>Lịch sử giao dịch cổng</h2>
+        <p>Tra cứu, sửa thông tin và hủy giao dịch gần nhất.</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="search-box">
+        <app-icon name="search" /><input
+          aria-label="Tìm giao dịch"
+          placeholder="Tìm container, phương tiện, tài xế..."
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event); page.set(1)"
+        />
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Thời gian</th>
+            <th>Container</th>
+            <th>Giao dịch</th>
+            <th>Phương tiện</th>
+            <th>Lệnh giao</th>
+            <th>Nhân viên</th>
+            <th>Trạng thái</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of visible(); track t.id) {
+            <tr>
+              <td class="nowrap">
+                {{ t.at | date: 'dd/MM/yyyy' }}<small>{{ t.at | date: 'HH:mm' }}</small>
+              </td>
+              <td>
+                <a class="mono" routerLink="/containers" [queryParams]="{ container: t.number }">{{
+                  t.number
+                }}</a>
+              </td>
+              <td>{{ t.direction === 'In' ? 'Nhập bãi' : 'Xuất bãi' }}</td>
+              <td>
+                {{ t.vehicleNo }}<small>{{ t.driver }}</small>
+              </td>
+              <td>
+                @if (t.orderId) {
+                  <a routerLink="/delivery-orders" [queryParams]="{ order: t.orderId }">{{
+                    orderNumber(t.orderId)
+                  }}</a>
+                } @else {
+                  —
+                }
+              </td>
+              <td>{{ t.createdBy }}</td>
+              <td><app-badge [value]="t.status === 'Active' ? 'Hoàn tất' : 'Đã hủy'" /></td>
+              <td><button class="text-button" (click)="open(t.id)">Chi tiết</button></td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty">Chưa có giao dịch phù hợp.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-pagination [total]="history().length" [page]="page()" (changed)="page.set($event)" />
+  </section>
+}
+@if (detail(); as t) {
+  <app-modal title="Chi tiết giao dịch cổng" [width]="920" (closed)="close()"
+    ><div class="detail-grid">
+      <div class="detail-item">
+        <span>Container</span><strong class="mono">{{ t.number }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Giao dịch</span><strong>{{ t.direction === 'In' ? 'Nhập bãi' : 'Xuất bãi' }}</strong>
+        <app-badge [value]="t.status === 'Active' ? 'Hoàn tất' : 'Đã hủy'" />
+      </div>
+      <div class="detail-item">
+        <span>Thời gian</span><strong>{{ t.at | date: 'dd/MM/yyyy HH:mm' }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Phương tiện</span><strong>{{ t.vehicleNo }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Tài xế</span><strong>{{ t.driver }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Phân loại · Tình trạng</span><strong>{{ t.grade }} · {{ t.condition }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Vị trí giao dịch</span
+        ><strong class="mono">{{
+          positionText(t.direction === 'In' ? t.target : t.previousPosition)
+        }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Nhân viên</span><strong>{{ t.createdBy }}</strong>
+      </div>
+    </div>
+    <h3 class="section-gap">Lịch sử thay đổi</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Thời gian</th>
+            <th>Người sửa</th>
+            <th>Trường</th>
+            <th>Trước</th>
+            <th>Sau</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of t.changes; track $index) {
+            <tr>
+              <td class="nowrap">{{ c.at | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ c.user }}</td>
+              <td>{{ c.field }}</td>
+              <td>{{ c.oldValue }}</td>
+              <td>{{ c.newValue }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty">Chưa có thay đổi.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (error()) {
+      <p class="banner error" role="alert">{{ error() }}</p>
+    }
+    <div footer>
+      @if (t.status === 'Active') {
+        <button class="button" (click)="editing.set(true)">Sửa thông tin</button>
+        @if (canCancel(t.id)) {
+          <button class="button danger" (click)="cancel(t.id)">Hủy giao dịch</button>
+        }
+      }
+    </div></app-modal
+  >
+}
+@if (editing()) {
+  <app-modal title="Sửa giao dịch cổng" [dirty]="editForm.dirty" (closed)="editing.set(false)"
+    ><p class="banner">
+      Chỉ sửa phương tiện, người điều khiển, phân loại và tình trạng. Sai container hoặc loại giao
+      dịch: hủy và tạo lại.
+    </p>
+    <app-form
+      #editForm
+      formId="gate-edit"
+      [fields]="editFields"
+      [value]="editValue()"
+      (saved)="saveEdit($event)"
+    />
+    <div footer>
+      <button class="button" (click)="editing.set(false)">Đóng</button
+      ><button class="button primary" type="submit" form="gate-edit">Lưu thay đổi</button>
+    </div></app-modal
+  >
+}

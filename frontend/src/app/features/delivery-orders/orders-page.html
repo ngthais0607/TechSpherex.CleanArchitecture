@@ -1,0 +1,296 @@
+<section class="page-header">
+  <div>
+    <span class="eyebrow">KIỂM SOÁT GIAO NHẬN</span>
+    <h1>Lệnh giao container</h1>
+    <p>Theo dõi hạn lệnh, số lượng và tiến độ giao container.</p>
+  </div>
+  <button class="button primary" (click)="startCreate()">
+    <app-icon name="plus" />Thêm lệnh giao
+  </button>
+</section>
+<div class="kpis three">
+  <button class="metric" (click)="filter('active')" [class.selected]="status() === 'active'">
+    <div class="metric-label">Lệnh còn hiệu lực</div>
+    <div class="metric-value">{{ count('active') }}</div>
+    <div class="metric-note">Bấm để lọc danh sách</div></button
+  ><button class="metric alert" (click)="filter('Sắp hết hạn')">
+    <div class="metric-label">Sắp hết hạn</div>
+    <div class="metric-value">{{ count('Sắp hết hạn') }}</div>
+    <div class="metric-note">Còn tối đa 3 ngày</div>
+  </button>
+  <div class="metric">
+    <div class="metric-label">Đã giao hôm nay</div>
+    <div class="metric-value">{{ store.state().gateTransactions.length ? shippedToday() : 0 }}</div>
+    <div class="metric-note">Giao dịch xuất chưa hủy</div>
+  </div>
+</div>
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Danh sách lệnh giao</h2>
+      <p>Thông tin khách hàng, hạn lệnh và container đã giao / tổng.</p>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <app-icon name="search" /><input
+        aria-label="Tìm lệnh giao"
+        placeholder="Tìm số lệnh, khách hàng..."
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event); page.set(1)"
+      />
+    </div>
+    @if (status() || customer()) {
+      <span class="muted"
+        >Đang lọc: {{ status() || 'Theo khách hàng' }} · {{ rows().length }} lệnh
+        <button class="text-button" (click)="status.set(''); customer.set(''); filter('')">
+          Bỏ lọc
+        </button></span
+      >
+    }
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Số lệnh</th>
+          <th>Khách hàng</th>
+          <th>Hãng khai thác</th>
+          <th>Hạn lệnh</th>
+          <th>Chuyến tàu</th>
+          <th>Số lượng theo loại</th>
+          <th>Đã giao</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (o of visible(); track o.id) {
+          <tr class="clickable" (click)="open(o.id)">
+            <td>
+              <button class="text-button mono">{{ o.number }}</button>
+            </td>
+            <td style="min-width: 170px; max-width: 230px">
+              {{ store.customer(o.customerId) }}<small>{{ taxCode(o.customerId) }}</small>
+            </td>
+            <td class="nowrap">{{ store.operator(o.operatorId) }}</td>
+            <td class="nowrap">{{ o.expiry | date: 'dd/MM/yyyy' }}</td>
+            <td>{{ o.voyage || '—' }}</td>
+            <td>
+              @for (l of o.lines; track l.id) {
+                <small class="nowrap">{{ l.size }}ft {{ l.type }} ×{{ l.quantity }}</small>
+              }
+            </td>
+            <td style="min-width: 100px">
+              <strong>{{ shipped(o.id) }} / {{ total(o.id) }}</strong>
+              <div class="progress">
+                <span [style.width.%]="(shipped(o.id) / total(o.id)) * 100"></span>
+              </div>
+            </td>
+            <td><app-badge [value]="store.orderStatus(o.id)" /></td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="empty">
+              <h3>Chưa có lệnh giao phù hợp</h3>
+              <p>Thêm lệnh giao hoặc thay đổi bộ lọc.</p>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-pagination [total]="rows().length" [page]="page()" (changed)="page.set($event)" />
+</section>
+@if (showCreate()) {
+  <app-modal
+    title="Thêm lệnh giao"
+    [width]="1040"
+    [dirty]="form.dirty"
+    (closed)="showCreate.set(false)"
+    ><app-form #form [fields]="fields()" [errors]="errors()" (saved)="save($event)" />
+    <div class="panel-header section-gap" style="padding: 14px 0">
+      <h3>Số lượng theo loại</h3>
+      <button class="button small" (click)="lines.push({ type: 'Dry', size: 20, quantity: 1 })">
+        <app-icon name="plus" />Thêm dòng
+      </button>
+    </div>
+    <div class="order-lines">
+      @for (l of lines; track $index) {
+        <div class="order-line">
+          <label
+            >Loại container<select [(ngModel)]="l.type">
+              @for (t of types; track t) {
+                <option>{{ t }}</option>
+              }
+            </select></label
+          ><label
+            >Cỡ<select [(ngModel)]="l.size">
+              <option [ngValue]="20">20ft</option>
+              <option [ngValue]="40">40ft</option>
+            </select></label
+          ><label>Số lượng<input type="number" min="1" [(ngModel)]="l.quantity" /></label
+          ><button
+            class="icon-button"
+            aria-label="Xóa dòng"
+            [disabled]="lines.length === 1"
+            (click)="lines.splice($index, 1)"
+          >
+            <app-icon name="close" />
+          </button>
+        </div>
+      }
+    </div>
+    @if (error()) {
+      <p class="field-error" role="alert">{{ error() }} {{ errors()['lines'] }}</p>
+    }
+    <div footer>
+      <button class="button" (click)="cancelCreate(form.dirty)">Hủy</button
+      ><button class="button primary" form="entry-form" type="submit">Tạo lệnh giao</button>
+    </div></app-modal
+  >
+}
+@if (detail(); as o) {
+  <app-modal [title]="o.number" [width]="1060" (closed)="close()"
+    ><div class="detail-grid">
+      <div class="detail-item">
+        <span>Khách hàng</span><strong>{{ store.customer(o.customerId) }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Hãng khai thác</span><strong>{{ store.operator(o.operatorId) }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Hạn lệnh</span><strong>{{ o.expiry | date: 'dd/MM/yyyy' }}</strong>
+        <app-badge [value]="store.orderStatus(o.id)" />
+      </div>
+      <div class="detail-item">
+        <span>Chuyến tàu xuất</span><strong>{{ o.voyage || '—' }}</strong>
+      </div>
+    </div>
+    <h3 class="section-gap">Số lượng theo loại</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Loại · Cỡ</th>
+            <th>Tổng</th>
+            <th>Giữ chỗ</th>
+            <th>Đã xuất</th>
+            <th>Còn lại</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (l of o.lines; track l.id) {
+            <tr>
+              <td>{{ l.type }} · {{ l.size }}ft</td>
+              <td>{{ l.quantity }}</td>
+              <td>{{ counts(l.id).held }}</td>
+              <td>{{ counts(l.id).shipped }}</td>
+              <td>{{ counts(l.id).remaining }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="panel-header section-gap" style="padding: 12px 0">
+      <h3>Container đã gán</h3>
+      <button
+        class="button primary small"
+        [disabled]="['Hết hạn', 'Đã giao đủ'].includes(store.orderStatus(o.id))"
+        (click)="checks.set([]); error.set(''); showAssign.set(true)"
+      >
+        Gán container
+      </button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Container</th>
+            <th>Loại · ISO</th>
+            <th>Vị trí</th>
+            <th>Trạng thái</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (b of bookings(); track b.id) {
+            <tr>
+              <td>
+                <a class="mono" routerLink="/containers" [queryParams]="{ container: b.number }">{{
+                  b.number
+                }}</a>
+              </td>
+              <td>{{ container(b.number)?.type }} · {{ container(b.number)?.size }}ft</td>
+              <td class="mono">{{ store.location(b.number) }}</td>
+              <td><app-badge [value]="bookingLabel(b.status)" /></td>
+              <td>
+                @if (b.status === 'Reserved') {
+                  <button class="text-button" (click)="unassign(b.id)">Gỡ</button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty">Chưa gán container nào.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (error()) {
+      <p role="alert" class="field-error">{{ error() }}</p>
+    }
+  </app-modal>
+}
+@if (showAssign()) {
+  <app-modal title="Gán container vào lệnh giao" [width]="900" (closed)="showAssign.set(false)"
+    ><div class="banner">
+      Chỉ hiển thị container trong bãi, cùng hãng và đúng loại/cỡ còn số lượng.
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Chọn</th>
+            <th>Container</th>
+            <th>Loại</th>
+            <th>Kích thước</th>
+            <th>Vị trí</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of eligibleContainers(); track c.number) {
+            <tr>
+              <td>
+                <input
+                  type="checkbox"
+                  [attr.aria-label]="'Chọn ' + c.number"
+                  [checked]="checks().includes(c.number)"
+                  [disabled]="full(c.number)"
+                  (change)="toggle(c.number)"
+                />
+              </td>
+              <td class="mono">{{ c.number }}</td>
+              <td>{{ c.type }}</td>
+              <td>{{ c.size }}ft</td>
+              <td class="mono">{{ store.location(c.number) }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty">Không có container phù hợp để gán.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (error()) {
+      <p class="field-error" role="alert">{{ error() }}</p>
+    }
+    <div footer>
+      <button class="button" (click)="showAssign.set(false)">Đóng</button
+      ><button class="button primary" [disabled]="!checks().length" (click)="assignSelected()">
+        Gán {{ checks().length }} container
+      </button>
+    </div></app-modal
+  >
+}

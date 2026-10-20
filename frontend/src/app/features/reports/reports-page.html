@@ -1,0 +1,110 @@
+<section class="page-header">
+  <div>
+    <span class="eyebrow">PHÂN TÍCH HOẠT ĐỘNG</span>
+    <h1>Báo cáo hoạt động</h1>
+    <p>Tổng hợp sản lượng giao nhận và thời gian lưu bãi theo kỳ.</p>
+  </div>
+  <button class="button" [disabled]="!(data().in + data().out) || busy()" (click)="export()">
+    <app-icon name="download" />{{ busy() ? 'Đang xuất...' : 'Xuất báo cáo' }}
+  </button>
+</section>
+<section class="panel" style="margin-bottom: 24px">
+  <div class="panel-body report-filters">
+    <div class="field">
+      <label for="report-kind">Loại báo cáo</label
+      ><select id="report-kind" [(ngModel)]="kind">
+        <option value="summary">Tổng hợp nhập / xuất</option>
+        <option value="operator">Sản lượng theo hãng</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="report-from">Từ ngày</label
+      ><input id="report-from" type="date" [(ngModel)]="from" />
+    </div>
+    <div class="field">
+      <label for="report-to">Đến ngày</label><input id="report-to" type="date" [(ngModel)]="to" />
+    </div>
+    <button class="button primary" (click)="apply()">Xem báo cáo</button>
+  </div>
+</section>
+@if (error()) {
+  <p class="banner error" role="alert">{{ error() }}</p>
+}
+<div class="kpis three">
+  <div class="metric">
+    <div class="metric-top">
+      <span class="metric-icon"><app-icon name="gate" /></span
+      ><small class="positive">{{ trend(data().in, data().previous.in) }}</small>
+    </div>
+    <div class="metric-value">{{ data().in }}</div>
+    <div class="metric-label">Tổng lượt nhập bãi</div>
+    <div class="metric-note">So với kỳ trước cùng số ngày</div>
+  </div>
+  <div class="metric">
+    <div class="metric-top">
+      <span class="metric-icon" style="background: #f2edff; color: #7853ce"
+        ><app-icon name="truck" /></span
+      ><small class="positive">{{ trend(data().out, data().previous.out) }}</small>
+    </div>
+    <div class="metric-value">{{ data().out }}</div>
+    <div class="metric-label">Tổng lượt xuất bãi</div>
+    <div class="metric-note">Chỉ tính giao dịch chưa hủy</div>
+  </div>
+  <div class="metric">
+    <div class="metric-top">
+      <span class="metric-icon" style="background: #fff7e8; color: #c78d24"
+        ><app-icon name="chart"
+      /></span>
+    </div>
+    <div class="metric-value">
+      {{ data().average === null ? '—' : (data().average | number: '1.1-1') }} <small>ngày</small>
+    </div>
+    <div class="metric-label">Thời gian lưu bãi trung bình</div>
+    <div class="metric-note">Các lượt xuất trong kỳ đã chọn</div>
+  </div>
+</div>
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>
+        {{ kind === 'operator' ? 'Sản lượng theo hãng khai thác' : 'Tổng hợp sản lượng giao nhận' }}
+      </h2>
+      <p>Từ {{ data().from }} đến {{ data().to }} · Số đang lưu tính tại thời điểm hiện tại</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Hãng khai thác</th>
+          <th class="numeric">Nhập bãi</th>
+          <th class="numeric">Xuất bãi</th>
+          <th class="numeric">Đang lưu bãi</th>
+          <th class="numeric">Tổng lượt</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of data().rows; track r.name) {
+          <tr>
+            <td>
+              <strong>{{ r.name }}</strong>
+            </td>
+            <td class="numeric">{{ r.in }}</td>
+            <td class="numeric">{{ r.out }}</td>
+            <td class="numeric">{{ r.stored }}</td>
+            <td class="numeric">
+              <strong>{{ r.total }}</strong>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  @if (!data().in && !data().out) {
+    <div class="empty">
+      <app-icon name="chart" />
+      <h3>Chưa có giao dịch trong kỳ</h3>
+      <p>Chọn khoảng ngày khác hoặc ghi nhận giao dịch cổng.</p>
+    </div>
+  }
+</section>
