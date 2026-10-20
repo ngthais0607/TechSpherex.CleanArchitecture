@@ -107,4 +107,21 @@ public sealed class ContainerNumberTests
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Be("ContainerNumber.CheckDigitMismatch");
     }
+
+    [Fact]
+    public void Create_WhenRemainderIs10_ShouldAcceptBothXAndZero()
+    {
+        // "RSKU123456" has Modulo 11 remainder = 10
+        var resultWithX = ContainerNumber.Create("RSKU123456X");
+        resultWithX.IsSuccess.Should().BeTrue();
+        resultWithX.Value!.CheckDigit.Should().Be(10);
+
+        var resultWithZero = ContainerNumber.Create("RSKU1234560");
+        resultWithZero.IsSuccess.Should().BeTrue();
+        resultWithZero.Value!.CheckDigit.Should().Be(0);
+
+        var resultWithWrongDigit = ContainerNumber.Create("RSKU1234561");
+        resultWithWrongDigit.IsFailure.Should().BeTrue();
+        resultWithWrongDigit.Error.Code.Should().Be("ContainerNumber.CheckDigitMismatch");
+    }
 }

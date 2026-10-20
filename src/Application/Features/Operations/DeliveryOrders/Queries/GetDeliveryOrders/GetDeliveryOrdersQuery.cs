@@ -8,5 +8,6 @@ public sealed record GetDeliveryOrdersQuery(
     string? LineOperator = null,
     string? CustomerTaxCode = null,
     bool? IsCompleted = null,
+    string? Status = null,
     int PageIndex = 1,
     int PageSize = 10) : IQuery<PagedResult<DeliveryOrderDto>>;

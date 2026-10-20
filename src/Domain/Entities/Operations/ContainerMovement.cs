@@ -36,20 +36,22 @@ public sealed class ContainerMovement : BaseEntity, ITenantEntity
         string? vehicleNumber = null, VehicleType? vehicleType = null, Guid? deliveryOrderId = null)
     {
         static bool ValidPosition(MovementPosition? position) => position is null ||
-            (position.BlockId != Guid.Empty && !string.IsNullOrWhiteSpace(position.BlockCode) && position.Bay > 0 && position.Row > 0 && position.Tier > 0);
+            (position.BlockId != Guid.Empty && !string.IsNullOrWhiteSpace(position.BlockCode) && position.Bay >= 0 && position.Row >= 0 && position.Tier >= 0);
         var validShape = eventType switch
         {
             ContainerMovementType.GateIn or ContainerMovementType.Place => source is null && destination is not null,
             ContainerMovementType.Relocate => source is not null && destination is not null,
             ContainerMovementType.Remove => source is not null && destination is null,
             ContainerMovementType.GateOut => destination is null && deliveryOrderId is not null,
+            ContainerMovementType.GateInCancelled => destination is null,
+            ContainerMovementType.GateOutCancelled => source is null,
             _ => false
         };
         var validVehicle = eventType is not (ContainerMovementType.GateIn or ContainerMovementType.GateOut) ||
             (!string.IsNullOrWhiteSpace(vehicleNumber) && vehicleType is not null && Enum.IsDefined(vehicleType.Value));
         if (containerId == Guid.Empty || lifecycleId == Guid.Empty || string.IsNullOrWhiteSpace(tenantId) || tenantId.Trim().Length > 50 ||
             occurredAtUtc.Kind != DateTimeKind.Utc || !validShape || !validVehicle || !ValidPosition(source) || !ValidPosition(destination))
-            return Result.Failure<ContainerMovement>(Error.Validation("Movement.InvalidData", "Movement data is invalid."));
+            return Result.Failure<ContainerMovement>(Error.Validation("Movement.InvalidData", "Dữ liệu di chuyển không hợp lệ."));
 
         return Result.Success(new ContainerMovement
         {

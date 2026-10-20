@@ -6,6 +6,8 @@ public sealed record YardLayoutDto(
     string Name,
     bool IsVirtual,
     int MaxBays,
+    int OddBays,
     int MaxRows,
     int MaxTiers,
-    IReadOnlyList<YardSlotDto> Slots);
+    IReadOnlyList<YardSlotDto> Slots,
+    IReadOnlyList<BlockContainerDto> Containers);

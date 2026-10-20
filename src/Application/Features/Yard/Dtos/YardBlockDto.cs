@@ -9,6 +9,7 @@ public sealed record YardBlockDto(
     bool IsVirtual,
     YardBlockType BlockType,
     int MaxBays,
+    int OddBays,
     int MaxRows,
     int MaxTiers,
     int TotalSlots,

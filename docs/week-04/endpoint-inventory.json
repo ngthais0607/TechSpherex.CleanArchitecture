@@ -12,6 +12,34 @@
     "anonymous": true
   },
   {
+    "path": "/api/auth/logout",
+    "methods": [
+      "POST"
+    ],
+    "name": "Logout",
+    "tags": [
+      "Authentication"
+    ],
+    "policies": [
+      "AuthenticatedUser"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/auth/me",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetCurrentUser",
+    "tags": [
+      "Authentication"
+    ],
+    "policies": [
+      "AuthenticatedUser"
+    ],
+    "anonymous": false
+  },
+  {
     "path": "/api/auth/refresh",
     "methods": [
       "POST"
@@ -80,6 +108,20 @@
     "anonymous": false
   },
   {
+    "path": "/api/containers/summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetContainerSummary",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "ReadContainers"
+    ],
+    "anonymous": false
+  },
+  {
     "path": "/api/containers/{id:guid}/damage",
     "methods": [
       "POST"
@@ -90,6 +132,20 @@
     ],
     "policies": [
       "ManageYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/containers/{number}/orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetContainerOrders",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "ReadContainers"
     ],
     "anonymous": false
   },
@@ -113,6 +169,48 @@
       "POST"
     ],
     "name": "CreateCustomer",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/customers/{id:guid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "UpdateCustomer",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/customers/{id:guid}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "ActivateCustomer",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/customers/{id:guid}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "DeactivateCustomer",
     "tags": [
       "Customers"
     ],
@@ -150,6 +248,20 @@
     "anonymous": false
   },
   {
+    "path": "/api/delivery-orders/bookings/{id:guid}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "ReleaseBooking",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ManageDeliveryOrders"
+    ],
+    "anonymous": false
+  },
+  {
     "path": "/api/delivery-orders/by-number/{number}",
     "methods": [
       "GET"
@@ -178,6 +290,34 @@
     "anonymous": false
   },
   {
+    "path": "/api/delivery-orders/{orderNumber}/assign",
+    "methods": [
+      "POST"
+    ],
+    "name": "AssignContainersToOrderShort",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ManageDeliveryOrders"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/delivery-orders/{orderNumber}/assign-containers",
+    "methods": [
+      "POST"
+    ],
+    "name": "AssignContainersToOrder",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ManageDeliveryOrders"
+    ],
+    "anonymous": false
+  },
+  {
     "path": "/api/gate/in",
     "methods": [
       "POST"
@@ -197,6 +337,76 @@
       "POST"
     ],
     "name": "GateOutContainer",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/gate/transactions",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetGateTransactions",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/gate/transactions/{id:guid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "UpdateGateTransaction",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/gate/transactions/{id:guid}/cancel",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "CancelGateTransaction",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/gate/transactions/{id:guid}/cancel",
+    "methods": [
+      "POST"
+    ],
+    "name": "CancelGateTransactionPost",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/gate/validate",
+    "methods": [
+      "POST"
+    ],
+    "name": "ValidateGate",
     "tags": [
       "Gate"
     ],
@@ -230,6 +440,300 @@
     ],
     "policies": [
       "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "UpdateLineOperator",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "ActivateLineOperator",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "DeactivateLineOperator",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}/owner-codes",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetLineOperatorOwnerCodes",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}/owner-codes",
+    "methods": [
+      "POST"
+    ],
+    "name": "AddLineOperatorOwnerCode",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}/owner-codes/{ownerCode}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "RemoveLineOperatorOwnerCode",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/lookups",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetLookups",
+    "tags": [
+      "Lookups"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/customers/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetCustomersMd",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/customers/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateCustomerMd",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/customers/{id:guid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "UpdateCustomerMd",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/customers/{id:guid}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "ActivateCustomerMd",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/customers/{id:guid}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "DeactivateCustomerMd",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/line-operators/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetLineOperatorsMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/line-operators/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateLineOperatorMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "UpdateLineOperatorMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "ActivateLineOperatorMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "DeactivateLineOperatorMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}/owner-codes",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetLineOperatorOwnerCodesMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}/owner-codes",
+    "methods": [
+      "POST"
+    ],
+    "name": "AddLineOperatorOwnerCodeMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}/owner-codes/{ownerCode}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "RemoveLineOperatorOwnerCodeMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/reports/block-capacity",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetBlockCapacity",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
     ],
     "anonymous": false
   },
@@ -272,6 +776,34 @@
     ],
     "policies": [
       "ReadExpiringOrders"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/reports/gate-traffic",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetGateTraffic",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/reports/summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetDashboardSummary",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
     ],
     "anonymous": false
   },
@@ -348,6 +880,20 @@
   {
     "path": "/api/yard/blocks",
     "methods": [
+      "GET"
+    ],
+    "name": "GetYardBlocks",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/blocks",
+    "methods": [
       "POST"
     ],
     "name": "CreateYardBlock",
@@ -374,20 +920,6 @@
     "anonymous": false
   },
   {
-    "path": "/api/yard/blocks/{id:guid}/layout",
-    "methods": [
-      "GET"
-    ],
-    "name": "GetYardLayout",
-    "tags": [
-      "Yard"
-    ],
-    "policies": [
-      "ReadYard"
-    ],
-    "anonymous": false
-  },
-  {
     "path": "/api/yard/blocks/{id:guid}/shrink",
     "methods": [
       "POST"
@@ -398,6 +930,20 @@
     ],
     "policies": [
       "ManageYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/blocks/{idOrCode}/layout",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetYardLayout",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
     ],
     "anonymous": false
   },
@@ -449,6 +995,48 @@
       "POST"
     ],
     "name": "RemoveContainer",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/search",
+    "methods": [
+      "GET"
+    ],
+    "name": "YardSearch",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/virtual-blocks/{code}/containers",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetVirtualBlockContainers",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/virtual-blocks/{code}/containers/{id:guid}/place",
+    "methods": [
+      "POST"
+    ],
+    "name": "PlaceFromVirtualBlock",
     "tags": [
       "Yard"
     ],

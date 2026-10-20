@@ -1257,6 +1257,130 @@
               }
             }
           ]
+        },
+        {
+          "name": "Assign container 1 to order",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/delivery-orders/{{orderNumber}}/assign-containers",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{orderAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ContainerNumbers\": [\n    \"{{containerNumber1}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('bookingId1', data.bookingIds[0]);",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Release booking for container 1",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/delivery-orders/bookings/{{bookingId1}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{orderAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Re-assign container 1 to order",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/delivery-orders/{{orderNumber}}/assign-containers",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{orderAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ContainerNumbers\": [\n    \"{{containerNumber1}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "})();"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

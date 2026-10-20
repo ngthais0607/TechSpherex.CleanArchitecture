@@ -79,13 +79,13 @@ public sealed class YardBlock : AuditableEntity, ITenantEntity
         if (IsVirtual)
         {
             return Result.Failure(
-                Error.Conflict("YardBlock.VirtualCannotExpand", "Virtual blocks cannot be expanded."));
+                Error.Conflict("YardBlock.VirtualCannotExpand", "Không thể mở rộng dãy ảo."));
         }
 
         if (newMaxBays < MaxBays || newMaxRows < MaxRows || newMaxTiers < MaxTiers)
         {
             return Result.Failure(
-                Error.Validation("YardBlock.InvalidExpansion", "New dimensions must be greater than or equal to current dimensions."));
+                Error.Validation("YardBlock.InvalidExpansion", "Kích thước mới phải lớn hơn hoặc bằng kích thước hiện tại."));
         }
 
         for (int bay = 1; bay <= newMaxBays; bay += 2)
@@ -115,23 +115,24 @@ public sealed class YardBlock : AuditableEntity, ITenantEntity
         if (IsVirtual)
         {
             return Result.Failure(
-                Error.Conflict("YardBlock.VirtualCannotShrink", "Virtual blocks cannot be shrunk."));
+                Error.Conflict("YardBlock.VirtualCannotShrink", "Không thể thu hẹp dãy ảo."));
         }
 
         if (newMaxBays > MaxBays || newMaxRows > MaxRows || newMaxTiers > MaxTiers)
         {
             return Result.Failure(
-                Error.Validation("YardBlock.InvalidShrink", "New dimensions must be less than or equal to current dimensions."));
+                Error.Validation("YardBlock.InvalidShrink", "Kích thước mới phải nhỏ hơn hoặc bằng kích thước hiện tại."));
         }
 
         var slotsToRemove = _slots
             .Where(s => s.Bay > newMaxBays || s.Row > newMaxRows || s.Tier > newMaxTiers)
             .ToList();
 
-        if (slotsToRemove.Any(s => s.IsOccupied))
+        var firstOccupied = slotsToRemove.FirstOrDefault(s => s.IsOccupied);
+        if (firstOccupied is not null)
         {
             return Result.Failure(
-                Error.Conflict("YardBlock.CannotShrinkOccupiedSlots", "Cannot shrink block because slots in the removed area are currently occupied."));
+                Error.Conflict("YardBlock.CannotShrinkOccupiedSlots", $"Không thể thu hẹp dãy vì vị trí {firstOccupied.Position.Bay:D2}-{firstOccupied.Position.Row:D2}-{firstOccupied.Position.Tier:D2} đang có container."));
         }
 
         foreach (var slot in slotsToRemove)

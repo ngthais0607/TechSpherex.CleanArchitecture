@@ -18,8 +18,7 @@ public class RegisterContainerValidatorTests
             ContainerType.Dry,
             2200,
             30480,
-            new DateTime(2020, 1, 1),
-            "CSQU");
+            new DateTime(2020, 1, 1));
 
         var result = _validator.TestValidate(command);
 
@@ -39,8 +38,7 @@ public class RegisterContainerValidatorTests
             ContainerType.Dry,
             2200,
             30480,
-            null,
-            "CSQU");
+            null);
 
         var result = _validator.TestValidate(command);
 
@@ -57,8 +55,7 @@ public class RegisterContainerValidatorTests
             ContainerType.Dry,
             0,
             30480,
-            null,
-            "CSQU");
+            null);
 
         var result = _validator.TestValidate(command);
 
@@ -75,8 +72,7 @@ public class RegisterContainerValidatorTests
             ContainerType.Dry,
             5000,
             4000,
-            null,
-            "CSQU");
+            null);
 
         var result = _validator.TestValidate(command);
 

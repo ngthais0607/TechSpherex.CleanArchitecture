@@ -34,7 +34,7 @@ public class DepotEndToEndWorkflowTests
         // BƯỚC 1: KHỞI TẠO MASTER DATA (HÃNG TÀU & KHÁCH HÀNG)
         // =========================================================================
         var lineOpHandler = new CreateLineOperatorCommandHandler(_context);
-        var lineOpResult = await lineOpHandler.Handle(new CreateLineOperatorCommand("CSQU", "Cosco Shipping Lines"));
+        var lineOpResult = await lineOpHandler.Handle(new CreateLineOperatorCommand("CSQ", "Cosco Shipping Lines"));
         lineOpResult.IsSuccess.Should().BeTrue();
 
         var customerHandler = new CreateCustomerCommandHandler(_context);
@@ -52,8 +52,7 @@ public class DepotEndToEndWorkflowTests
             ContainerType.Dry,
             2200,
             30480,
-            new DateTime(2022, 1, 1),
-            "CSQU");
+            new DateTime(2022, 1, 1));
         var regResult = await regContainerHandler.Handle(regCommand);
         regResult.IsSuccess.Should().BeTrue();
         var containerId = regResult.Value;
@@ -98,7 +97,7 @@ public class DepotEndToEndWorkflowTests
         var doHandler = new CreateDeliveryOrderCommandHandler(_context);
         var doResult = await doHandler.Handle(new CreateDeliveryOrderCommand(
             "DO-SNP-2026-001",
-            "CSQU",
+            "CSQ",
             "0101234567",
             "Cong Ty TNHH Logistics Quoc Te A",
             DateTime.UtcNow.AddDays(7),

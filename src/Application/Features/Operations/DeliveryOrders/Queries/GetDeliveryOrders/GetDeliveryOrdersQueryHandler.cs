@@ -38,6 +38,31 @@ public sealed class GetDeliveryOrdersQueryHandler : IQueryHandler<GetDeliveryOrd
             dbQuery = dbQuery.Where(o => o.IsCompleted == query.IsCompleted.Value);
         }
 
+        var now = DateTime.UtcNow;
+        var today = now.Date;
+        var in3Days = today.AddDays(4);
+
+        if (!string.IsNullOrWhiteSpace(query.Status))
+        {
+            var statusLower = query.Status.Trim().ToLowerInvariant();
+            if (statusLower is "expiring" or "expiringsoon")
+            {
+                dbQuery = dbQuery.Where(o => !o.IsCompleted && o.ExpiryDate >= today && o.ExpiryDate <= in3Days && o.Items.Any(i => i.DeliveredQuantity < i.RequiredQuantity));
+            }
+            else if (statusLower == "expired")
+            {
+                dbQuery = dbQuery.Where(o => o.ExpiryDate < today);
+            }
+            else if (statusLower == "active")
+            {
+                dbQuery = dbQuery.Where(o => !o.IsCompleted && o.ExpiryDate > in3Days && o.Items.Any(i => i.DeliveredQuantity < i.RequiredQuantity));
+            }
+            else if (statusLower is "completed" or "fullydelivered")
+            {
+                dbQuery = dbQuery.Where(o => o.IsCompleted || o.Items.All(i => i.DeliveredQuantity >= i.RequiredQuantity));
+            }
+        }
+
         var totalCount = await dbQuery.CountAsync(cancellationToken);
 
         var pageIndex = query.PageIndex < 1 ? 1 : query.PageIndex;
@@ -65,7 +90,8 @@ public sealed class GetDeliveryOrdersQueryHandler : IQueryHandler<GetDeliveryOrd
                 i.Type,
                 i.RequiredQuantity,
                 i.DeliveredQuantity,
-                i.RemainingQuantity)).ToList()
+                i.RemainingQuantity)).ToList(),
+            o.GetDisplayStatus(now).ToString()
         )).ToList();
 
         var pagedResult = PagedResult<DeliveryOrderDto>.Create(dtos, totalCount, pageIndex, pageSize);

@@ -49,8 +49,9 @@ public sealed class AppDbSeederTests
             .Build();
 
         _logger = Substitute.For<ILogger<AppDbSeeder>>();
+        var demoDataSeeder = Substitute.For<IDemoDataSeeder>();
 
-        _sut = new AppDbSeeder(_context, _passwordHasher, _configuration, _logger);
+        _sut = new AppDbSeeder(_context, _passwordHasher, _configuration, _logger, demoDataSeeder);
     }
 
     [Fact]

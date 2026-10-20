@@ -12,8 +12,21 @@ using SnpDepotManagement.Application;
 using SnpDepotManagement.Infrastructure;
 using SnpDepotManagement.Infrastructure.Persistence.Seed;
 using SnpDepotManagement.Infrastructure.Tenancy;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    options.SerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict;
+});
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    options.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict;
+});
 var trustedProxy = builder.Configuration["ReverseProxy:TrustedProxy"];
 if (!string.IsNullOrWhiteSpace(trustedProxy))
 {
@@ -40,6 +53,28 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 }));
 builder.Services.AddHealthChecks();
 builder.Services.AddTransient<IValidator<YardBlockSizeRequest>, YardBlockSizeRequestValidator>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("login", context =>
+    {
+        var partitionKey = context.Connection.RemoteIpAddress?.ToString()
+            ?? context.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+            ?? context.TraceIdentifier;
+
+        return RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: partitionKey,
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 6,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 
 // Register application & infrastructure services
 builder.Services.AddApplication();
@@ -77,6 +112,7 @@ app.UseStatusCodePages(async statusContext =>
     await ResultExtensions.Problem(status, code).ExecuteAsync(http);
 });
 app.UseCors();
+app.UseRateLimiter();
 if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 
 // Resolve tenant only after authentication and authorization; header cannot select a depot.

@@ -27,8 +27,28 @@ public sealed class ShrinkYardBlockCommandHandler : ICommandHandler<ShrinkYardBl
         }
 
         var slotsToRemove = block.Slots
-            .Where(s => s.Bay > command.NewBays || s.Row > command.NewRows || s.Tier > command.NewTiers)
+            .Where(s => s.Position.Bay > command.NewBays || s.Position.Row > command.NewRows || s.Position.Tier > command.NewTiers)
             .ToList();
+
+        var firstOccupied = slotsToRemove.FirstOrDefault(s => s.IsOccupied);
+        if (firstOccupied is not null)
+        {
+            string contInfo = "";
+            if (firstOccupied.ContainerId.HasValue)
+            {
+                var container = await _context.Containers
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == firstOccupied.ContainerId.Value, cancellationToken);
+                if (container is not null)
+                {
+                    contInfo = $" ({container.ContainerNumber.Value})";
+                }
+            }
+
+            return Result.Failure(
+                Error.Conflict("YardBlock.CannotShrinkOccupiedSlots",
+                    $"Không thể thu hẹp dãy vì vị trí {firstOccupied.Position.Bay:D2}-{firstOccupied.Position.Row:D2}-{firstOccupied.Position.Tier:D2} đang có container{contInfo}."));
+        }
 
         var shrinkResult = block.Shrink(command.NewBays, command.NewRows, command.NewTiers);
         if (shrinkResult.IsFailure)

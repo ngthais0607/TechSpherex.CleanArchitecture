@@ -11,4 +11,6 @@ public sealed record RegisterContainerCommand(
     decimal TareWeight,
     decimal MaxGrossWeight,
     DateTime? DateOfManufacture,
-    string OwnerCode) : ICommand<Guid>;
+    Classification Grade = Classification.A,
+    ContainerCondition Condition = ContainerCondition.Normal
+) : ICommand<Guid>;

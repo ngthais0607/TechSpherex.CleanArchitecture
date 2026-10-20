@@ -9,6 +9,9 @@ using SnpDepotManagement.Application.Features.Operations.DeliveryOrders.Queries.
 using SnpDepotManagement.Application.Features.Operations.DeliveryOrders.Dtos;
 using SnpDepotManagement.Domain.Common;
 
+using SnpDepotManagement.Application.Features.Operations.Bookings.Commands.AssignContainers;
+using SnpDepotManagement.Application.Features.Operations.Bookings.Commands.ReleaseBooking;
+
 namespace SnpDepotManagement.Api.Endpoints;
 
 public static class DeliveryOrderEndpoints
@@ -19,9 +22,9 @@ public static class DeliveryOrderEndpoints
         group.MapPost("", async (CreateDeliveryOrderCommand command, ICommandHandler<CreateDeliveryOrderCommand, Guid> handler, CancellationToken ct) =>
             (await handler.Handle(command, ct)).ToHttpResult(id => Results.Created($"/api/delivery-orders/{id}", new { id })))
             .WithName("CreateDeliveryOrder").RequireAuthorization(Policies.ManageDeliveryOrders);
-        group.MapGet("", async (string? lineOperator, string? customerTaxCode, bool? isCompleted, PaginationRequest page,
+        group.MapGet("", async (string? lineOperator, string? customerTaxCode, bool? isCompleted, string? status, PaginationRequest page,
                 IQueryHandler<GetDeliveryOrdersQuery, PagedResult<DeliveryOrderDto>> handler, CancellationToken ct) =>
-            (await handler.Handle(new(lineOperator, customerTaxCode, isCompleted, page.PageIndex, page.PageSize), ct)).ToHttpResult())
+            (await handler.Handle(new(lineOperator, customerTaxCode, isCompleted, status, page.PageIndex, page.PageSize), ct)).ToHttpResult())
             .WithName("GetDeliveryOrders").RequireAuthorization(Policies.ReadDeliveryOrders);
         group.MapGet("/{id:guid}", async (Guid id, IQueryHandler<GetDeliveryOrderByIdQuery, DeliveryOrderDto> handler, CancellationToken ct) =>
             (await handler.Handle(new(id), ct)).ToHttpResult())
@@ -29,6 +32,17 @@ public static class DeliveryOrderEndpoints
         group.MapGet("/by-number/{number}", async (string number, IQueryHandler<GetDeliveryOrderByOrderNumberQuery, DeliveryOrderDto> handler, CancellationToken ct) =>
             (await handler.Handle(new(number), ct)).ToHttpResult())
             .WithName("GetDeliveryOrderByOrderNumber").RequireAuthorization(Policies.ReadDeliveryOrders);
+        group.MapPost("/{orderNumber}/assign-containers", async (string orderNumber, AssignContainersRequest request,
+                ICommandHandler<AssignContainersToOrderCommand, AssignContainersResult> handler, CancellationToken ct) =>
+            (await handler.Handle(new(orderNumber, request.ContainerNumbers), ct)).ToHttpResult())
+            .WithName("AssignContainersToOrder").RequireAuthorization(Policies.ManageDeliveryOrders);
+        group.MapPost("/{orderNumber}/assign", async (string orderNumber, AssignContainersRequest request,
+                ICommandHandler<AssignContainersToOrderCommand, AssignContainersResult> handler, CancellationToken ct) =>
+            (await handler.Handle(new(orderNumber, request.ContainerNumbers), ct)).ToHttpResult())
+            .WithName("AssignContainersToOrderShort").RequireAuthorization(Policies.ManageDeliveryOrders);
+        group.MapDelete("/bookings/{id:guid}", async (Guid id, ICommandHandler<ReleaseBookingCommand> handler, CancellationToken ct) =>
+            (await handler.Handle(new(id), ct)).ToHttpResult())
+            .WithName("ReleaseBooking").RequireAuthorization(Policies.ManageDeliveryOrders);
         return app;
     }
 }

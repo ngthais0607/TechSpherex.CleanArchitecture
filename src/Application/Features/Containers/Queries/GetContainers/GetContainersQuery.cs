@@ -6,6 +6,7 @@ using SnpDepotManagement.Domain.Enums;
 namespace SnpDepotManagement.Application.Features.Containers.Queries.GetContainers;
 
 public sealed record GetContainersQuery(
+    string? Search = null,
     string? OwnerCode = null,
     ContainerSize? Size = null,
     ContainerCondition? Condition = null,

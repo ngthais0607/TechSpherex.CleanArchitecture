@@ -19,7 +19,8 @@ public sealed record DeliveryOrderDto(
     DateTime ExpiryDate,
     string OutboundVessel,
     bool IsCompleted,
-    List<DeliveryOrderItemDto> Items);
+    List<DeliveryOrderItemDto> Items,
+    string Status = "");
 
 public sealed record CreateDeliveryOrderItemInput(
     ContainerSize Size,

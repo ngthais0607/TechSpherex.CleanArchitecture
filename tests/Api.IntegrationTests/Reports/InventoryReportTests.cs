@@ -44,8 +44,8 @@ public sealed class InventoryReportTests(ApiFactory factory)
         var all = await client.GetFromJsonAsync<JsonElement>($"/api/reports/yard-inventory?lineOperator={owner}", ct);
         var groups = all.GetProperty("groups").GetProperty("items").EnumerateArray().ToArray();
         Assert.Equal(1, groups.Single(g => g.GetProperty("blockId").ValueKind == JsonValueKind.Null).GetProperty("containerCount").GetInt32());
-        Assert.Equal((int)ContainerCondition.Damaged, groups.Single(g => g.GetProperty("blockId").ValueKind == JsonValueKind.Null).GetProperty("condition").GetInt32());
-        Assert.Equal(1, groups.Single(g => g.GetProperty("size").GetInt32() == 40).GetProperty("containerCount").GetInt32());
+        Assert.Equal("Damaged", groups.Single(g => g.GetProperty("blockId").ValueKind == JsonValueKind.Null).GetProperty("condition").GetString());
+        Assert.Equal(1, groups.Single(g => g.GetProperty("size").GetString() == "Ft40").GetProperty("containerCount").GetInt32());
         var filtered = await client.GetFromJsonAsync<JsonElement>($"/api/reports/yard-inventory?lineOperator={owner}&blockId={block.Id}&size=40", ct);
         Assert.Equal(1, filtered.GetProperty("totalContainers").GetInt32());
     }

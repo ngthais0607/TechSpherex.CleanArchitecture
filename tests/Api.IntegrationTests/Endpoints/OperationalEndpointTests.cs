@@ -15,6 +15,16 @@ public sealed class OperationalEndpointTests(ApiFactory factory)
     public async Task DeliveryOrderTaxCodeRespectsStorageBoundary(int length, HttpStatusCode expected)
     {
         var ct = TestContext.Current.CancellationToken;
+        if (expected == HttpStatusCode.Created)
+        {
+            var taxCode = new string('1', length);
+            await using var db = factory.Context("DEPOT-A");
+            if (!db.LineOperators.Any(l => l.Code == "MSK"))
+                db.LineOperators.Add(Domain.Entities.MasterData.LineOperator.Create("MSK", "Maersk Line").Value!);
+            if (!db.Customers.Any(c => c.TaxCode == taxCode))
+                db.Customers.Add(Domain.Entities.MasterData.Customer.Create(taxCode, "Customer").Value!);
+            await db.SaveChangesAsync(ct);
+        }
         using var client = await ApiTestClient.LoginAsync(factory);
         using var response = await client.PostAsJsonAsync("/api/delivery-orders", new
         {
@@ -96,6 +106,14 @@ public sealed class OperationalEndpointTests(ApiFactory factory)
     public async Task DeliveryOrderCanBeRetrievedByIdAndOrderNumber()
     {
         var ct = TestContext.Current.CancellationToken;
+        await using (var db = factory.Context("DEPOT-A"))
+        {
+            if (!db.LineOperators.Any(l => l.Code == "MSK"))
+                db.LineOperators.Add(Domain.Entities.MasterData.LineOperator.Create("MSK", "Maersk Line").Value!);
+            if (!db.Customers.Any(c => c.TaxCode == "0101234567"))
+                db.Customers.Add(Domain.Entities.MasterData.Customer.Create("0101234567", "Customer").Value!);
+            await db.SaveChangesAsync(ct);
+        }
         using var client = await ApiTestClient.LoginAsync(factory);
         var number = "DO" + Guid.NewGuid().ToString("N")[..8];
         var created = await client.PostAsJsonAsync("/api/delivery-orders", new

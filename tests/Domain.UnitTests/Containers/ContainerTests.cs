@@ -41,6 +41,28 @@ public sealed class ContainerTests
         container.Condition.Should().Be(ContainerCondition.Normal);
     }
 
+    [Fact]
+    public void Create_WithGradeAndCondition_ShouldDeriveOwnerCode()
+    {
+        var result = Container.Create(
+            _validNumber,
+            "22G1",
+            ContainerSize.Ft20,
+            ContainerType.Dry,
+            tareWeight: 2200m,
+            maxGrossWeight: 30480m,
+            dateOfManufacture: new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            grade: Classification.C,
+            condition: ContainerCondition.Warped,
+            tenantId: "DEPOT-01");
+
+        result.IsSuccess.Should().BeTrue();
+        var container = result.Value!;
+        container.OwnerCode.Should().Be("CSQ");
+        container.Classification.Should().Be(Classification.C);
+        container.Condition.Should().Be(ContainerCondition.Warped);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-500)]

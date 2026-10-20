@@ -89,6 +89,9 @@ for (let n=1;n<=4;n++) {
   request('Register container '+n, 'POST', '/api/containers', 'gate', 201, registration('containerNumber'+n), saveId('containerId'+n)+`\npm.test('Location is a readable by-number route',()=>pm.expect(pm.response.headers.get('Location')).to.include('/by-number/'));`);
   request('Gate-In container '+n, 'POST', '/api/gate/in', 'gate', 201, { ContainerId: variable('containerId'+n), InVehicleNumber: variable('vehiclePlate'), SlotId: variable('slotId'+n), Classification: 1, Condition: n === 4 ? 1 : 0, VehicleType: 0 });
 }
+request('Assign container 1 to order', 'POST', '/api/delivery-orders/{{orderNumber}}/assign-containers', 'order', 200, { ContainerNumbers: [variable('containerNumber1')] }, `pm.environment.set('bookingId1', data.bookingIds[0]);`);
+request('Release booking for container 1', 'DELETE', '/api/delivery-orders/bookings/{{bookingId1}}', 'order', 204);
+request('Re-assign container 1 to order', 'POST', '/api/delivery-orders/{{orderNumber}}/assign-containers', 'order', 200, { ContainerNumbers: [variable('containerNumber1')] });
 folder('05 - YardPlanner moves and inventory');
 const inventory = '/api/reports/yard-inventory?lineOperator={{operatorCode}}';
 request('Inventory 4', 'GET', inventory, 'yard', 200, null, `pm.test('4 containers in depot',()=>pm.expect(data.totalContainers).to.eql(4));`);

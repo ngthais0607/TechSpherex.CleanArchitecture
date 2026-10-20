@@ -122,13 +122,32 @@ public sealed class RelocateContainerCommandHandler : ICommandHandler<RelocateCo
         sourceSlot1.Release();
         sourceSlot2?.Release();
 
-        // Evaluate 4 rules for target slot
+        var belowTier = command.TargetTier - 1;
+        var occupiedBelowIds = block.Slots
+            .Where(s => s.Row == command.TargetRow && s.Tier == belowTier && s.ContainerId.HasValue)
+            .Select(s => s.ContainerId!.Value)
+            .Distinct()
+            .ToList();
+
+        var containerSizes = occupiedBelowIds.Count > 0
+            ? await _context.Containers
+                .Where(c => occupiedBelowIds.Contains(c.Id))
+                .Select(c => new { c.Id, c.Size })
+                .ToDictionaryAsync(c => c.Id, c => (ContainerSize?)c.Size, cancellationToken)
+            : new Dictionary<Guid, ContainerSize?>();
+
+        var belowSlotTuples = block.Slots
+            .Where(s => s.Row == command.TargetRow && s.Tier == belowTier)
+            .Select(s => (s.Bay, s.Row, s.Tier, s.ContainerId, s.ContainerId.HasValue && containerSizes.TryGetValue(s.ContainerId.Value, out var sz) ? sz : null));
+
+        // Evaluate 5 rules for target slot
         var rules = new IBusinessRule[]
         {
             new ValidBayContainerSizeRule(command.TargetBay, container.Size, block.MaxBays),
             new TierWithinBlockLimitRule(command.TargetTier, block.MaxTiers),
             new SlotIsFreeRule(container.Size, command.TargetBay, command.TargetRow, command.TargetTier, block.Slots),
-            new SlotBelowMustBeOccupiedRule(command.TargetTier, container.Size, command.TargetBay, command.TargetRow, block.Slots)
+            new SlotBelowMustBeOccupiedRule(command.TargetTier, container.Size, command.TargetBay, command.TargetRow, block.Slots),
+            new StackCompatibilityRule(container.Size, command.TargetBay, command.TargetRow, command.TargetTier, belowSlotTuples)
         };
 
         var ruleResult = _ruleEngine.Evaluate(rules);

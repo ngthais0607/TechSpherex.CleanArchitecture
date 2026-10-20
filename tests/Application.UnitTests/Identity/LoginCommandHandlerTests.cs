@@ -50,6 +50,8 @@ public class LoginCommandHandlerTests
         result.Value.RefreshToken.Should().Be("raw_refresh_token_123");
         result.Value.UserName.Should().Be("operator01");
         result.Value.Role.Should().Be(Roles.YardPlanner);
+        result.Value.AccessTokenExpiresAt.Should().BeAfter(DateTime.UtcNow);
+        result.Value.ExpiresAt.Should().BeAfter(DateTime.UtcNow);
 
         // Verify user refreshToken updated in DB
         var userInDb = await _context.Users.FindAsync(user.Id);

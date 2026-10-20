@@ -16,7 +16,7 @@ public sealed class ContainerIsInYardRule : IBusinessRule
 
     public Error Error => Error.Conflict(
         "LifecycleRule.ContainerNotInYard",
-        "Container is not currently present in the yard.");
+        "Container hiện không có trong bãi.");
 
     public string Message => Error.Description;
 

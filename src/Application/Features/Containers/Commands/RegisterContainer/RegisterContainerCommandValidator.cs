@@ -16,9 +16,5 @@ public sealed class RegisterContainerCommandValidator : AbstractValidator<Regist
         RuleFor(x => x.MaxGrossWeight)
             .GreaterThan(0).WithMessage("Max gross weight must be greater than zero.")
             .GreaterThan(x => x.TareWeight).WithMessage("Max gross weight must be greater than tare weight.");
-
-        RuleFor(x => x.OwnerCode)
-            .NotEmpty().WithMessage("Owner code is required.")
-            .MaximumLength(10).WithMessage("Owner code cannot exceed 10 characters.");
     }
 }

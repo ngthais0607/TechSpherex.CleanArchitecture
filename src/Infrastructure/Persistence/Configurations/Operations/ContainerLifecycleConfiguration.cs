@@ -68,6 +68,7 @@ public sealed class ContainerLifecycleConfiguration : IEntityTypeConfiguration<C
         builder.Property(c => c.DeliveryOrderId);
 
         builder.Property(c => c.CurrentSlotId);
+        builder.Property(c => c.VirtualBlockId);
         builder.Property(c => c.MovementHistoryVersion).HasDefaultValue(0);
 
         builder.Property(c => c.CreatedBy)
@@ -78,6 +79,10 @@ public sealed class ContainerLifecycleConfiguration : IEntityTypeConfiguration<C
 
         // Frequent query index
         builder.HasIndex(c => c.Status);
+
+        builder.HasIndex(c => c.ContainerId)
+            .HasFilter("\"status\" = 'InYard'")
+            .HasDatabaseName("ix_container_lifecycles_container_id_status_inyard");
 
         // Partial unique index: A container can only have AT MOST ONE active lifecycle (InYard) in the depot
         builder.HasIndex(c => new { c.TenantId, c.ContainerId })

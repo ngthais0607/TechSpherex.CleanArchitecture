@@ -5,9 +5,11 @@ using SnpDepotManagement.Api.Authorization;
 using SnpDepotManagement.Api.Extensions;
 using SnpDepotManagement.Application.Abstractions.Messaging;
 using SnpDepotManagement.Application.Features.Identity.Commands.Login;
+using SnpDepotManagement.Application.Features.Identity.Commands.Logout;
 using SnpDepotManagement.Application.Features.Identity.Commands.RefreshToken;
 using SnpDepotManagement.Application.Features.Identity.Commands.Register;
 using SnpDepotManagement.Application.Features.Identity.Dtos;
+using SnpDepotManagement.Application.Features.Identity.Queries.GetCurrentUser;
 
 namespace SnpDepotManagement.Api.Endpoints;
 
@@ -29,6 +31,7 @@ public static class IdentityEndpoints
         })
         .WithName("Login")
         .WithSummary("User login returning JWT and refresh tokens")
+        .RequireRateLimiting("login")
         .AllowAnonymous();
 
         group.MapPost("/refresh", async (
@@ -54,6 +57,28 @@ public static class IdentityEndpoints
         .WithName("Register")
         .WithSummary("Register a new user in the system")
         .RequireAuthorization(Policies.Admin);
+
+        group.MapGet("/me", async (
+            IQueryHandler<GetCurrentUserQuery, CurrentUserDto> handler,
+            CancellationToken ct) =>
+        {
+            var result = await handler.Handle(new GetCurrentUserQuery(), ct);
+            return result.ToHttpResult();
+        })
+        .WithName("GetCurrentUser")
+        .WithSummary("Trả thông tin người dùng đang đăng nhập")
+        .RequireAuthorization(Policies.AuthenticatedUser);
+
+        group.MapPost("/logout", async (
+            ICommandHandler<LogoutCommand> handler,
+            CancellationToken ct) =>
+        {
+            var result = await handler.Handle(new LogoutCommand(), ct);
+            return result.ToHttpResult();
+        })
+        .WithName("Logout")
+        .WithSummary("Đăng xuất, thu hồi refresh token")
+        .RequireAuthorization(Policies.AuthenticatedUser);
 
         return app;
     }

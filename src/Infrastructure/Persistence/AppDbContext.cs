@@ -47,6 +47,11 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Depot> Depots => Set<Depot>();
+    public DbSet<LineOperatorOwnerCode> LineOperatorOwnerCodes => Set<LineOperatorOwnerCode>();
+    public DbSet<DeliveryOrderBooking> Bookings => Set<DeliveryOrderBooking>();
+    public DbSet<GateTransaction> GateTransactions => Set<GateTransaction>();
+    public DbSet<GateTransactionChange> GateTransactionChanges => Set<GateTransactionChange>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,6 +104,8 @@ public class AppDbContext : DbContext, IAppDbContext
 
         foreach (var entry in ChangeTracker.Entries())
         {
+            if (entry.Entity is GateTransactionChange && entry.State == EntityState.Modified)
+                entry.State = EntityState.Added;
             if ((entry.Entity is ContainerMovement or MovementPosition) && entry.State is EntityState.Modified or EntityState.Deleted)
                 throw new InvalidOperationException("Container movement history is append-only.");
             if (entry.Entity is ITenantEntity tenantEntity && entry.State == EntityState.Added)

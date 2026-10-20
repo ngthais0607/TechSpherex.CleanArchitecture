@@ -289,6 +289,12 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("created_by");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
                     b.Property<DateTime?>("LastModifiedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_modified_at");
@@ -310,14 +316,47 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(13)")
                         .HasColumnName("tax_code");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasDefaultValue("")
+                        .HasColumnName("tenant_id");
+
                     b.HasKey("Id")
                         .HasName("pk_customers");
 
-                    b.HasIndex("TaxCode")
+                    b.HasIndex("TenantId", "TaxCode")
                         .IsUnique()
-                        .HasDatabaseName("ix_customers_tax_code");
+                        .HasDatabaseName("ix_customers_tenant_id_tax_code");
 
                     b.ToTable("customers", (string)null);
+                });
+
+            modelBuilder.Entity("SnpDepotManagement.Domain.Entities.MasterData.Depot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Timezone")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("timezone");
+
+                    b.HasKey("Id")
+                        .HasName("pk_depots");
+
+                    b.ToTable("depots", (string)null);
                 });
 
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.MasterData.LineOperator", b =>
@@ -342,6 +381,12 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("created_by");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
                     b.Property<DateTime?>("LastModifiedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_modified_at");
@@ -365,6 +410,39 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_line_operators_code");
 
                     b.ToTable("line_operators", (string)null);
+                });
+
+            modelBuilder.Entity("SnpDepotManagement.Domain.Entities.MasterData.LineOperatorOwnerCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("LineOperatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("line_operator_id");
+
+                    b.Property<string>("OwnerCode")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("owner_code");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_line_operator_owner_codes");
+
+                    b.HasIndex("TenantId", "OwnerCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_line_operator_owner_codes_tenant_id_owner_code");
+
+                    b.ToTable("line_operator_owner_codes", (string)null);
                 });
 
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.MasterData.Vehicle", b =>
@@ -567,6 +645,10 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("tenant_id");
 
+                    b.Property<Guid?>("VirtualBlockId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("virtual_block_id");
+
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -577,7 +659,8 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasName("pk_container_lifecycles");
 
                     b.HasIndex("ContainerId")
-                        .HasDatabaseName("ix_container_lifecycles_container_id");
+                        .HasDatabaseName("ix_container_lifecycles_container_id_status_inyard")
+                        .HasFilter("\"status\" = 'InYard'");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("ix_container_lifecycles_status");
@@ -745,6 +828,62 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("delivery_orders", (string)null);
                 });
 
+            modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.DeliveryOrderBooking", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<Guid>("ContainerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("container_id");
+
+                    b.Property<DateTime?>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expired_at");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("item_id");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_id");
+
+                    b.Property<DateTime>("ReservedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reserved_at");
+
+                    b.Property<DateTime?>("ShippedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("shipped_at");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_delivery_order_bookings");
+
+                    b.HasIndex("TenantId", "ContainerId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_booking_container_reserved")
+                        .HasFilter("\"status\" = 1");
+
+                    b.ToTable("delivery_order_bookings", (string)null);
+                });
+
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.DeliveryOrderItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -789,6 +928,140 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_delivery_order_items_delivery_order_id");
 
                     b.ToTable("delivery_order_items", (string)null);
+                });
+
+            modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.GateTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<string>("CancelledBy")
+                        .HasColumnType("text")
+                        .HasColumnName("cancelled_by");
+
+                    b.Property<Guid>("ContainerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("container_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("DriverName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("driver_name");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modified_at");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_modified_by");
+
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_id");
+
+                    b.Property<Guid?>("SlotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("slot_id");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.Property<string>("VehicleNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("vehicle_number");
+
+                    b.Property<int>("VehicleType")
+                        .HasColumnType("integer")
+                        .HasColumnName("vehicle_type");
+
+                    b.Property<string>("VirtualBlockCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("virtual_block_code");
+
+                    b.HasKey("Id")
+                        .HasName("pk_gate_transactions");
+
+                    b.HasIndex("TenantId", "CreatedAt")
+                        .HasDatabaseName("ix_gate_transactions_tenant_id_created_at");
+
+                    b.HasIndex("TenantId", "ContainerId", "Status")
+                        .HasDatabaseName("ix_gate_transactions_tenant_id_container_id_status");
+
+                    b.ToTable("gate_transactions", (string)null);
+                });
+
+            modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.GateTransactionChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<string>("ChangedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("changed_by");
+
+                    b.Property<string>("FieldName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("field_name");
+
+                    b.Property<string>("NewValue")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("new_value");
+
+                    b.Property<string>("OldValue")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("old_value");
+
+                    b.Property<Guid>("TransactionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("transaction_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_gate_transaction_changes");
+
+                    b.HasIndex("TransactionId")
+                        .HasDatabaseName("ix_gate_transaction_changes_transaction_id");
+
+                    b.ToTable("gate_transaction_changes", (string)null);
                 });
 
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Yard.YardBlock", b =>
@@ -1047,6 +1320,16 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_delivery_order_items_delivery_orders_delivery_order_id");
                 });
 
+            modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.GateTransactionChange", b =>
+                {
+                    b.HasOne("SnpDepotManagement.Domain.Entities.Operations.GateTransaction", null)
+                        .WithMany("Changes")
+                        .HasForeignKey("TransactionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_gate_transaction_changes_gate_transactions_transaction_id");
+                });
+
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Yard.YardSlot", b =>
                 {
                     b.HasOne("SnpDepotManagement.Domain.Entities.Yard.YardBlock", null)
@@ -1101,6 +1384,11 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.DeliveryOrder", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Operations.GateTransaction", b =>
+                {
+                    b.Navigation("Changes");
                 });
 
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Yard.YardBlock", b =>

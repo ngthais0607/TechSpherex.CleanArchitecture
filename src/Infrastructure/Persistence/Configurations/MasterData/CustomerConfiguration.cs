@@ -12,15 +12,24 @@ public sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
 
         builder.HasKey(c => c.Id);
 
+        builder.Property(c => c.TenantId)
+            .HasMaxLength(64)
+            .IsRequired()
+            .HasDefaultValue(string.Empty);
+
         builder.Property(c => c.TaxCode)
             .HasMaxLength(13)
             .IsRequired();
 
-        builder.HasIndex(c => c.TaxCode)
+        builder.HasIndex(c => new { c.TenantId, c.TaxCode })
             .IsUnique();
 
         builder.Property(c => c.Name)
             .HasMaxLength(255)
+            .IsRequired();
+
+        builder.Property(c => c.IsActive)
+            .HasDefaultValue(true)
             .IsRequired();
 
         builder.Property(c => c.CreatedBy)

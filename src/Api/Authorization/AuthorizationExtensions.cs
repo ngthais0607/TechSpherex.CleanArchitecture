@@ -21,5 +21,6 @@ public static class AuthorizationExtensions
         Policy(Policies.ManageGate, Roles.Admin, Roles.GateClerk);
         Policy(Policies.ReadReports, Roles.All.ToArray());
         Policy(Policies.ReadExpiringOrders, Roles.Admin, Roles.OrderClerk, Roles.GateClerk);
+        Policy(Policies.AuthenticatedUser, Roles.All.ToArray());
     });
 }
