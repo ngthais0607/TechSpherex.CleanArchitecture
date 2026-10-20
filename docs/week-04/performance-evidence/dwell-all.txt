@@ -7,28 +7,28 @@ INNER JOIN (
     WHERE c0.tenant_id = @__ef_filter__p_0
 ) AS c1 ON c.container_id = c1.id
 WHERE c.tenant_id = @__ef_filter__p_0
-Aggregate  (cost=1356.75..1356.76 rows=1 width=4) (actual time=16.475..16.479 rows=1 loops=1)
+Aggregate  (cost=1356.75..1356.76 rows=1 width=4) (actual time=39.814..39.818 rows=1 loops=1)
   Buffers: shared hit=693
-  ->  Hash Join  (cost=683.00..1344.25 rows=5000 width=0) (actual time=7.008..15.398 rows=10000 loops=1)
+  ->  Hash Join  (cost=683.00..1344.25 rows=5000 width=0) (actual time=23.194..37.993 rows=10000 loops=1)
         Hash Cond: (c.container_id = c0.id)
         Buffers: shared hit=693
-        ->  Seq Scan on container_lifecycles c  (cost=0.00..635.00 rows=10000 width=16) (actual time=0.027..4.673 rows=10000 loops=1)
+        ->  Seq Scan on container_lifecycles c  (cost=0.00..635.00 rows=10000 width=16) (actual time=0.016..8.471 rows=10000 loops=1)
               Filter: ((tenant_id)::text = 'DEPOT-A'::text)
               Rows Removed by Filter: 10000
               Buffers: shared hit=385
-        ->  Hash  (cost=558.00..558.00 rows=10000 width=16) (actual time=6.796..6.798 rows=10000 loops=1)
+        ->  Hash  (cost=558.00..558.00 rows=10000 width=16) (actual time=23.033..23.035 rows=10000 loops=1)
               Buckets: 16384  Batches: 1  Memory Usage: 597kB
               Buffers: shared hit=308
-              ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=16) (actual time=0.015..3.809 rows=10000 loops=1)
+              ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=16) (actual time=0.006..16.768 rows=10000 loops=1)
                     Filter: ((tenant_id)::text = 'DEPOT-A'::text)
                     Rows Removed by Filter: 10000
                     Buffers: shared hit=308
 Planning:
-  Buffers: shared hit=12
-Planning Time: 0.733 ms
-Execution Time: 16.965 ms
+  Buffers: shared hit=38
+Planning Time: 1.634 ms
+Execution Time: 40.383 ms
 
--- Parameters: [{"Name":"@__asOf_0","Type":"TimestampTz","Value":"2026-10-16T06:50:43.371239Z"},{"Name":"@__offset_1","Type":"Interval","Value":"07:00:00"},{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__p_3","Type":"Integer","Value":20},{"Name":"@__p_2","Type":"Integer","Value":0}]
+-- Parameters: [{"Name":"@__asOf_0","Type":"TimestampTz","Value":"2026-10-16T13:54:44.1436855Z"},{"Name":"@__offset_1","Type":"Interval","Value":"07:00:00"},{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__p_3","Type":"Integer","Value":20},{"Name":"@__p_2","Type":"Integer","Value":0}]
 SELECT c.id, c.container_id, c1.container_number, c.line_operator, c.in_date, c.out_date, floor(date_part('day', date_trunc('day', COALESCE(c.out_date, @__asOf_0) + @__offset_1, 'UTC') - date_trunc('day', c.in_date + @__offset_1, 'UTC')))::int
 FROM container_lifecycles AS c
 INNER JOIN (
@@ -39,28 +39,28 @@ INNER JOIN (
 WHERE c.tenant_id = @__ef_filter__p_0
 ORDER BY floor(date_part('day', date_trunc('day', COALESCE(c.out_date, @__asOf_0) + @__offset_1, 'UTC') - date_trunc('day', c.in_date + @__offset_1, 'UTC')))::int DESC, c.id
 LIMIT @__p_3 OFFSET @__p_2
-Limit  (cost=1577.30..1577.35 rows=20 width=68) (actual time=43.480..43.488 rows=20 loops=1)
+Limit  (cost=1577.30..1577.35 rows=20 width=68) (actual time=66.333..66.348 rows=20 loops=1)
   Buffers: shared hit=693
-  ->  Sort  (cost=1577.30..1589.80 rows=5000 width=68) (actual time=43.478..43.483 rows=20 loops=1)
-        Sort Key: ((floor(date_part('day'::text, (date_trunc('day'::text, (COALESCE(c.out_date, '2026-10-16 06:50:43.371239+00'::timestamp with time zone) + '07:00:00'::interval), 'UTC'::text) - date_trunc('day'::text, (c.in_date + '07:00:00'::interval), 'UTC'::text)))))::integer) DESC, c.id
+  ->  Sort  (cost=1577.30..1589.80 rows=5000 width=68) (actual time=66.331..66.338 rows=20 loops=1)
+        Sort Key: ((floor(date_part('day'::text, (date_trunc('day'::text, (COALESCE(c.out_date, '2026-10-16 13:54:44.143685+00'::timestamp with time zone) + '07:00:00'::interval), 'UTC'::text) - date_trunc('day'::text, (c.in_date + '07:00:00'::interval), 'UTC'::text)))))::integer) DESC, c.id
         Sort Method: top-N heapsort  Memory: 30kB
         Buffers: shared hit=693
-        ->  Hash Join  (cost=683.00..1444.25 rows=5000 width=68) (actual time=9.120..38.605 rows=10000 loops=1)
+        ->  Hash Join  (cost=683.00..1444.25 rows=5000 width=68) (actual time=9.963..59.087 rows=10000 loops=1)
               Hash Cond: (c.container_id = c0.id)
               Buffers: shared hit=693
-              ->  Seq Scan on container_lifecycles c  (cost=0.00..635.00 rows=10000 width=52) (actual time=0.016..6.552 rows=10000 loops=1)
+              ->  Seq Scan on container_lifecycles c  (cost=0.00..635.00 rows=10000 width=52) (actual time=0.014..11.464 rows=10000 loops=1)
                     Filter: ((tenant_id)::text = 'DEPOT-A'::text)
                     Rows Removed by Filter: 10000
                     Buffers: shared hit=385
-              ->  Hash  (cost=558.00..558.00 rows=10000 width=28) (actual time=8.702..8.704 rows=10000 loops=1)
+              ->  Hash  (cost=558.00..558.00 rows=10000 width=28) (actual time=9.424..9.426 rows=10000 loops=1)
                     Buckets: 16384  Batches: 1  Memory Usage: 714kB
                     Buffers: shared hit=308
-                    ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=28) (actual time=0.020..4.542 rows=10000 loops=1)
+                    ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=28) (actual time=0.018..4.706 rows=10000 loops=1)
                           Filter: ((tenant_id)::text = 'DEPOT-A'::text)
                           Rows Removed by Filter: 10000
                           Buffers: shared hit=308
 Planning:
-  Buffers: shared hit=22
-Planning Time: 0.971 ms
-Execution Time: 44.066 ms
+  Buffers: shared hit=31
+Planning Time: 1.289 ms
+Execution Time: 67.296 ms
 

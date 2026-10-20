@@ -1,0 +1,482 @@
+[
+  {
+    "path": "/api/auth/login",
+    "methods": [
+      "POST"
+    ],
+    "name": "Login",
+    "tags": [
+      "Authentication"
+    ],
+    "policies": [],
+    "anonymous": true
+  },
+  {
+    "path": "/api/auth/refresh",
+    "methods": [
+      "POST"
+    ],
+    "name": "RefreshToken",
+    "tags": [
+      "Authentication"
+    ],
+    "policies": [],
+    "anonymous": true
+  },
+  {
+    "path": "/api/auth/register",
+    "methods": [
+      "POST"
+    ],
+    "name": "Register",
+    "tags": [
+      "Authentication"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/containers/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetContainers",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "ReadContainers"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/containers/",
+    "methods": [
+      "POST"
+    ],
+    "name": "RegisterContainer",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "RegisterContainer"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/containers/by-number/{number}",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetContainerByNumber",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "ReadContainers"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/containers/{id:guid}/damage",
+    "methods": [
+      "POST"
+    ],
+    "name": "MarkContainerDamaged",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/customers/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetCustomers",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/customers/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateCustomer",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/delivery-orders/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetDeliveryOrders",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ReadDeliveryOrders"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/delivery-orders/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateDeliveryOrder",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ManageDeliveryOrders"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/delivery-orders/by-number/{number}",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetDeliveryOrderByOrderNumber",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ReadDeliveryOrders"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/delivery-orders/{id:guid}",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetDeliveryOrderById",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ReadDeliveryOrders"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/gate/in",
+    "methods": [
+      "POST"
+    ],
+    "name": "GateInContainer",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/gate/out",
+    "methods": [
+      "POST"
+    ],
+    "name": "GateOutContainer",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/line-operators/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetLineOperators",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/line-operators/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateLineOperator",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/reports/containers/{number}/history",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetContainerHistory",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/reports/dwell-times",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetDwellTimes",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/reports/expiring-orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetExpiringOrders",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadExpiringOrders"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/reports/yard-inventory",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetYardInventory",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/vehicles/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetVehicles",
+    "tags": [
+      "Vehicles"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/vehicles/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateVehicle",
+    "tags": [
+      "Vehicles"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/voyages/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetVoyages",
+    "tags": [
+      "Voyages"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/voyages/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateVoyage",
+    "tags": [
+      "Voyages"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/blocks",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateYardBlock",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/blocks/{id:guid}/expand",
+    "methods": [
+      "POST"
+    ],
+    "name": "ExpandYardBlock",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/blocks/{id:guid}/layout",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetYardLayout",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/blocks/{id:guid}/shrink",
+    "methods": [
+      "POST"
+    ],
+    "name": "ShrinkYardBlock",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/free-slots",
+    "methods": [
+      "GET"
+    ],
+    "name": "FindFreeSlots",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/placements",
+    "methods": [
+      "POST"
+    ],
+    "name": "PlaceContainer",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/relocations",
+    "methods": [
+      "POST"
+    ],
+    "name": "RelocateContainer",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/api/yard/removals",
+    "methods": [
+      "POST"
+    ],
+    "name": "RemoveContainer",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false
+  },
+  {
+    "path": "/health/live",
+    "methods": null,
+    "name": "Liveness",
+    "tags": [
+      "Health"
+    ],
+    "policies": [],
+    "anonymous": true
+  },
+  {
+    "path": "/health/ready",
+    "methods": null,
+    "name": "Readiness",
+    "tags": [
+      "Health"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false
+  }
+]

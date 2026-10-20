@@ -16,7 +16,7 @@ public sealed class CreateDeliveryOrderCommandValidator : AbstractValidator<Crea
 
         RuleFor(x => x.CustomerTaxCode)
             .NotEmpty().WithMessage("Customer tax code is required.")
-            .MaximumLength(20).WithMessage("Customer tax code cannot exceed 20 characters.");
+            .MaximumLength(13).WithMessage("Customer tax code cannot exceed 13 characters.");
 
         RuleFor(x => x.CustomerName)
             .NotEmpty().WithMessage("Customer name is required.")

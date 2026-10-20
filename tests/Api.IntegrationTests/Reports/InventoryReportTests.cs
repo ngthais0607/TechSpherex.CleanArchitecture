@@ -26,7 +26,7 @@ public sealed class InventoryReportTests(ApiFactory factory)
             var container = OperationScenario.NewContainer(owner, tenant, i == 0 ? ContainerSize.Ft40 : ContainerSize.Ft20);
             db.Containers.Add(container);
             var slot = block.Slots.First(s => s.Bay == (i == 0 ? 1 : 5) && s.Tier == 1);
-            var lifecycle = ContainerLifecycle.GateIn(container.Id, owner, Classification.A, ContainerCondition.Normal, "TRUCK", slot.Id, DateTime.UtcNow, tenant);
+            var lifecycle = ContainerLifecycle.GateIn(container.Id, owner, Classification.A, i == 2 ? ContainerCondition.Damaged : ContainerCondition.Normal, "TRUCK", slot.Id, DateTime.UtcNow, tenant);
             if (i == 0) foreach (var x in block.Slots.Where(s => s.Tier == 1 && s.Bay < 5)) x.Occupy(container.Id);
             else if (i == 1) slot.Occupy(container.Id);
             else lifecycle.SetCurrentSlot(null);
@@ -44,6 +44,7 @@ public sealed class InventoryReportTests(ApiFactory factory)
         var all = await client.GetFromJsonAsync<JsonElement>($"/api/reports/yard-inventory?lineOperator={owner}", ct);
         var groups = all.GetProperty("groups").GetProperty("items").EnumerateArray().ToArray();
         Assert.Equal(1, groups.Single(g => g.GetProperty("blockId").ValueKind == JsonValueKind.Null).GetProperty("containerCount").GetInt32());
+        Assert.Equal((int)ContainerCondition.Damaged, groups.Single(g => g.GetProperty("blockId").ValueKind == JsonValueKind.Null).GetProperty("condition").GetInt32());
         Assert.Equal(1, groups.Single(g => g.GetProperty("size").GetInt32() == 40).GetProperty("containerCount").GetInt32());
         var filtered = await client.GetFromJsonAsync<JsonElement>($"/api/reports/yard-inventory?lineOperator={owner}&blockId={block.Id}&size=40", ct);
         Assert.Equal(1, filtered.GetProperty("totalContainers").GetInt32());

@@ -77,6 +77,26 @@ public class AppDbContext : DbContext, IAppDbContext
         var currentUserId = _currentUser.UserId?.ToString();
         var utcNow = _timeProvider.GetUtcNow().UtcDateTime;
 
+        // Occupancy/support and quota/completion are aggregate invariants. Every child write
+        // also updates the parent read by the handler, so its xmin protects disjoint children.
+        // The parent update shares the same SaveChanges transaction as slots/items/history.
+        var changedBlocks = ChangeTracker.Entries<YardSlot>()
+            .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            .Select(e => e.Entity.BlockId).ToHashSet();
+        foreach (var block in ChangeTracker.Entries<YardBlock>().Where(e => changedBlocks.Contains(e.Entity.Id) && e.State != EntityState.Added))
+        {
+            block.Property(b => b.LastModifiedAt).CurrentValue = utcNow;
+            block.Property(b => b.LastModifiedAt).IsModified = true;
+        }
+        var changedOrders = ChangeTracker.Entries<DeliveryOrderItem>()
+            .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            .Select(e => e.Entity.DeliveryOrderId).ToHashSet();
+        foreach (var order in ChangeTracker.Entries<DeliveryOrder>().Where(e => changedOrders.Contains(e.Entity.Id) && e.State != EntityState.Added))
+        {
+            order.Property(o => o.LastModifiedAt).CurrentValue = utcNow;
+            order.Property(o => o.LastModifiedAt).IsModified = true;
+        }
+
         foreach (var entry in ChangeTracker.Entries())
         {
             if ((entry.Entity is ContainerMovement or MovementPosition) && entry.State is EntityState.Modified or EntityState.Deleted)

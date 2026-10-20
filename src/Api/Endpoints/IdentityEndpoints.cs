@@ -49,7 +49,7 @@ public static class IdentityEndpoints
             CancellationToken cancellationToken) =>
         {
             var result = await handler.Handle(command, cancellationToken);
-            return result.ToHttpResult(id => Results.Created($"/api/auth/users/{id}", new { userId = id }));
+            return result.ToHttpResult(id => Results.Json(new { userId = id }, statusCode: StatusCodes.Status201Created));
         })
         .WithName("Register")
         .WithSummary("Register a new user in the system")

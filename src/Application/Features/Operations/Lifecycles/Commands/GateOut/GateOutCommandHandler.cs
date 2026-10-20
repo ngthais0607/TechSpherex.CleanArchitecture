@@ -75,11 +75,16 @@ public sealed class GateOutCommandHandler : ICommandHandler<GateOutCommand>
             return Result.Failure(ruleResult.Error!);
         }
 
-        var occupiedSlots = await _context.YardSlots.Where(s => s.ContainerId == command.ContainerId).ToListAsync(cancellationToken);
+        var occupiedBlockIds = await _context.YardSlots.Where(s => s.ContainerId == command.ContainerId)
+            .Select(s => s.BlockId).Distinct().ToListAsync(cancellationToken);
+        // Read the block concurrency token together with occupancy BEFORE checking support.
+        var occupiedBlocks = await _context.YardBlocks.Include(b => b.Slots)
+            .Where(b => occupiedBlockIds.Contains(b.Id)).ToListAsync(cancellationToken);
+        var occupiedSlots = occupiedBlocks.SelectMany(b => b.Slots).Where(s => s.ContainerId == command.ContainerId).ToList();
         foreach (var occupied in occupiedSlots)
         {
-            var hasContainerAbove = await _context.YardSlots.AnyAsync(s => s.BlockId == occupied.BlockId &&
-                s.Position.Bay == occupied.Bay && s.Position.Row == occupied.Row && s.Position.Tier > occupied.Tier && s.IsOccupied, cancellationToken);
+            var hasContainerAbove = occupiedBlocks.Single(b => b.Id == occupied.BlockId).Slots.Any(s =>
+                s.Bay == occupied.Bay && s.Row == occupied.Row && s.Tier > occupied.Tier && s.IsOccupied);
             if (hasContainerAbove)
                 return Result.Failure(Error.Conflict("YardSlot.CannotRemoveWithContainersAbove", "Containers above must be relocated before gate-out."));
         }
@@ -106,7 +111,7 @@ public sealed class GateOutCommandHandler : ICommandHandler<GateOutCommand>
         var source = occupiedSlots.OrderBy(s => s.Bay).FirstOrDefault();
         if (source is not null)
         {
-            var block = await _context.YardBlocks.FirstAsync(b => b.Id == source.BlockId, cancellationToken);
+            var block = occupiedBlocks.Single(b => b.Id == source.BlockId);
             var bay = container.Size == ContainerSize.Ft40 ? source.Bay + 1 : source.Bay;
             sourcePosition = MovementHistory.Position(block, bay, source.Row, source.Tier);
         }

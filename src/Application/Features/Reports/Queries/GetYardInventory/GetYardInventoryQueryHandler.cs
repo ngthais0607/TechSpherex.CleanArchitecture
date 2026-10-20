@@ -21,7 +21,7 @@ public sealed class GetYardInventoryQueryHandler(IAppDbContext db) : IQueryHandl
                    join block in db.YardBlocks.AsNoTracking() on position.BlockId equals block.Id into blocks
                    from block in blocks.DefaultIfEmpty()
                    where lifecycle.Status == LifecycleStatus.InYard && lifecycle.OutDate == null
-                   select new { lifecycle.LineOperator, container.Size, container.Type, container.Condition,
+                   select new { lifecycle.LineOperator, container.Size, container.Type, lifecycle.Condition,
                        BlockId = (Guid?)block.Id, BlockCode = (string?)block.Code };
         if (!string.IsNullOrWhiteSpace(query.LineOperator)) rows = rows.Where(r => r.LineOperator == query.LineOperator.Trim().ToUpper());
         if (query.Size.HasValue) rows = rows.Where(r => r.Size == query.Size);

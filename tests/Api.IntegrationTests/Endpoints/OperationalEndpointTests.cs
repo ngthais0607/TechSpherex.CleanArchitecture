@@ -9,6 +9,39 @@ namespace SnpDepotManagement.Api.IntegrationTests.Endpoints;
 [Collection("Api")]
 public sealed class OperationalEndpointTests(ApiFactory factory)
 {
+    [Theory]
+    [InlineData(13, HttpStatusCode.Created)]
+    [InlineData(14, HttpStatusCode.BadRequest)]
+    public async Task DeliveryOrderTaxCodeRespectsStorageBoundary(int length, HttpStatusCode expected)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await ApiTestClient.LoginAsync(factory);
+        using var response = await client.PostAsJsonAsync("/api/delivery-orders", new
+        {
+            OrderNumber = "TAX" + Guid.NewGuid().ToString("N")[..8], LineOperator = "MSK", CustomerTaxCode = new string('1', length),
+            CustomerName = "Customer", OutboundVessel = "Vessel", ExpiryDate = DateTime.UtcNow.AddDays(7),
+            Items = new[] { new { Size = 20, Type = 85, Quantity = 1 } }
+        }, ct);
+        Assert.Equal(expected, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UserRegistrationDoesNotAdvertiseANonexistentResourceLocation()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await ApiTestClient.LoginAsync(factory);
+        var name = "location" + Guid.NewGuid().ToString("N")[..8];
+        using var created = await client.PostAsJsonAsync("/api/auth/register", new
+        { UserName = name, Email = name + "@example.test", FirstName = "Location", LastName = "Test", Password = ApiFactory.AdminPassword, Role = "GateClerk" }, ct);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        Assert.NotEqual(Guid.Empty, (await created.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("userId").GetGuid());
+        if (created.Headers.Location is { } location)
+        {
+            using var resource = await client.GetAsync(location, ct);
+            Assert.Equal(HttpStatusCode.OK, resource.StatusCode);
+        }
+    }
+
     [Fact]
     public async Task RegisteredContainerLocationResolvesToTheCreatedResource()
     {
