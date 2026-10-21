@@ -43,8 +43,8 @@ public static class MasterDataEndpoints
         // Helper to register line operator endpoints on a group
         void RegisterLineOperatorEndpoints(RouteGroupBuilder group, string suffix)
         {
-            group.MapGet("", async (PaginationRequest page, IQueryHandler<GetLineOperatorsQuery, PagedResult<LineOperatorDto>> handler, CancellationToken ct) =>
-                (await handler.Handle(new(page.PageIndex, page.PageSize), ct)).ToHttpResult())
+            group.MapGet("", async (PaginationRequest page, string? search, IQueryHandler<GetLineOperatorsQuery, PagedResult<LineOperatorDto>> handler, CancellationToken ct) =>
+                (await handler.Handle(new(page.PageIndex, page.PageSize, search), ct)).ToHttpResult())
                 .WithName($"GetLineOperators{suffix}").RequireAuthorization(Policies.ReadMasterData);
 
             group.MapPost("", async (CreateLineOperatorCommand command, ICommandHandler<CreateLineOperatorCommand, Guid> handler, CancellationToken ct) =>
@@ -79,8 +79,8 @@ public static class MasterDataEndpoints
         // Helper to register customer endpoints on a group
         void RegisterCustomerEndpoints(RouteGroupBuilder group, string suffix)
         {
-            group.MapGet("", async (PaginationRequest page, IQueryHandler<GetCustomersQuery, PagedResult<CustomerDto>> handler, CancellationToken ct) =>
-                (await handler.Handle(new(page.PageIndex, page.PageSize), ct)).ToHttpResult())
+            group.MapGet("", async (PaginationRequest page, string? search, IQueryHandler<GetCustomersQuery, PagedResult<CustomerDto>> handler, CancellationToken ct) =>
+                (await handler.Handle(new(page.PageIndex, page.PageSize, search), ct)).ToHttpResult())
                 .WithName($"GetCustomers{suffix}").RequireAuthorization(Policies.ReadMasterData);
 
             group.MapPost("", async (CreateCustomerCommand command, ICommandHandler<CreateCustomerCommand, Guid> handler, CancellationToken ct) =>

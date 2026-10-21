@@ -19,9 +19,14 @@ public sealed class GetLineOperatorsQueryHandler : IQueryHandler<GetLineOperator
     public async Task<Result<PagedResult<LineOperatorDto>>> Handle(GetLineOperatorsQuery query, CancellationToken cancellationToken = default)
     {
         var utcNow = DateTime.UtcNow;
-        var total = await _context.LineOperators.CountAsync(cancellationToken);
-        var operators = await _context.LineOperators
-            .AsNoTracking()
+        var source = _context.LineOperators.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim().ToUpperInvariant();
+            source = source.Where(l => l.Code.Contains(search) || l.Name.ToUpper().Contains(search));
+        }
+        var total = await source.CountAsync(cancellationToken);
+        var operators = await source
             .OrderBy(l => l.Code)
             .ThenBy(l => l.Id)
             .Skip((query.PageIndex - 1) * query.PageSize).Take(query.PageSize)

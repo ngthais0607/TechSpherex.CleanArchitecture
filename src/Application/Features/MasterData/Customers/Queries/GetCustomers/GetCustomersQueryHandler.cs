@@ -18,9 +18,14 @@ public sealed class GetCustomersQueryHandler : IQueryHandler<GetCustomersQuery, 
     public async Task<Result<PagedResult<CustomerDto>>> Handle(GetCustomersQuery query, CancellationToken cancellationToken = default)
     {
         var utcNow = DateTime.UtcNow;
-        var total = await _context.Customers.CountAsync(cancellationToken);
-        var customers = await _context.Customers
-            .AsNoTracking()
+        var source = _context.Customers.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim().ToUpperInvariant();
+            source = source.Where(c => c.Name.ToUpper().Contains(search) || c.TaxCode.Contains(search));
+        }
+        var total = await source.CountAsync(cancellationToken);
+        var customers = await source
             .OrderBy(c => c.Name)
             .ThenBy(c => c.Id)
             .Skip((query.PageIndex - 1) * query.PageSize).Take(query.PageSize)
