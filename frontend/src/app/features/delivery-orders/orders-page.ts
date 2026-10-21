@@ -1,236 +1,93 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TYPES, OrderInput, ContainerType, ContainerSize } from '../../core/models/entities';
-import { DemoRepository } from '../../demo/demo-repository';
-import {
-  assign,
-  createOrder,
-  eligible,
-  lineCounts,
-  release,
-} from '../../demo/commands/order-commands';
-import { dayKey } from '../../demo/rules/container-rules';
-import { Badge, DynamicForm, Field, Icon, Modal, Pagination } from '../../shared/ui';
+import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Badge, Modal, Pagination } from '../../shared/ui';
+import { AuthService } from '../../core/auth/auth-service';
+import { can } from '../../core/auth/permissions';
+import { ApiError } from '../../core/api/api-error';
+import { ReferenceData } from '../../core/api/reference-data';
+import { LookupsDto } from '../../core/api/lookups.dto';
+import { ContainerTypeCode } from '../../core/api/containers.dto';
+import { Notifications } from '../../core/notifications/notifications';
+import { MasterChoice, MasterPicker } from '../../core/presentation/master-picker';
+import { orderStatusLabels } from '../../core/presentation/container-labels';
+import { containerTypes } from '../containers/container.mapper';
+import { normalizeContainerNumber } from '../../core/presentation/container-number';
+import { OrdersFacade } from './orders-facade';
 @Component({
-  selector: 'app-orders',
-  imports: [FormsModule, DatePipe, RouterLink, Badge, DynamicForm, Icon, Modal, Pagination],
-  templateUrl: './orders-page.html',
+  selector: 'app-orders', imports: [FormsModule, DatePipe, Badge, Modal, Pagination, MasterPicker],
+  providers: [OrdersFacade], templateUrl: './orders-page.html',
 })
 export class OrdersPage {
-  store = inject(DemoRepository);
-  router = inject(Router);
-  route = inject(ActivatedRoute);
-  search = signal('');
-  status = signal('');
-  customer = signal('');
-  page = signal(1);
-  selected = signal('');
-  showCreate = signal(false);
-  showAssign = signal(false);
-  checks = signal<string[]>([]);
-  error = signal('');
-  errors = signal<Record<string, string>>({});
-  types = TYPES;
-  lines: { type: ContainerType; size: ContainerSize; quantity: number }[] = [
-    { type: 'Dry', size: 20, quantity: 1 },
-  ];
-  constructor() {
-    this.route.queryParamMap.subscribe((q) => {
-      this.selected.set(q.get('order') || '');
-      this.status.set(q.get('status') || '');
-      this.customer.set(q.get('customerId') || '');
+  readonly facade=inject(OrdersFacade);
+  readonly auth=inject(AuthService);
+  readonly router=inject(Router);
+  readonly route=inject(ActivatedRoute);
+  readonly notify=inject(Notifications);
+  readonly canManage=computed(()=>can('manageOrders',this.auth.user()?.roles??[]));
+  readonly lookups=signal<LookupsDto|null>(null);
+  readonly search=signal('');
+  readonly status=signal('');
+  readonly sort=signal('createdAt');
+  readonly selected=signal('');
+  readonly showCreate=signal(false);
+  readonly createError=signal('');
+  readonly selectedCustomer=signal<MasterChoice|null>(null);
+  readonly selectedOperator=signal<MasterChoice|null>(null);
+  readonly assignItem=signal('');
+  readonly candidateSearch=signal('');
+  readonly manualNumbers=signal('');
+  readonly types=containerTypes;
+  readonly statusLabels=orderStatusLabels;
+  readonly statuses=['Active','ExpiringSoon','Expired','FullyDelivered'];
+  createForm={orderNumber:'',expiryDate:'',outboundVessel:''};
+  lines:{size:'Ft20'|'Ft40';type:ContainerTypeCode;quantity:number}[]=[{size:'Ft20',type:'Dry',quantity:1}];
+  constructor(){
+    inject(ReferenceData).lookups().pipe(takeUntilDestroyed()).subscribe({next:value=>this.lookups.set(value),error:error=>this.notify.error(error.detail)});
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params=>{
+      const query=Object.fromEntries(params.keys.map(key=>[key,params.get(key)]));
+      this.facade.setQuery(query);
+      this.search.set(params.get('search')??'');this.status.set(params.get('status')??'');this.sort.set(params.get('sort')??'createdAt');
+      const id=params.get('order')??'';
+      if(id!==this.selected()){this.selected.set(id);this.facade.select(id);}
+      this.manualNumbers.set(params.get('container')??'');
     });
-  }
-  rows = computed(() =>
-    this.store.state().orders.filter((o) => {
-      const status = this.store.orderStatus(o.id);
-      return (
-        (!this.search() ||
-          `${o.number} ${this.store.customer(o.customerId)}`
-            .toLowerCase()
-            .includes(this.search().toLowerCase())) &&
-        (!this.customer() || o.customerId === this.customer()) &&
-        (!this.status() ||
-          (this.status() === 'active'
-            ? ['Còn hạn', 'Sắp hết hạn'].includes(status)
-            : status === this.status()))
-      );
-    }),
-  );
-  visible = computed(() => this.rows().slice((this.page() - 1) * 8, this.page() * 8));
-  detail = computed(() => this.store.state().orders.find((o) => o.id === this.selected()));
-  bookings = computed(() =>
-    this.store.state().bookings.filter((b) => b.orderId === this.selected()),
-  );
-  eligibleContainers = computed(() =>
-    this.store
-      .containers()
-      .filter((c) => eligible(this.store.state(), this.selected(), c.number, this.store.now()).ok),
-  );
-  count(status: string) {
-    return this.store
-      .state()
-      .orders.filter((o) =>
-        status === 'active'
-          ? ['Còn hạn', 'Sắp hết hạn'].includes(this.store.orderStatus(o.id))
-          : this.store.orderStatus(o.id) === status,
-      ).length;
-  }
-  total(id: string) {
-    return this.store
-      .state()
-      .orders.find((o) => o.id === id)!
-      .lines.reduce((n, l) => n + l.quantity, 0);
-  }
-  shippedToday() {
-    return this.store
-      .state()
-      .gateTransactions.filter(
-        (t) =>
-          t.direction === 'Out' &&
-          t.status === 'Active' &&
-          dayKey(new Date(t.at)) === dayKey(this.store.now()),
-      ).length;
-  }
-  taxCode(id: string) {
-    return this.store.state().customers.find((c) => c.id === id)?.taxCode;
-  }
-  container(number: string) {
-    return this.store.containers().find((c) => c.number === number);
-  }
-  shipped(id: string) {
-    return this.store.state().bookings.filter((b) => b.orderId === id && b.status === 'Shipped')
-      .length;
-  }
-  counts(id: string) {
-    return lineCounts(this.store.state(), id);
-  }
-  open(id: string) {
-    this.error.set('');
-    this.router.navigate([], { queryParams: { order: id }, queryParamsHandling: 'merge' });
-  }
-  close() {
-    this.router.navigate([], { queryParams: { order: null }, queryParamsHandling: 'merge' });
-  }
-  filter(s: string) {
-    this.status.set(this.status() === s ? '' : s);
-    this.page.set(1);
-    this.router.navigate([], {
-      queryParams: { status: this.status() || null },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
+    effect(()=>{
+      const order=this.facade.detail();
+      if(order&&!order.items.some(item=>item.id===this.assignItem()))this.assignItem.set(order.items[0]?.id??'');
     });
+    effect(()=>{const id=this.assignItem();if(id&&this.canManage())this.facade.loadCandidates(id,this.candidateSearch());});
   }
-  fields(): Field[] {
-    return [
-      { key: 'number', label: 'Số lệnh', required: true },
-      {
-        key: 'customerId',
-        label: 'Khách hàng',
-        required: true,
-        options: this.store
-          .state()
-          .customers.filter((c) => c.isActive)
-          .map((c) => ({ value: c.id, label: c.taxCode + ' – ' + c.name })),
-      },
-      {
-        key: 'operatorId',
-        label: 'Hãng khai thác',
-        required: true,
-        options: this.store
-          .state()
-          .operators.filter((o) => o.isActive)
-          .map((o) => ({ value: o.id, label: o.name })),
-      },
-      {
-        key: 'expiry',
-        label: 'Hạn lệnh',
-        type: 'date',
-        required: true,
-        hint: 'Ngày cuối container được phép giao.',
-      },
-      { key: 'voyage', label: 'Chuyến tàu xuất' },
-    ];
+  update():void{this.router.navigate([],{queryParams:{search:this.search()||null,status:this.status()||null,sort:this.sort(),pageIndex:1},queryParamsHandling:'merge',replaceUrl:true});}
+  next(pageIndex:number):void{this.router.navigate([],{queryParams:{pageIndex},queryParamsHandling:'merge',replaceUrl:true});}
+  open(id:string):void{this.router.navigate([],{queryParams:{order:id},queryParamsHandling:'merge'});}
+  close():void{this.router.navigate([],{queryParams:{order:null},queryParamsHandling:'merge'});}
+  toggle(number:string):void{this.facade.selectedNumbers.update(values=>values.includes(number)?values.filter(value=>value!==number):[...values,number]);}
+  assign():void{
+    const numbers=[...new Set([...this.facade.selectedNumbers(),...this.manualNumbers().split(/[\s,;]+/).map(normalizeContainerNumber).filter(Boolean)])];
+    if(!numbers.length||this.facade.pending())return;
+    this.facade.selectedNumbers.set(numbers);
+    this.facade.assign(numbers).subscribe({next:result=>{
+      this.manualNumbers.set(result.failedContainerNumbers.join('\n'));
+      if(result.failedContainerNumbers.length)this.notify.error(this.facade.message());else this.notify.success(this.facade.message());
+    },error:()=>{}});
   }
-  save(v: Record<string, unknown>) {
-    const r = this.store.run(
-      (s) =>
-        createOrder(
-          s,
-          {
-            ...v,
-            lines: this.lines.map((l) => ({
-              ...l,
-              size: Number(l.size),
-              quantity: Number(l.quantity),
-            })),
-          } as unknown as OrderInput,
-          this.store.now(),
-        ),
-      'Đã tạo lệnh giao.',
-    );
-    if (!r.ok) {
-      this.error.set(r.error.message);
-      this.errors.set(r.error.fields || {});
-    } else {
-      this.showCreate.set(false);
-      this.open(r.value);
-    }
+  release(id:string):void{if(!this.facade.pending())this.facade.release(id).subscribe({next:()=>this.notify.success('Đã giải phóng giữ chỗ.'),error:()=>{}});}
+  startCreate():void{this.createError.set('');this.showCreate.set(true);}
+  create():void{
+    const customer=this.selectedCustomer(),operator=this.selectedOperator();
+    if(!customer||!operator){this.createError.set('Vui lòng chọn khách hàng và hãng khai thác.');return;}
+    if(this.facade.pending())return;
+    this.facade.create({orderNumber:this.createForm.orderNumber.trim(),customerTaxCode:customer.code,customerName:customer.name,lineOperator:operator.code,
+      expiryDate:this.createForm.expiryDate+'T00:00:00Z',outboundVessel:this.createForm.outboundVessel.trim(),
+      items:this.lines.map(line=>({...line,quantity:Number(line.quantity)}))}).subscribe({
+        next:result=>{this.showCreate.set(false);this.notify.success('Đã tạo lệnh giao trên máy chủ.');this.open(result.id);},
+        error:(error:ApiError)=>this.createError.set(error.detail),
+      });
   }
-  startCreate() {
-    this.lines = [{ type: 'Dry', size: 20, quantity: 1 }];
-    this.error.set('');
-    this.errors.set({});
-    this.showCreate.set(true);
-  }
-  toggle(number: string) {
-    this.checks.update((a) =>
-      a.includes(number) ? a.filter((n) => n !== number) : [...a, number],
-    );
-  }
-  full(number: string) {
-    const c = this.store.containers().find((c) => c.number === number)!,
-      o = this.detail()!;
-    const line = o.lines.find((l) => l.type === c.type && l.size === c.size)!;
-    const chosen = this.checks().filter((n) => {
-      const c = this.store.containers().find((c) => c.number === n)!;
-      return c.type === line.type && c.size === line.size;
-    }).length;
-    return !this.checks().includes(number) && chosen >= this.counts(line.id).remaining;
-  }
-  assignSelected() {
-    const r = this.store.run(
-      (s) => assign(s, this.selected(), this.checks(), this.store.now()),
-      'Đã gán container vào lệnh.',
-    );
-    if (!r.ok) this.error.set(r.error.message);
-    else {
-      this.showAssign.set(false);
-      this.checks.set([]);
-    }
-  }
-  unassign(id: string) {
-    if (confirm('Gỡ container khỏi lệnh? Lịch sử đặt chỗ vẫn được giữ.')) {
-      const r = this.store.run((s) => release(s, id, this.store.now()), 'Đã gỡ đặt chỗ.');
-      if (!r.ok) this.error.set(r.error.message);
-    }
-  }
-  bookingLabel(s: string) {
-    return (
-      {
-        Reserved: 'Đang giữ chỗ',
-        Shipped: 'Đã xuất',
-        Cancelled: 'Đã hủy',
-        Expired: 'Hết hạn',
-      } as Record<string, string>
-    )[s];
-  }
-  cancelCreate(dirty: boolean) {
-    if (!dirty || confirm('Bỏ các thay đổi chưa lưu?')) this.showCreate.set(false);
-  }
-  linesChanged() {
-    return JSON.stringify(this.lines) !== JSON.stringify([{ type: 'Dry', size: 20, quantity: 1 }]);
-  }
+  count(itemId:string){return this.facade.bookings()?.itemCounts.find(item=>item.itemId===itemId);}
+  candidatesNext(pageIndex:number):void{this.facade.loadCandidates(this.assignItem(),this.candidateSearch(),pageIndex);}
 }
+
