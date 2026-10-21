@@ -1,7 +1,7 @@
 # Thiết kế sửa kết nối Angular – .NET và dữ liệu mẫu
 
 Ngày: 21/10/2026.
-Trạng thái: dự thảo chờ người dùng duyệt bản viết; chưa cho phép triển khai.
+Trạng thái: người dùng đã duyệt bản viết và yêu cầu bổ sung tài liệu ngày 21/10/2026; đang lập kế hoạch, chưa triển khai.
 
 ## 1. Mục tiêu và cơ sở quyết định
 
@@ -74,10 +74,12 @@ Tạo `yard`, `order`, `gate` cùng tenant, role tương ứng bằng API domain
 | 15–19 | MSC, 20ft Reefer, trong VB-01 | 15–16 Reserved cho DO-003 sắp hết hạn |
 | 20–22 | MSC, 20ft Dry, đã xuất | Shipped đúng 3 cho DO-005; đơn hoàn tất |
 | 23–34 | 20ft Dry, chưa nhập | Hãng được khai báo rõ trong manifest; dùng test gate-in |
-| 35–36 | MAEU, 40ft Dry, chưa nhập | Reserved cho DO-002; test nhập rồi xuất |
+| 35–36 | MAEU, 40ft Dry, chưa nhập | Chưa Reserved; test nhập → gán DO-002 → xuất |
 | 37–49 | MAEU, 40ft Dry, chưa nhập | Dữ liệu nền |
 
 DO-001 có 5 suất, DO-002 có 4, DO-003 có 3, DO-004 có 4, DO-005 có 3. Ngày dựng theo TimeProvider: đơn sắp hết hạn +2 ngày, đơn hết hạn -5 ngày, lịch sử reservation của đơn hết hạn phải trước hạn. Thời điểm gate-in/place/gate-out, booking và transaction phải theo thứ tự; không dùng ngày hiện tại mặc định của factory để giả lịch sử quá khứ.
+
+Hiệu chỉnh khi lập kế hoạch: `AssignContainersToOrderCommandHandler` hiện trả `Lifecycle.NotInYard` cho container chưa nhập. Vì vậy 35–36 không seed Reserved trước gate-in; không thay đổi rule này. Bổ sung API đọc booking của lệnh để FE gỡ bằng booking ID thật. Hai chi tiết này được trình duyệt cùng kế hoạch triển khai.
 
 Seed phải có movement và gate-in cho mọi lifecycle, gate-out cho lifecycle đã xuất, vị trí physical/virtual tương ứng và booking Shipped đúng đơn. Chọn slot theo rule hỗ trợ tầng/footprint, không lấy 15 ô đầu theo thứ tự rồi mặc định hợp lệ. Dữ liệu hết hạn biểu diễn lịch sử hợp lệ, không nới rule command vận hành để tạo nó.
 
