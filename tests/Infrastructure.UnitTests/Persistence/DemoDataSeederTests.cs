@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Hosting;
 using NSubstitute;
 using SnpDepotManagement.Application.Abstractions.Identity;
 using SnpDepotManagement.Application.Abstractions.Tenancy;
@@ -21,7 +22,8 @@ public sealed class DemoDataSeederTests
             TimeProvider.System, Substitute.For<ICurrentUser>());
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
             { ["Seed:DemoData"] = "false" }).Build();
-        await new DemoDataSeeder(context, config, NullLogger<DemoDataSeeder>.Instance)
+        await new DemoDataSeeder(context, config, NullLogger<DemoDataSeeder>.Instance,
+                Substitute.For<IHostEnvironment>(), Substitute.For<IPasswordHasher>(), TimeProvider.System)
             .SeedAsync(TestContext.Current.CancellationToken);
         Assert.Empty(await context.Containers.IgnoreQueryFilters().ToListAsync(TestContext.Current.CancellationToken));
     }

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
+using SnpDepotManagement.Application.Abstractions.Identity;
 
 namespace SnpDepotManagement.Infrastructure.Persistence.Seed;
 
@@ -12,20 +14,23 @@ public interface IDemoDataSeeder
 public sealed class DemoDataSeeder(
     AppDbContext context,
     IConfiguration configuration,
-    ILogger<DemoDataSeeder> logger) : IDemoDataSeeder
+    ILogger<DemoDataSeeder> logger,
+    IHostEnvironment environment,
+    IPasswordHasher passwordHasher,
+    TimeProvider timeProvider) : IDemoDataSeeder
 {
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         if (!configuration.GetValue<bool>("Seed:DemoData")) return;
-        var tenant = configuration["Admin:TenantId"] ?? "DEPOT-A";
-        if (await context.YardBlocks.IgnoreQueryFilters().AnyAsync(block => block.TenantId == tenant, cancellationToken))
+        if (!environment.IsDevelopment())
         {
-            logger.LogInformation("Demo data already exists for tenant {TenantId}, skipping.", tenant);
+            logger.LogInformation("Skipping demo seed outside Development.");
             return;
         }
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-        await DemoDatasetWriter.WriteAsync(context, tenant, DateTime.UtcNow, cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        logger.LogInformation("Seeded demo dataset {DatasetVersion} for tenant {TenantId}.", DemoDataset.Version, tenant);
+        var tenant = configuration["Admin:TenantId"]?.Trim();
+        if (string.IsNullOrWhiteSpace(tenant))
+            throw new InvalidOperationException("Admin:TenantId must be configured before demo seeding.");
+        await new DemoSeedCoordinator(context, configuration, passwordHasher, timeProvider).RunAsync(tenant, cancellationToken);
+        logger.LogInformation("Demo dataset {DatasetVersion} is ready for tenant {TenantId}.", DemoDataset.Version, tenant);
     }
 }

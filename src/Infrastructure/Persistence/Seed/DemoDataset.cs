@@ -22,10 +22,10 @@ public static class DemoDataset
 {
     public const string Version = "fe-be-v1";
     public static IReadOnlyList<DemoContainerSpec> Containers { get; } = Build();
-    public static readonly string[] OrderNumbers =
+    public static readonly IReadOnlyList<string> OrderNumbers =
         ["DO-2026-001", "DO-2026-002", "DO-2026-003", "DO-2026-004", "DO-2026-005"];
-    public static readonly string[] BlockCodes = ["A", "B", "VB-01"];
-    public static readonly string[] CustomerTaxCodes = ["0102030405", "0109876543", "0105556667"];
+    public static readonly IReadOnlyList<string> BlockCodes = ["A", "B", "VB-01"];
+    public static readonly IReadOnlyList<string> CustomerTaxCodes = ["0102030405", "0109876543", "0105556667"];
 
     private static IReadOnlyList<DemoContainerSpec> Build()
     {

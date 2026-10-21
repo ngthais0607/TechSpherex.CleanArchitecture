@@ -2,7 +2,8 @@
 param(
     [ValidatePattern('^snp-integration-[a-z0-9-]+$')][string]$Project = 'snp-integration-dev',
     [ValidateRange(1024,65535)][int]$ApiPort = 15000,
-    [switch]$DemoData
+    [switch]$DemoData,
+    [ValidateRange(1,3)][int]$RestartCount = 1
 )
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
@@ -51,10 +52,22 @@ function WaitLive {
     throw 'API did not become live; inspect the isolated project logs.'
 }
 function VerifyApi {
-    $auth = Invoke-RestMethod "$url/api/auth/login" -Method Post -ContentType 'application/json' -Body (
-        @{userName=$settings.ADMIN_USERNAME; password=$settings.ADMIN_PASSWORD} | ConvertTo-Json
-    )
-    $headers = @{Authorization="Bearer $($auth.accessToken)"}
+    if ($null -eq $script:authHeaders) {
+        $auth = Invoke-RestMethod "$url/api/auth/login" -Method Post -ContentType 'application/json' -Body (
+            @{userName=$settings.ADMIN_USERNAME; password=$settings.ADMIN_PASSWORD} | ConvertTo-Json
+        )
+        $script:authHeaders = @{Authorization="Bearer $($auth.accessToken)"}
+        if ($DemoData) {
+            foreach ($account in @(@('yard','YardPlanner'), @('order','OrderClerk'), @('gate','GateClerk'))) {
+                $roleAuth = Invoke-RestMethod "$url/api/auth/login" -Method Post -ContentType 'application/json' -Body (
+                    @{userName=$account[0]; password=$settings.SEED_USER_PASSWORD} | ConvertTo-Json
+                )
+                $roleMe = Invoke-RestMethod "$url/api/auth/me" -Headers @{Authorization="Bearer $($roleAuth.accessToken)"}
+                if ($roleMe.roles -notcontains $account[1]) { throw "Unexpected role for demo user $($account[0])." }
+            }
+        }
+    }
+    $headers = $script:authHeaders
     $me = Invoke-RestMethod "$url/api/auth/me" -Headers $headers
     if ($me.tenantId -ne $settings.ADMIN_TENANT_ID) { throw 'Authenticated tenant does not match configuration.' }
     $page = Invoke-RestMethod "$url/api/containers/?pageSize=1" -Headers $headers
@@ -65,9 +78,11 @@ Compose -Arguments @('config','--quiet')
 Compose -Arguments @('up','-d','--build')
 WaitLive
 $before = VerifyApi
-Compose -Arguments @('restart','api')
-WaitLive
-$after = VerifyApi
-if ($after -ne $before) { throw 'Container count changed after restarting the API.' }
+for ($restart = 0; $restart -lt $RestartCount; $restart++) {
+    Compose -Arguments @('restart','api')
+    WaitLive
+    $after = VerifyApi
+    if ($after -ne $before) { throw 'Container count changed after restarting the API.' }
+}
 Write-Output "PASS: isolated $Project is live; login/me/database query and restart succeeded ($after containers)."
 Write-Output "Project remains running at $url; credentials stay in ignored $envFile."

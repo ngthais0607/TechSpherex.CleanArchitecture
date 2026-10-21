@@ -36,10 +36,25 @@ public sealed class AppDbSeeder : IAppDbSeeder
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
+        if (_context.Database.IsRelational())
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            await _context.Database.ExecuteSqlRawAsync(DemoSeedCoordinator.GlobalLockSql, cancellationToken);
+            await SeedBootstrapAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        else
+        {
+            await SeedBootstrapAsync(cancellationToken);
+        }
+        await _demoDataSeeder.SeedAsync(cancellationToken);
+    }
+
+    private async Task SeedBootstrapAsync(CancellationToken cancellationToken)
+    {
         await SeedDepotAsync(cancellationToken);
         await SeedRolesAsync(cancellationToken);
         await SeedAdminUserAsync(cancellationToken);
-        await _demoDataSeeder.SeedAsync(cancellationToken);
     }
 
     private async Task SeedDepotAsync(CancellationToken cancellationToken)
@@ -102,9 +117,11 @@ public sealed class AppDbSeeder : IAppDbSeeder
         var adminFirstName = _configuration["Admin:FirstName"] ?? "System";
         var adminLastName = _configuration["Admin:LastName"] ?? "Administrator";
 
-        var adminExists = await _context.Users.AnyAsync(u => u.UserName == adminUserName || u.Email == adminEmail, cancellationToken);
-        if (adminExists)
+        var existingAdmin = await _context.Users.FirstOrDefaultAsync(u => u.UserName == adminUserName || u.Email == adminEmail, cancellationToken);
+        if (existingAdmin is not null)
         {
+            if (existingAdmin.UserName != adminUserName || existingAdmin.TenantId != adminTenantId || existingAdmin.Role != "Admin")
+                throw new InvalidOperationException("Configured admin conflicts with an existing account; existing credentials and depot were not changed.");
             return;
         }
 

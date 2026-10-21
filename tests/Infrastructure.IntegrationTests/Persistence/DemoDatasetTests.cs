@@ -18,14 +18,11 @@ public sealed class DemoDatasetTests(PostgreSqlFixture fixture)
         const string tenant = "SEED-DATASET";
         var ct = TestContext.Current.CancellationToken;
         await using var db = fixture.CreateContext(tenant);
-        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        await using (var transaction = await db.Database.BeginTransactionAsync(ct))
         {
-            ["Admin:TenantId"] = tenant,
-            ["Seed:DemoData"] = "true",
-            ["Seed:UserPassword"] = "TestOnlyPassword!123"
-        }).Build();
-        var seeder = new DemoDataSeeder(db, config, NullLogger<DemoDataSeeder>.Instance);
-        await seeder.SeedAsync(ct);
+            await DemoDatasetWriter.WriteAsync(db, tenant, new DateTime(2026, 10, 21, 2, 0, 0, DateTimeKind.Utc), ct);
+            await transaction.CommitAsync(ct);
+        }
 
         var containers = await db.Containers.ToListAsync(ct);
         var lifecycles = await db.ContainerLifecycles.ToListAsync(ct);
