@@ -4,6 +4,7 @@ import vi from '@angular/common/locales/vi';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { errorInterceptor } from './core/api/error.interceptor';
+import { authInterceptor } from './core/auth/auth.interceptor';
 
 import { routes } from './app.routes';
 registerLocaleData(vi);
@@ -14,6 +15,6 @@ export const appConfig: ApplicationConfig = {
     { provide: DATE_PIPE_DEFAULT_OPTIONS, useValue: { timezone: '+0700' } },
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([errorInterceptor])),
+    provideHttpClient(withInterceptors([errorInterceptor, authInterceptor])),
   ],
 };
