@@ -113,7 +113,8 @@ app.UseStatusCodePages(async statusContext =>
 });
 app.UseCors();
 app.UseRateLimiter();
-if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("Transport:UseHttpsRedirection"))
+    app.UseHttpsRedirection();
 
 // Resolve tenant only after authentication and authorization; header cannot select a depot.
 app.UseAuthentication();
