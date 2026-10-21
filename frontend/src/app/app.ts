@@ -28,5 +28,9 @@ export class App {
       if (event instanceof NavigationEnd) this.pageTitle.set(this.items.find(item => event.urlAfterRedirects.startsWith(item.path))?.label ?? 'Tổng quan');
     });
   }
-  logout(): void { this.session.logout().subscribe(() => this.router.navigateByUrl('/login')); }
+  logout(): void {
+    const revoke = this.session.logout();
+    this.router.navigateByUrl('/login');
+    revoke.subscribe();
+  }
 }

@@ -1,194 +1,93 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Container, CONDITIONS, TYPES } from '../../core/models/entities';
-import { DemoRepository } from '../../demo/demo-repository';
-import { activeLife, normalizeNumber, register } from '../../demo/rules/container-rules';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Badge, DynamicForm, Field, Icon, Modal, Pagination } from '../../shared/ui';
+import { AuthService } from '../../core/auth/auth-service';
+import { can } from '../../core/auth/permissions';
+import { ReferenceData } from '../../core/api/reference-data';
+import { LookupsDto } from '../../core/api/lookups.dto';
+import { ApiError } from '../../core/api/api-error';
+import { Notifications } from '../../core/notifications/notifications';
+import { containerStatusLabels } from '../../core/presentation/container-labels';
 import { ContainerDetail } from './container-detail';
+import { ContainersFacade } from './containers-facade';
+import { containerConditions, containerTypes, registrationRequest } from './container.mapper';
 @Component({
-  selector: 'app-containers',
-  imports: [FormsModule, DatePipe, Badge, DynamicForm, Icon, Modal, Pagination, ContainerDetail],
-  templateUrl: './containers-page.html',
+  selector: 'app-containers', imports: [FormsModule, DatePipe, Badge, DynamicForm, Icon, Modal, Pagination, ContainerDetail],
+  providers: [ContainersFacade], templateUrl: './containers-page.html',
 })
 export class ContainersPage {
-  store = inject(DemoRepository);
-  router = inject(Router);
-  route = inject(ActivatedRoute);
-  types = TYPES;
-  conditions = CONDITIONS;
-  search = signal('');
-  type = signal('');
-  booking = signal('');
-  operator = signal('');
-  condition = signal('');
-  page = signal(1);
-  sort = signal('number');
-  showCreate = signal(false);
-  selected = signal('');
-  errors = signal<Record<string, string>>({});
-  error = signal('');
+  readonly facade = inject(ContainersFacade);
+  readonly router = inject(Router);
+  readonly route = inject(ActivatedRoute);
+  readonly auth = inject(AuthService);
+  readonly notify = inject(Notifications);
+  readonly reference = inject(ReferenceData);
+  readonly lookups = signal<LookupsDto | null>(null);
+  readonly canRegister = computed(() => can('registerContainer', this.auth.user()?.roles ?? []));
+  readonly types = containerTypes;
+  readonly conditions = containerConditions;
+  readonly search = signal('');
+  readonly type = signal('');
+  readonly booking = signal('');
+  readonly operator = signal('');
+  readonly condition = signal('');
+  readonly sort = signal('number');
+  readonly selected = signal('');
+  readonly showCreate = signal(false);
+  readonly errors = signal<Record<string, string>>({});
+  readonly error = signal('');
+  readonly statusLabels = containerStatusLabels;
+  readonly defaults = { type: 'Dry', size: 20, grade: 'A', condition: 'Normal', maxGrossWeight: 30480, tareWeight: 2200, manufactureMonth: '' };
   constructor() {
-    this.route.queryParamMap.subscribe((q) => {
-      this.search.set(q.get('search') || '');
-      this.type.set(TYPES.includes(q.get('type') as never) ? q.get('type')! : '');
-      this.page.set(Math.max(1, Number(q.get('page')) || 1));
-      this.selected.set(q.get('container') || '');
+    this.reference.lookups().pipe(takeUntilDestroyed()).subscribe({ next: value => this.lookups.set(value), error: error => this.notify.error(error.detail) });
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      this.facade.setQuery(Object.fromEntries(params.keys.map(key => [key, params.get(key)])));
+      const query = this.facade.query();
+      this.search.set(String(query['search'] ?? '')); this.type.set(String(query['type'] ?? ''));
+      this.booking.set(String(query['booking'] ?? '')); this.operator.set(String(query['lineOperator'] ?? ''));
+      this.condition.set(String(query['condition'] ?? '')); this.sort.set(String(query['sort'] ?? 'number'));
+      const number = params.get('container') ?? '';
+      if (number !== this.selected()) { this.selected.set(number); this.facade.select(number || null); }
+    });
+    effect(() => {
+      if (this.facade.detailError()?.status === 404) { this.notify.error('Container không còn tồn tại hoặc không thuộc depot hiện tại.'); this.close(); }
     });
   }
-  filtered = computed(() =>
-    this.store
-      .containers()
-      .filter(
-        (c) =>
-          (!this.search() ||
-            normalizeNumber(c.number).includes(normalizeNumber(this.search())) ||
-            c.iso.includes(this.search().toUpperCase())) &&
-          (!this.operator() || c.operatorId === this.operator()) &&
-          (!this.condition() || c.condition === this.condition()) &&
-          (!this.booking() ||
-            (this.booking() === 'assigned'
-              ? !!this.store.booking(c.number)
-              : !this.store.booking(c.number))),
-      ),
-  );
-  rows = computed(() =>
-    this.filtered()
-      .filter((c) => !this.type() || c.type === this.type())
-      .sort((a, b) =>
-        this.sort() === 'size' ? a.size - b.size : a.number.localeCompare(b.number),
-      ),
-  );
-  visible = computed(() => this.rows().slice((this.page() - 1) * 8, this.page() * 8));
-  count(t: string) {
-    return this.filtered().filter((c) => !t || c.type === t).length;
+  count(type: string): number { const summary = this.facade.summary(); return type ? summary?.byType[type] ?? 0 : summary?.total ?? 0; }
+  update(): void {
+    this.router.navigate([], { queryParams: { search: this.search() || null, type: this.type() || null,
+      booking: this.booking() || null, lineOperator: this.operator() || null, condition: this.condition() || null,
+      sort: this.sort(), pageIndex: 1, page: null }, queryParamsHandling: 'merge', replaceUrl: true });
   }
-  update() {
-    this.page.set(1);
-    this.router.navigate([], {
-      queryParams: { search: this.search() || null, type: this.type() || null, page: null },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-  }
-  open(number: string) {
-    this.router.navigate([], { queryParams: { container: number }, queryParamsHandling: 'merge' });
-  }
-  close() {
-    this.router.navigate([], { queryParams: { container: null }, queryParamsHandling: 'merge' });
-  }
-  next(p: number) {
-    this.page.set(p);
-    this.router.navigate([], {
-      queryParams: { page: p },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-  }
+  next(pageIndex: number): void { this.router.navigate([], { queryParams: { pageIndex, page: null }, queryParamsHandling: 'merge', replaceUrl: true }); }
+  open(number: string): void { this.router.navigate([], { queryParams: { container: number }, queryParamsHandling: 'merge' }); }
+  close(): void { this.router.navigate([], { queryParams: { container: null }, queryParamsHandling: 'merge' }); }
   fields(): Field[] {
+    const dictionary = this.lookups();
     return [
-      {
-        key: 'number',
-        label: 'Số container',
-        required: true,
-        section: 'Nhận dạng',
-        hint: '4 chữ cái + 7 chữ số, gồm số kiểm tra ISO 6346.',
-      },
-      {
-        key: 'ownerCode',
-        label: 'Chủ sở hữu',
-        readonly: true,
-        hint: 'Tự lấy từ 4 chữ đầu số container.',
-      },
-      {
-        key: 'type',
-        label: 'Loại container',
-        required: true,
-        options: TYPES.map((v) => ({ value: v, label: v })),
-      },
-      {
-        key: 'size',
-        label: 'Kích thước',
-        required: true,
-        options: [
-          { value: 20, label: '20ft' },
-          { value: 40, label: '40ft' },
-        ],
-      },
-      { key: 'iso', label: 'Mã ISO', required: true, hint: 'Ví dụ: 22G1 (20ft), 45G1 (40ft).' },
-      {
-        key: 'operatorId',
-        label: 'Hãng khai thác',
-        required: true,
-        options: this.store
-          .state()
-          .operators.filter((o) => o.isActive)
-          .map((o) => ({ value: o.id, label: o.name })),
-      },
-      {
-        key: 'grade',
-        label: 'Phân loại',
-        required: true,
-        section: 'Đặc tính',
-        options: ['A', 'B', 'C'].map((v) => ({ value: v, label: v })),
-      },
-      {
-        key: 'condition',
-        label: 'Tình trạng',
-        required: true,
-        options: CONDITIONS.map((v) => ({ value: v, label: v })),
-      },
-      {
-        key: 'maxWeight',
-        label: 'Trọng lượng tối đa (kg)',
-        type: 'number',
-        required: true,
-        min: 1,
-        section: 'Thông số kỹ thuật',
-      },
-      { key: 'tareWeight', label: 'Trọng lượng vỏ (kg)', type: 'number', required: true, min: 1 },
-      { key: 'manufactureMonth', label: 'Tháng sản xuất', type: 'month', required: true },
+      { key: 'number', label: 'Số container', required: true, section: 'Nhận dạng', hint: '4 chữ cái + 7 chữ số, gồm số kiểm tra ISO 6346.' },
+      { key: 'type', label: 'Loại container', required: true, options: this.types.map(value => ({ value, label: dictionary?.containerTypes[value] ?? value })) },
+      { key: 'size', label: 'Kích thước', required: true, options: [{value:20,label:'20ft'}, {value:40,label:'40ft'}] },
+      { key: 'isoCode', label: 'Mã ISO', required: true, hint: 'Ví dụ: 22G1 (20ft), 42G1 (40ft).' },
+      { key: 'grade', label: 'Phân loại', required: true, options: ['A','B','C'].map(value => ({value,label:dictionary?.classifications[value] ?? value})) },
+      { key: 'condition', label: 'Tình trạng', required: true, options: this.conditions.map(value => ({value,label:dictionary?.containerConditions[value] ?? value})) },
+      { key: 'maxGrossWeight', label: 'Trọng lượng tối đa (kg)', type:'number', required:true,min:1,section:'Thông số kỹ thuật' },
+      { key: 'tareWeight', label:'Trọng lượng vỏ (kg)',type:'number',required:true,min:1 },
+      { key: 'manufactureMonth',label:'Tháng sản xuất',type:'month' },
     ];
   }
-  defaults = {
-    type: 'Dry',
-    size: 20,
-    grade: 'A',
-    condition: 'Bình thường',
-    maxWeight: 30480,
-    tareWeight: 2200,
-    manufactureMonth: '2021-06',
-  };
-  closeDirty() {
-    if (confirm('Bỏ các thay đổi chưa lưu?')) this.showCreate.set(false);
-  }
-  save(value: Record<string, unknown>) {
-    const c = {
-      ...value,
-      size: Number(value['size']),
-      maxWeight: Number(value['maxWeight']),
-      tareWeight: Number(value['tareWeight']),
-    } as unknown as Container;
-    const r = this.store.run(
-      (s) => register(s, c, this.store.now()),
-      'Đã thêm container. Có thể ghi nhận nhập bãi.',
-    );
-    if (!r.ok) {
-      this.errors.set(r.error.fields || {});
-      this.error.set(r.error.message);
-    } else {
-      this.showCreate.set(false);
-      this.search.set('');
-      this.type.set('');
-      this.update();
-    }
-  }
-  entered(number: string) {
-    return activeLife(this.store.state(), number)?.inAt;
-  }
-  currentOrder(number: string) {
-    const b = this.store.booking(number);
-    return b ? this.store.state().orders.find((o) => o.id === b.orderId) : null;
+  save(value: Record<string, unknown>): void {
+    if (this.facade.pending() || !this.canRegister()) return;
+    this.error.set(''); this.errors.set({});
+    this.facade.register(registrationRequest(value)).subscribe({
+      next: () => { this.showCreate.set(false); this.notify.success('Đã đăng ký container trên máy chủ.'); },
+      error: (error: ApiError) => {
+        this.error.set(error.detail);
+        this.errors.set(Object.fromEntries(Object.entries(error.errors ?? {}).map(([key, messages]) => [key.charAt(0).toLowerCase()+key.slice(1),messages.join(' ')])));
+      },
+    });
   }
 }
