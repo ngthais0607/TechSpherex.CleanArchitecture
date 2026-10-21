@@ -147,7 +147,19 @@ Playwright có cấu hình API riêng và bootstrap xác định, không reuse n
 
 Nghiệm thu cuối: khởi động mới và khởi động lại thành công; 4 tài khoản đúng quyền; số nền seed khớp; history có gate-in/place/gate-out; token refresh đúng; các lệnh thành công tồn tại sau reload; không có request alias hoặc ghi snapshot local; build/test/E2E có kết quả mới và ghi rõ phần chưa chạy nếu môi trường thiếu.
 
-## 10. Rà soát thiết kế và bước tiếp theo
+## 10. README và dọn tài liệu sau khi hoàn tất tích hợp
+
+Yêu cầu bổ sung của người dùng: khi hoàn thành, viết/cập nhật README và dọn các Markdown quá cũ, giữ báo cáo mỗi ngày cùng tài liệu cần thiết. Công việc này là điều kiện bàn giao cuối, thực hiện sau khi tích hợp và kiểm thử; không xóa tài liệu ngay trong giai đoạn thiết kế.
+
+- README gốc là điểm bắt đầu: trạng thái thật của hệ thống, yêu cầu môi trường, cấu hình, cách chạy FE/BE, migrate/seed, tài khoản theo role (không chứa mật khẩu), lệnh kiểm thử và liên kết tài liệu còn hiệu lực. Bỏ tuyên bố sẵn sàng hoặc số test cũ nếu chưa còn đúng với kết quả bàn giao.
+- `frontend/README.md` chỉ giữ hướng dẫn riêng của Angular, cấu hình API/proxy, build/test/E2E và cách truy cập bản demo đã giữ; liên kết README gốc để tránh lặp hướng dẫn BE.
+- Giữ toàn bộ báo cáo hằng ngày, gồm `day-*.md` và báo cáo ngày có quy ước tên khác sau khi đọc nội dung xác nhận. Kết quả lịch sử giữ nguyên ngữ cảnh ngày, không biến thành kết quả kiểm thử hiện tại.
+- Giữ tài liệu còn phục vụ sử dụng/vận hành: API và ma trận quyền hiện hành, cấu hình, runbook/deploy/backup/migration, nghiệm thu và yêu cầu nghiệp vụ đang áp dụng. Giữ `AGENTS.md`, `SKILL.md` và tài liệu chỉ dẫn công cụ nếu có; không coi chúng là báo cáo cũ.
+- Giữ spec và plan của đợt tích hợp cho đến khi bàn giao; sau đó giữ phần còn cần làm căn cứ kiến trúc, bảo trì hoặc danh sách giới hạn chưa xử lý. Không xóa chỉ vì tên file có ngày cũ.
+- Rà các tài liệu audit, checklist trước Angular, hướng dẫn chạy trùng nhau, báo cáo demo và spec/plan đã hết hiệu lực. Chỉ xóa file khi đã đọc, xác định nội dung được thay thế hoặc không còn dùng; chuyển thông tin còn cần vào tài liệu chuẩn trước khi xóa. Các tên này là nhóm cần rà, chưa phải danh sách xóa đã chốt.
+- Lập danh sách đường dẫn giữ/xóa cùng lý do trong báo cáo ngày bàn giao. Sửa các liên kết bị ảnh hưởng và kiểm tra chúng sau dọn dẹp. Với tài liệu chưa được Git theo dõi, giữ bản sao phục hồi trong gói lưu ngoài cây tài liệu trước khi xóa để không mất nội dung độc nhất.
+
+## 11. Rà soát thiết kế và bước tiếp theo
 
 Đã tự rà phạm vi, tính nhất quán seed/quota/tenant, tên endpoint/DTO, thiếu hụt filter/report, quyền đọc phụ thuộc và giới hạn của API hiện tại. Đây là đặc tả để lập một kế hoạch triển khai theo các mốc trên; chưa phải kế hoạch task/file/test chi tiết và chưa xác nhận bất kỳ lỗi runtime nào đã được sửa.
 
