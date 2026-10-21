@@ -1188,6 +1188,28 @@ namespace SnpDepotManagement.Infrastructure.Persistence.Migrations
                     b.ToTable("yard_slots", (string)null);
                 });
 
+            modelBuilder.Entity("SnpDepotManagement.Infrastructure.Persistence.Seed.DemoSeedRun", b =>
+                {
+                    b.Property<string>("TenantId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("DatasetVersion")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("dataset_version");
+
+                    b.Property<DateTime>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at_utc");
+
+                    b.HasKey("TenantId", "DatasetVersion")
+                        .HasName("pk_demo_seed_runs");
+
+                    b.ToTable("demo_seed_runs", (string)null);
+                });
+
             modelBuilder.Entity("SnpDepotManagement.Domain.Entities.Identity.UserRole", b =>
                 {
                     b.HasOne("SnpDepotManagement.Domain.Entities.Identity.Role", null)
