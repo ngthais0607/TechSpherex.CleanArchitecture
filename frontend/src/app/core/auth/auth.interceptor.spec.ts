@@ -7,19 +7,38 @@ import { AuthService } from './auth-service';
 import { TokenStorage } from './token-storage';
 import { errorInterceptor } from '../api/error.interceptor';
 
-const tokens = { userName: 'gate', accessToken: 'access-new', refreshToken: 'refresh-new', role: 'GateClerk',
-  expiresAt: '2099-01-01T00:00:00Z', accessTokenExpiresAt: '2099-01-01T00:00:00Z' };
+const tokens = {
+  userName: 'gate',
+  accessToken: 'access-new',
+  refreshToken: 'refresh-new',
+  role: 'GateClerk',
+  expiresAt: '2099-01-01T00:00:00Z',
+  accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+};
 describe('auth transport', () => {
   let http: HttpTestingController;
   let client: HttpClient;
   beforeEach(() => {
     sessionStorage.clear();
-    TestBed.configureTestingModule({ providers: [provideHttpClient(withInterceptors([errorInterceptor, authInterceptor])), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([errorInterceptor, authInterceptor])),
+        provideHttpClientTesting(),
+      ],
+    });
     http = TestBed.inject(HttpTestingController);
     client = TestBed.inject(HttpClient);
-    TestBed.inject(TokenStorage).write({ ...tokens, accessToken: 'access-old', refreshToken: 'refresh-old', accessTokenExpiresAt: '2020-01-01T00:00:00Z' });
+    TestBed.inject(TokenStorage).write({
+      ...tokens,
+      accessToken: 'access-old',
+      refreshToken: 'refresh-old',
+      accessTokenExpiresAt: '2020-01-01T00:00:00Z',
+    });
   });
-  afterEach(() => { http.verify(); TestBed.resetTestingModule(); });
+  afterEach(() => {
+    http.verify();
+    TestBed.resetTestingModule();
+  });
   it('threeExpiredRequestsUseOneRotatingRefresh', () => {
     let completed = 0;
     for (let n = 0; n < 3; n++) client.get('/api/resource/' + n).subscribe(() => completed++);
@@ -37,7 +56,7 @@ describe('auth transport', () => {
   it('resource401RetriesOnlyOnceAndExternalUrlsHaveNoBearer', () => {
     TestBed.inject(TokenStorage).write(tokens);
     let status = 0;
-    client.get('/api/resource').subscribe({ error: error => status = error.status });
+    client.get('/api/resource').subscribe({ error: (error) => (status = error.status) });
     http.expectOne('/api/resource').flush({}, { status: 401, statusText: 'Unauthorized' });
     http.expectOne('/api/auth/refresh').flush(tokens);
     http.expectOne('/api/resource').flush({}, { status: 401, statusText: 'Unauthorized' });
@@ -49,7 +68,9 @@ describe('auth transport', () => {
     external.flush({});
   });
   it('login401DoesNotRefreshRecursively', () => {
-    TestBed.inject(AuthService).login({ userName: 'gate', password: 'wrong' }).subscribe({ error: () => {} });
+    TestBed.inject(AuthService)
+      .login({ userName: 'gate', password: 'wrong' })
+      .subscribe({ error: () => {} });
     http.expectOne('/api/auth/login').flush({}, { status: 401, statusText: 'Unauthorized' });
     http.expectNone('/api/auth/refresh');
   });
@@ -63,7 +84,13 @@ describe('auth transport', () => {
     expect(auth.status()).toBe('initializing');
     const me = http.expectOne('/api/auth/me');
     expect(me.request.headers.get('Authorization')).toBe('Bearer access-new');
-    me.flush({ userId: '1', userName: 'gate', roles: ['GateClerk'], tenantId: 'DEPOT-A', depotName: 'Depot A' });
+    me.flush({
+      userId: '1',
+      userName: 'gate',
+      roles: ['GateClerk'],
+      tenantId: 'DEPOT-A',
+      depotName: 'Depot A',
+    });
     expect(completed).toBe(2);
     expect(auth.user()?.tenantId).toBe('DEPOT-A');
     expect(auth.status()).toBe('authenticated');
@@ -76,13 +103,21 @@ describe('auth transport', () => {
     expect(auth.status()).toBe('error');
     expect(auth.storage.read()?.refreshToken).toBe('refresh-new');
     auth.restore().subscribe();
-    http.expectOne('/api/auth/me').flush({ userId: '1', userName: 'gate', roles: ['GateClerk'], tenantId: 'DEPOT-A', depotName: 'Depot A' });
+    http
+      .expectOne('/api/auth/me')
+      .flush({
+        userId: '1',
+        userName: 'gate',
+        roles: ['GateClerk'],
+        tenantId: 'DEPOT-A',
+        depotName: 'Depot A',
+      });
     expect(auth.status()).toBe('authenticated');
   });
   it('logoutDuringRefreshCannotRestoreUserOrReplayCommands', () => {
     const auth = TestBed.inject(AuthService);
     let commandSent = false;
-    client.post('/api/command', {}).subscribe(() => commandSent = true);
+    client.post('/api/command', {}).subscribe(() => (commandSent = true));
     const refresh = http.expectOne('/api/auth/refresh');
     auth.logout().subscribe();
     http.expectOne('/api/auth/logout').flush({}, { status: 500, statusText: 'Error' });
@@ -93,7 +128,7 @@ describe('auth transport', () => {
     http.expectNone('/api/command');
     expect(commandSent).toBe(false);
   });
-  it.each([401, 403, 500, 0])('refresh %s clears only rejected credentials', status => {
+  it.each([401, 403, 500, 0])('refresh %s clears only rejected credentials', (status) => {
     const auth = TestBed.inject(AuthService);
     auth.refreshOnce().subscribe({ error: () => {} });
     const request = http.expectOne('/api/auth/refresh');

@@ -1,27 +1,262 @@
-<section class="page-header"><div><span class="eyebrow">ĐIỀU PHỐI KHAI THÁC</span><h1>Sơ đồ bãi</h1><p>Vị trí và kích thước block từ máy chủ.</p></div></section>
-<div class="toolbar"><input aria-label="Tìm vị trí container" placeholder="Số container đầy đủ…" [ngModel]="search()" (ngModelChange)="search.set($event)" /><button class="button" (click)="find()">Tìm vị trí</button></div>
-<div class="chips">@for(block of facade.blocks();track block.id){<button class="chip" [class.active]="facade.blockId()===block.id" (click)="choose(block.id)">{{ block.code }} · {{ block.isVirtual?'Bãi ảo':block.occupiedSlots+'/'+block.totalSlots+' ô' }}</button>}</div>
-<section class="panel">
-@if(block();as block){<div class="panel-header"><div><h2>{{ block.code }} · {{ block.name }}</h2><p>{{ block.isVirtual?'Chờ phân vị trí':block.maxBays+' Bay × '+block.maxRows+' Row × '+block.maxTiers+' Tier' }}</p></div>
-@if(canManage()&&!block.isVirtual){<div class="toolbar-group"><button class="button" (click)="facade.error.set(null);placing.set(true)">Phân vị trí container</button><button class="button" [disabled]="facade.pending()" (click)="facade.error.set(null);mode.set('expand')">Mở rộng bãi</button><button class="button" [disabled]="facade.pending()" (click)="facade.error.set(null);mode.set('shrink')">Thu hẹp bãi</button></div>}</div>
-@if(!block.isVirtual){<div class="toolbar"><label>Tầng <select aria-label="Tầng bãi" [ngModel]="facade.tier()" (ngModelChange)="choose(block.id,+$event)">@for(tier of tiers();track tier){<option [ngValue]="tier">Tier {{ tier }}</option>}</select></label></div>}}
-@if(facade.loading()){<p class="banner" role="status">Đang tải sơ đồ…</p>}@if(facade.error();as error){<p class="banner error" role="alert">{{ error.detail }} @if(error.ruleCode){({{ error.ruleCode }})}</p>}
-@if(facade.layout();as layout){
-@if(layout.isVirtual){
-<div class="table-wrap"><table><thead><tr><th>Container</th><th>Cỡ / Loại</th><th>Thao tác</th></tr></thead><tbody>@for(container of facade.virtual();track container.id){<tr><td>{{ container.containerNumber }}</td><td>{{ container.size }} · {{ container.type }}</td><td>@if(canManage()){<button class="button small" (click)="facade.selectedContainer.set(container.id);moving.set(true)">Phân vị trí</button>}</td></tr>}@empty{<tr><td colspan="3" class="empty">Bãi ảo chưa có container.</td></tr>}</tbody></table></div>
-}@else{
-<div class="yard-scroll"><div class="api-yard-grid" [style.grid-template-columns]="'repeat('+layout.oddBays+', minmax(130px,1fr))'">
-@for(slot of layout.slots;track slot.id){@if(!slot.isOccupied){<div class="yard-cell" [style.grid-column]="(slot.bay+1)/2" [style.grid-row]="slot.row">Bay {{ slot.bay }} · {{ rowLabel(slot.row) }} · {{ slot.tier }}<small>Trống</small></div>}}
-@for(card of cards();track card.id){@if(card.footprint.length){<button class="yard-cell occupied" [class.selected]="facade.selectedContainer()===card.id || highlight()===card.number" [style.grid-column]="((card.footprint[0].bay+1)/2)+' / span '+card.footprint.length" [style.grid-row]="card.row" (click)="facade.selectedContainer.set(card.id)"><strong>{{ card.number }}</strong><small>{{ card.size }} · {{ card.type }}</small><small>Bay {{ card.bay }} · {{ rowLabel(card.row) }} · {{ card.tier }}</small></button>}}</div></div>
-@if(selected();as card){<div class="banner"><strong>{{ card.number }}</strong> · {{ card.ownerCode }} · {{ card.condition }} @if(canManage()){<button class="button small" (click)="moving.set(true)">Di chuyển container</button><button class="button small" [disabled]="facade.pending()" (click)="remove()">Dỡ khỏi vị trí</button>}</div>}
-}
-}
+<section class="page-header">
+  <div>
+    <span class="eyebrow">ĐIỀU PHỐI KHAI THÁC</span>
+    <h1>Sơ đồ bãi</h1>
+    <p>Vị trí và kích thước block từ máy chủ.</p>
+  </div>
 </section>
-@if(mode();as mode){<app-modal [title]="mode==='expand'?'Mở rộng bãi':'Thu hẹp bãi'" [dirty]="form.dirty" (closed)="this.mode.set(null)">
-<p class="banner">Kích thước hiện tại: {{ block()?.maxBays }} Bay × {{ block()?.maxRows }} Row × {{ block()?.maxTiers }} Tier. Thu hẹp bị chặn nếu vùng loại bỏ còn container.</p>
-<app-form #form formId="resize-api-form" [fields]="resizeFields" [value]="resizeValue()" (saved)="resize($event)" />
-@if(facade.error();as error){<p class="banner error" role="alert">{{ error.detail }}</p>}
-<div footer><button class="button" [disabled]="facade.pending()" (click)="this.mode.set(null)">Đóng</button><button class="button primary" type="submit" form="resize-api-form" [disabled]="facade.pending()">{{ facade.pending()?'Đang xử lý…':mode==='expand'?'Xác nhận mở rộng':'Xác nhận thu hẹp' }}</button></div></app-modal>}
-@if(moving()){<app-modal title="Phân vị trí / di chuyển" [dirty]="form.dirty" (closed)="moving.set(false)"><app-form #form formId="yard-move-form" [fields]="moveFields()" [value]="moveValue()" (saved)="move($event)" />@if(facade.error();as error){<p class="banner error" role="alert">{{ error.detail }}</p>}<div footer><button class="button" (click)="moving.set(false)">Đóng</button><button class="button primary" type="submit" form="yard-move-form" [disabled]="facade.pending()">Xác nhận di chuyển</button></div></app-modal>}
+<div class="toolbar">
+  <input
+    aria-label="Tìm vị trí container"
+    placeholder="Số container đầy đủ…"
+    [ngModel]="search()"
+    (ngModelChange)="search.set($event)"
+  /><button class="button" (click)="find()">Tìm vị trí</button>
+</div>
+<div class="chips">
+  @for (block of facade.blocks(); track block.id) {
+    <button class="chip" [class.active]="facade.blockId() === block.id" (click)="choose(block.id)">
+      {{ block.code }} ·
+      {{ block.isVirtual ? 'Bãi ảo' : block.occupiedSlots + '/' + block.totalSlots + ' ô' }}
+    </button>
+  }
+</div>
+<section class="panel">
+  @if (block(); as block) {
+    <div class="panel-header">
+      <div>
+        <h2>{{ block.code }} · {{ block.name }}</h2>
+        <p>
+          {{
+            block.isVirtual
+              ? 'Chờ phân vị trí'
+              : block.maxBays + ' Bay × ' + block.maxRows + ' Row × ' + block.maxTiers + ' Tier'
+          }}
+        </p>
+      </div>
+      @if (canManage() && !block.isVirtual) {
+        <div class="toolbar-group">
+          <button class="button" (click)="facade.error.set(null); placing.set(true)">
+            Phân vị trí container</button
+          ><button
+            class="button"
+            [disabled]="facade.pending()"
+            (click)="facade.error.set(null); mode.set('expand')"
+          >
+            Mở rộng bãi</button
+          ><button
+            class="button"
+            [disabled]="facade.pending()"
+            (click)="facade.error.set(null); mode.set('shrink')"
+          >
+            Thu hẹp bãi
+          </button>
+        </div>
+      }
+    </div>
+    @if (!block.isVirtual) {
+      <div class="toolbar">
+        <label
+          >Tầng
+          <select
+            aria-label="Tầng bãi"
+            [ngModel]="facade.tier()"
+            (ngModelChange)="choose(block.id, +$event)"
+          >
+            @for (tier of tiers(); track tier) {
+              <option [ngValue]="tier">Tier {{ tier }}</option>
+            }
+          </select></label
+        >
+      </div>
+    }
+  }
+  @if (facade.loading()) {
+    <p class="banner" role="status">Đang tải sơ đồ…</p>
+  }
+  @if (facade.error(); as error) {
+    <p class="banner error" role="alert">
+      {{ error.detail }}
+      @if (error.ruleCode) {
+        ({{ error.ruleCode }})
+      }
+    </p>
+  }
+  @if (facade.layout(); as layout) {
+    @if (layout.isVirtual) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Container</th>
+              <th>Cỡ / Loại</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (container of facade.virtual(); track container.id) {
+              <tr>
+                <td>{{ container.containerNumber }}</td>
+                <td>{{ container.size }} · {{ container.type }}</td>
+                <td>
+                  @if (canManage()) {
+                    <button
+                      class="button small"
+                      (click)="facade.selectedContainer.set(container.id); moving.set(true)"
+                    >
+                      Phân vị trí
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="empty">Bãi ảo chưa có container.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="yard-scroll">
+        <div
+          class="api-yard-grid"
+          [style.grid-template-columns]="'repeat(' + layout.oddBays + ', minmax(130px,1fr))'"
+        >
+          @for (slot of layout.slots; track slot.id) {
+            @if (!slot.isOccupied) {
+              <div
+                class="yard-cell"
+                [style.grid-column]="(slot.bay + 1) / 2"
+                [style.grid-row]="slot.row"
+              >
+                Bay {{ slot.bay }} · {{ rowLabel(slot.row) }} · {{ slot.tier }}<small>Trống</small>
+              </div>
+            }
+          }
+          @for (card of cards(); track card.id) {
+            @if (card.footprint.length) {
+              <button
+                class="yard-cell occupied"
+                [class.selected]="
+                  facade.selectedContainer() === card.id || highlight() === card.number
+                "
+                [style.grid-column]="
+                  (card.footprint[0].bay + 1) / 2 + ' / span ' + card.footprint.length
+                "
+                [style.grid-row]="card.row"
+                (click)="facade.selectedContainer.set(card.id)"
+              >
+                <strong>{{ card.number }}</strong
+                ><small>{{ card.size }} · {{ card.type }}</small
+                ><small>Bay {{ card.bay }} · {{ rowLabel(card.row) }} · {{ card.tier }}</small>
+              </button>
+            }
+          }
+        </div>
+      </div>
+      @if (selected(); as card) {
+        <div class="banner">
+          <strong>{{ card.number }}</strong> · {{ card.ownerCode }} · {{ card.condition }}
+          @if (canManage()) {
+            <button class="button small" (click)="moving.set(true)">Di chuyển container</button
+            ><button class="button small" [disabled]="facade.pending()" (click)="remove()">
+              Dỡ khỏi vị trí
+            </button>
+          }
+        </div>
+      }
+    }
+  }
+</section>
+@if (mode(); as mode) {
+  <app-modal
+    [title]="mode === 'expand' ? 'Mở rộng bãi' : 'Thu hẹp bãi'"
+    [dirty]="form.dirty"
+    (closed)="this.mode.set(null)"
+  >
+    <p class="banner">
+      Kích thước hiện tại: {{ block()?.maxBays }} Bay × {{ block()?.maxRows }} Row ×
+      {{ block()?.maxTiers }} Tier. Thu hẹp bị chặn nếu vùng loại bỏ còn container.
+    </p>
+    <app-form
+      #form
+      formId="resize-api-form"
+      [fields]="resizeFields"
+      [value]="resizeValue()"
+      (saved)="resize($event)"
+    />
+    @if (facade.error(); as error) {
+      <p class="banner error" role="alert">{{ error.detail }}</p>
+    }
+    <div footer>
+      <button class="button" [disabled]="facade.pending()" (click)="this.mode.set(null)">
+        Đóng</button
+      ><button
+        class="button primary"
+        type="submit"
+        form="resize-api-form"
+        [disabled]="facade.pending()"
+      >
+        {{
+          facade.pending()
+            ? 'Đang xử lý…'
+            : mode === 'expand'
+              ? 'Xác nhận mở rộng'
+              : 'Xác nhận thu hẹp'
+        }}
+      </button>
+    </div></app-modal
+  >
+}
+@if (moving()) {
+  <app-modal title="Phân vị trí / di chuyển" [dirty]="form.dirty" (closed)="moving.set(false)"
+    ><app-form
+      #form
+      formId="yard-move-form"
+      [fields]="moveFields()"
+      [value]="moveValue()"
+      (saved)="move($event)"
+    />
+    @if (facade.error(); as error) {
+      <p class="banner error" role="alert">{{ error.detail }}</p>
+    }
+    <div footer>
+      <button class="button" (click)="moving.set(false)">Đóng</button
+      ><button
+        class="button primary"
+        type="submit"
+        form="yard-move-form"
+        [disabled]="facade.pending()"
+      >
+        Xác nhận di chuyển
+      </button>
+    </div></app-modal
+  >
+}
 
-@if(placing()){<app-modal title="Phân vị trí container" [dirty]="form.dirty" (closed)="placing.set(false)"><app-form #form formId="yard-place-form" [fields]="placeFields" [value]="{bay:1,row:1,tier:1}" (saved)="place($event)" />@if(facade.error();as error){<p class="banner error" role="alert">{{ error.detail }}</p>}<div footer><button class="button" (click)="placing.set(false)">Đóng</button><button class="button primary" form="yard-place-form" type="submit" [disabled]="facade.pending()||resolving()">Xác nhận phân vị trí</button></div></app-modal>}
+@if (placing()) {
+  <app-modal title="Phân vị trí container" [dirty]="form.dirty" (closed)="placing.set(false)"
+    ><app-form
+      #form
+      formId="yard-place-form"
+      [fields]="placeFields"
+      [value]="{ bay: 1, row: 1, tier: 1 }"
+      (saved)="place($event)"
+    />
+    @if (facade.error(); as error) {
+      <p class="banner error" role="alert">{{ error.detail }}</p>
+    }
+    <div footer>
+      <button class="button" (click)="placing.set(false)">Đóng</button
+      ><button
+        class="button primary"
+        form="yard-place-form"
+        type="submit"
+        [disabled]="facade.pending() || resolving()"
+      >
+        Xác nhận phân vị trí
+      </button>
+    </div></app-modal
+  >
+}

@@ -13,19 +13,36 @@ export class ReferenceData {
   private cache?: { key: string; expires: number; stream: Observable<LookupsDto> };
   constructor() {
     let identity = this.key();
-    effect(() => { const key = this.key(); if (key !== identity) { identity = key; this.clear(); } });
-    inject(QueryInvalidation).changes$.pipe(takeUntilDestroyed()).subscribe(keys => {
-      if (keys.includes('lookups')) this.clear();
+    effect(() => {
+      const key = this.key();
+      if (key !== identity) {
+        identity = key;
+        this.clear();
+      }
     });
+    inject(QueryInvalidation)
+      .changes$.pipe(takeUntilDestroyed())
+      .subscribe((keys) => {
+        if (keys.includes('lookups')) this.clear();
+      });
   }
   lookups(): Observable<LookupsDto> {
     const key = this.key();
     if (this.cache?.key === key && this.cache.expires > Date.now()) return this.cache.stream;
-    const stream = this.api.get().pipe(takeUntil(this.canceled), filter(() => this.key() === key),
-      shareReplay({ bufferSize: 1, refCount: false }));
+    const stream = this.api.get().pipe(
+      takeUntil(this.canceled),
+      filter(() => this.key() === key),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
     this.cache = { key, expires: Date.now() + 3_600_000, stream };
     return stream;
   }
-  clear(): void { this.canceled.next(); this.cache = undefined; }
-  private key(): string { const user = this.auth.user(); return `${user?.userId ?? ''}:${user?.tenantId ?? ''}`; }
+  clear(): void {
+    this.canceled.next();
+    this.cache = undefined;
+  }
+  private key(): string {
+    const user = this.auth.user();
+    return `${user?.userId ?? ''}:${user?.tenantId ?? ''}`;
+  }
 }

@@ -1,55 +1,182 @@
 <section class="page-header">
-  <div><span class="eyebrow">QUẢN LÝ TÀI SẢN</span><h1>Danh sách container</h1><p>Theo dõi đặc tính ISO, tình trạng và vị trí xếp bãi của từng container.</p></div>
-  @if (canRegister()) { <button class="button primary" (click)="errors.set({}); error.set(''); showCreate.set(true)"><app-icon name="plus" />Thêm container</button> }
+  <div>
+    <span class="eyebrow">QUẢN LÝ TÀI SẢN</span>
+    <h1>Danh sách container</h1>
+    <p>Theo dõi đặc tính ISO, tình trạng và vị trí xếp bãi của từng container.</p>
+  </div>
+  @if (canRegister()) {
+    <button class="button primary" (click)="errors.set({}); error.set(''); showCreate.set(true)">
+      <app-icon name="plus" />Thêm container
+    </button>
+  }
 </section>
 <div class="chips">
-  <button class="chip" [class.active]="!type()" (click)="type.set(''); update()">Tất cả <strong>{{ count('') }}</strong></button>
-  @for (t of types; track t) { <button class="chip" [class.active]="type() === t" (click)="type.set(t); update()">{{ lookups()?.containerTypes?.[t] || t }} <strong>{{ count(t) }}</strong></button> }
+  <button class="chip" [class.active]="!type()" (click)="type.set(''); update()">
+    Tất cả <strong>{{ count('') }}</strong>
+  </button>
+  @for (t of types; track t) {
+    <button class="chip" [class.active]="type() === t" (click)="type.set(t); update()">
+      {{ lookups()?.containerTypes?.[t] || t }} <strong>{{ count(t) }}</strong>
+    </button>
+  }
 </div>
 <div class="tabs">
-  @for (b of [{id:'',label:'Tất cả'},{id:'assigned',label:'Đã gán lệnh'},{id:'unassigned',label:'Chưa gán lệnh'}]; track b.id) {
-    <button [class.active]="booking() === b.id" (click)="booking.set(b.id); update()">{{ b.label }}</button>
+  @for (
+    b of [
+      { id: '', label: 'Tất cả' },
+      { id: 'assigned', label: 'Đã gán lệnh' },
+      { id: 'unassigned', label: 'Chưa gán lệnh' },
+    ];
+    track b.id
+  ) {
+    <button [class.active]="booking() === b.id" (click)="booking.set(b.id); update()">
+      {{ b.label }}
+    </button>
   }
 </div>
 <section class="panel">
-  <div class="panel-header"><div><h2>Thông tin container</h2><p>Chọn container để xem chi tiết và lịch sử.</p></div><span class="pill">{{ facade.totalCount() }} CONTAINER</span></div>
+  <div class="panel-header">
+    <div>
+      <h2>Thông tin container</h2>
+      <p>Chọn container để xem chi tiết và lịch sử.</p>
+    </div>
+    <span class="pill">{{ facade.totalCount() }} CONTAINER</span>
+  </div>
   <div class="toolbar">
-    <div class="search-box"><app-icon name="search" /><input aria-label="Tìm container" placeholder="Tìm số container, mã ISO…" [ngModel]="search()" (ngModelChange)="search.set($event); update()" /></div>
+    <div class="search-box">
+      <app-icon name="search" /><input
+        aria-label="Tìm container"
+        placeholder="Tìm số container, mã ISO…"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event); update()"
+      />
+    </div>
     <div class="toolbar-group">
-      <input aria-label="Mã hãng khai thác" placeholder="Mã hãng (MSC, MAEU…)" [ngModel]="operator()" (ngModelChange)="operator.set($event); update()" />
-      <select aria-label="Tình trạng" [ngModel]="condition()" (ngModelChange)="condition.set($event); update()">
-        <option value="">Tất cả tình trạng</option>@for (c of conditions; track c) { <option [value]="c">{{ lookups()?.containerConditions?.[c] || c }}</option> }
+      <input
+        aria-label="Mã hãng khai thác"
+        placeholder="Mã hãng (MSC, MAEU…)"
+        [ngModel]="operator()"
+        (ngModelChange)="operator.set($event); update()"
+      />
+      <select
+        aria-label="Tình trạng"
+        [ngModel]="condition()"
+        (ngModelChange)="condition.set($event); update()"
+      >
+        <option value="">Tất cả tình trạng</option>
+        @for (c of conditions; track c) {
+          <option [value]="c">{{ lookups()?.containerConditions?.[c] || c }}</option>
+        }
       </select>
-      <select aria-label="Sắp xếp" [ngModel]="sort()" (ngModelChange)="sort.set($event); update()"><option value="number">Số container ↑</option><option value="size">Kích thước ↑</option></select>
+      <select aria-label="Sắp xếp" [ngModel]="sort()" (ngModelChange)="sort.set($event); update()">
+        <option value="number">Số container ↑</option>
+        <option value="size">Kích thước ↑</option>
+      </select>
     </div>
   </div>
-  @if (facade.loading()) { <p class="banner" role="status">Đang tải container…</p> }
-  @if (facade.error(); as error) { <div class="banner error" role="alert">{{ error.detail }} <button class="button small" (click)="facade.reload()">Thử lại</button></div> }
-  <div class="table-wrap"><table>
-    <thead><tr><th>Số container</th><th>Loại · ISO</th><th>Kích thước</th><th>Owner</th><th>Tình trạng</th><th>Vị trí</th><th>Lệnh giao hiện tại</th><th>Trạng thái</th></tr></thead>
-    <tbody>
-      @for (c of facade.rows(); track c.id) {
-        <tr class="clickable" (click)="open(c.number)">
-          <td><button class="text-button mono" (click)="$event.stopPropagation(); open(c.number)">{{ c.number.slice(0,4) }} {{ c.number.slice(4) }}</button></td>
-          <td>{{ lookups()?.containerTypes?.[c.type] || c.type }}<small class="mono">{{ c.isoCode }} · Loại {{ c.classification }}</small></td>
-          <td><span class="size-badge" [class.large]="c.size === 40">{{ c.size }}ft</span></td>
-          <td>{{ c.ownerCode }}</td><td><app-badge [value]="lookups()?.containerConditions?.[c.condition] || c.condition" /></td>
-          <td class="mono">@if (c.location; as loc) { {{ loc.blockCode }} @if (loc.kind === 'physical') { · {{ loc.bay }}-{{ loc.row }}-{{ loc.tier }} } @else { (ảo) } } @else { — }</td>
-          <td>@if (c.currentBooking; as booking) { <strong class="mono">{{ booking.orderNumber }}</strong><small>Hạn {{ booking.orderExpiry | date:'dd/MM/yyyy' }}</small> } @else { <span class="muted">Chưa gán</span> }</td>
-          <td><app-badge [value]="statusLabels[c.displayStatus] || c.displayStatus" /></td>
+  @if (facade.loading()) {
+    <p class="banner" role="status">Đang tải container…</p>
+  }
+  @if (facade.error(); as error) {
+    <div class="banner error" role="alert">
+      {{ error.detail }} <button class="button small" (click)="facade.reload()">Thử lại</button>
+    </div>
+  }
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Số container</th>
+          <th>Loại · ISO</th>
+          <th>Kích thước</th>
+          <th>Owner</th>
+          <th>Tình trạng</th>
+          <th>Vị trí</th>
+          <th>Lệnh giao hiện tại</th>
+          <th>Trạng thái</th>
         </tr>
-      } @empty { @if (!facade.loading() && !facade.error()) { <tr><td colspan="8" class="empty">Không có container phù hợp.</td></tr> } }
-    </tbody>
-  </table></div>
-  <app-pagination [total]="facade.totalCount()" [page]="facade.query().pageIndex" (changed)="next($event)" />
+      </thead>
+      <tbody>
+        @for (c of facade.rows(); track c.id) {
+          <tr class="clickable" (click)="open(c.number)">
+            <td>
+              <button class="text-button mono" (click)="$event.stopPropagation(); open(c.number)">
+                {{ c.number.slice(0, 4) }} {{ c.number.slice(4) }}
+              </button>
+            </td>
+            <td>
+              {{ lookups()?.containerTypes?.[c.type] || c.type
+              }}<small class="mono">{{ c.isoCode }} · Loại {{ c.classification }}</small>
+            </td>
+            <td>
+              <span class="size-badge" [class.large]="c.size === 40">{{ c.size }}ft</span>
+            </td>
+            <td>{{ c.ownerCode }}</td>
+            <td>
+              <app-badge [value]="lookups()?.containerConditions?.[c.condition] || c.condition" />
+            </td>
+            <td class="mono">
+              @if (c.location; as loc) {
+                {{ loc.blockCode }}
+                @if (loc.kind === 'physical') {
+                  · {{ loc.bay }}-{{ loc.row }}-{{ loc.tier }}
+                } @else {
+                  (ảo)
+                }
+              } @else {
+                —
+              }
+            </td>
+            <td>
+              @if (c.currentBooking; as booking) {
+                <strong class="mono">{{ booking.orderNumber }}</strong
+                ><small>Hạn {{ booking.orderExpiry | date: 'dd/MM/yyyy' }}</small>
+              } @else {
+                <span class="muted">Chưa gán</span>
+              }
+            </td>
+            <td><app-badge [value]="statusLabels[c.displayStatus] || c.displayStatus" /></td>
+          </tr>
+        } @empty {
+          @if (!facade.loading() && !facade.error()) {
+            <tr>
+              <td colspan="8" class="empty">Không có container phù hợp.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-pagination
+    [total]="facade.totalCount()"
+    [page]="facade.query().pageIndex"
+    (changed)="next($event)"
+  />
 </section>
 @if (showCreate()) {
   <app-modal title="Thêm container mới" [dirty]="form.dirty" (closed)="showCreate.set(false)">
-    <div class="banner">Chủ sở hữu lấy từ số container. Hãng khai thác được xác định theo ánh xạ owner-code của depot.</div>
-    <app-form #form [fields]="fields()" [value]="defaults" [errors]="errors()" (saved)="save($event)" />
-    @if (error()) { <p class="field-error section-gap" role="alert">{{ error() }}</p> }
-    <div footer><button class="button" [disabled]="facade.pending()" (click)="showCreate.set(false)">Hủy</button><button class="button primary" type="submit" form="entry-form" [disabled]="facade.pending()">{{ facade.pending() ? 'Đang lưu…' : 'Lưu container' }}</button></div>
+    <div class="banner">
+      Chủ sở hữu lấy từ số container. Hãng khai thác được xác định theo ánh xạ owner-code của depot.
+    </div>
+    <app-form
+      #form
+      [fields]="fields()"
+      [value]="defaults"
+      [errors]="errors()"
+      (saved)="save($event)"
+    />
+    @if (error()) {
+      <p class="field-error section-gap" role="alert">{{ error() }}</p>
+    }
+    <div footer>
+      <button class="button" [disabled]="facade.pending()" (click)="showCreate.set(false)">
+        Hủy</button
+      ><button class="button primary" type="submit" form="entry-form" [disabled]="facade.pending()">
+        {{ facade.pending() ? 'Đang lưu…' : 'Lưu container' }}
+      </button>
+    </div>
   </app-modal>
 }
-@if (selected()) { <app-container-detail [number]="selected()" (closed)="close()" /> }
-
+@if (selected()) {
+  <app-container-detail [number]="selected()" (closed)="close()" />
+}

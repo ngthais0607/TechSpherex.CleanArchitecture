@@ -48,11 +48,17 @@ import { Icon } from '../../shared/ui';
           @if (error()) {
             <p class="banner error" role="alert">{{ error() }}</p>
           }
-          <button class="button primary login-submit" type="submit" [disabled]="loading() || form.invalid">
+          <button
+            class="button primary login-submit"
+            type="submit"
+            [disabled]="loading() || form.invalid"
+          >
             {{ loading() ? 'Đang đăng nhập…' : 'Đăng nhập' }} <app-icon name="arrow" />
           </button>
         </form>
-        @if (session.storage.warning()) { <p class="banner warning">{{ session.storage.warning() }}</p> }
+        @if (session.storage.warning()) {
+          <p class="banner warning">{{ session.storage.warning() }}</p>
+        }
       </div>
     </section>
   </div>`,
@@ -177,15 +183,34 @@ export class LoginPage {
     password: new FormControl('', Validators.required),
   });
   login() {
-    if (this.form.invalid || this.loading()) { this.form.markAllAsTouched(); return; }
-    this.error.set(''); this.loading.set(true);
-    this.session.login({ userName: this.form.value.username?.trim() || '', password: this.form.value.password || '' })
-      .pipe(finalize(() => this.loading.set(false))).subscribe({
-        next: () => { this.form.controls.password.reset(); this.router.navigateByUrl(safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'))); },
+    if (this.form.invalid || this.loading()) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.error.set('');
+    this.loading.set(true);
+    this.session
+      .login({
+        userName: this.form.value.username?.trim() || '',
+        password: this.form.value.password || '',
+      })
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: () => {
+          this.form.controls.password.reset();
+          this.router.navigateByUrl(
+            safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')),
+          );
+        },
         error: (error: ApiError) => {
           this.form.controls.password.reset();
-          this.error.set(error.status === 401 ? 'Tên đăng nhập hoặc mật khẩu không đúng.' :
-            error.status === 429 ? `Đăng nhập quá nhiều lần. ${error.retryAfterSeconds ? 'Thử lại sau ' + error.retryAfterSeconds + ' giây.' : 'Vui lòng chờ rồi thử lại.'}` : error.detail || 'Không thể đăng nhập. Vui lòng thử lại.');
+          this.error.set(
+            error.status === 401
+              ? 'Tên đăng nhập hoặc mật khẩu không đúng.'
+              : error.status === 429
+                ? `Đăng nhập quá nhiều lần. ${error.retryAfterSeconds ? 'Thử lại sau ' + error.retryAfterSeconds + ' giây.' : 'Vui lòng chờ rồi thử lại.'}`
+                : error.detail || 'Không thể đăng nhập. Vui lòng thử lại.',
+          );
         },
       });
   }

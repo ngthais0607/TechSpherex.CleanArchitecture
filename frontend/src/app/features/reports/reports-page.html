@@ -1,9 +1,107 @@
-<section class="page-header"><div><span class="eyebrow">BÁO CÁO KHAI THÁC</span><h1>Báo cáo</h1><p>Tải dữ liệu theo bộ lọc; xuất đủ các trang từ máy chủ.</p></div><button class="button primary" [disabled]="facade.exporting()||facade.loading()" (click)="export()">Xuất Excel</button></section>
-<section class="panel"><div class="toolbar"><select aria-label="Loại báo cáo" [(ngModel)]="mode" (ngModelChange)="load()"><option value="dwell">Lưu bãi</option>@if(canExpiring()){<option value="expiring">Lệnh sắp hết hạn</option>}<option value="history">Lịch sử container</option></select>
-@if(mode==='history'){<input aria-label="Số container báo cáo" placeholder="Số container đầy đủ" [(ngModel)]="number" /><button class="button" (click)="load()">Xem lịch sử</button>}@else{<input aria-label="Hãng báo cáo" placeholder="Mã hãng khai thác" [(ngModel)]="lineOperator" (ngModelChange)="load()" />
-@if(mode==='dwell'){<label>Số ngày tối thiểu <input aria-label="Ngày lưu tối thiểu" type="number" min="0" [(ngModel)]="minDays" (ngModelChange)="load()" /></label><label><input type="checkbox" [(ngModel)]="includeGatedOut" (ngModelChange)="load()" />Gồm lượt đã xuất</label>}@else{<label>Hết hạn trong <input type="number" aria-label="Ngày đến hết hạn" min="1" [(ngModel)]="days" (ngModelChange)="load()" /> ngày</label>}}</div>
-@if(facade.loading()){<p role="status">Đang tải báo cáo…</p>}@if(facade.error()){<p class="banner error" role="alert">{{ facade.error() }}</p>}
-@if(facade.exporting()){<p class="banner" role="status">Đang xuất {{ facade.progress() }} <button class="button small" (click)="facade.cancelExport()">Hủy xuất</button></p>}
-<div class="table-wrap"><table><thead><tr>@for(header of headers();track header){<th>{{ header }}</th>}</tr></thead><tbody>@for(row of facade.rows();track row.id){<tr>@for(cell of row.cells;track $index){<td>{{ cell ?? '—' }}</td>}</tr>}@empty{@if(!facade.loading()){<tr><td [attr.colspan]="headers().length" class="empty">Không có dữ liệu phù hợp.</td></tr>}}</tbody></table></div>
-<app-pagination [total]="facade.totalCount()" [page]="page" (changed)="load($event)" /></section><p class="muted">Dữ liệu có thể thay đổi trong lúc xuất; hệ thống dừng nếu phát hiện tổng số thay đổi.</p>
-
+<section class="page-header">
+  <div>
+    <span class="eyebrow">BÁO CÁO KHAI THÁC</span>
+    <h1>Báo cáo</h1>
+    <p>Tải dữ liệu theo bộ lọc; xuất đủ các trang từ máy chủ.</p>
+  </div>
+  <button
+    class="button primary"
+    [disabled]="facade.exporting() || facade.loading()"
+    (click)="export()"
+  >
+    Xuất Excel
+  </button>
+</section>
+<section class="panel">
+  <div class="toolbar">
+    <select aria-label="Loại báo cáo" [(ngModel)]="mode" (ngModelChange)="load()">
+      <option value="dwell">Lưu bãi</option>
+      @if (canExpiring()) {
+        <option value="expiring">Lệnh sắp hết hạn</option>
+      }
+      <option value="history">Lịch sử container</option>
+    </select>
+    @if (mode === 'history') {
+      <input
+        aria-label="Số container báo cáo"
+        placeholder="Số container đầy đủ"
+        [(ngModel)]="number"
+      /><button class="button" (click)="load()">Xem lịch sử</button>
+    } @else {
+      <input
+        aria-label="Hãng báo cáo"
+        placeholder="Mã hãng khai thác"
+        [(ngModel)]="lineOperator"
+        (ngModelChange)="load()"
+      />
+      @if (mode === 'dwell') {
+        <label
+          >Số ngày tối thiểu
+          <input
+            aria-label="Ngày lưu tối thiểu"
+            type="number"
+            min="0"
+            [(ngModel)]="minDays"
+            (ngModelChange)="load()" /></label
+        ><label
+          ><input type="checkbox" [(ngModel)]="includeGatedOut" (ngModelChange)="load()" />Gồm lượt
+          đã xuất</label
+        >
+      } @else {
+        <label
+          >Hết hạn trong
+          <input
+            type="number"
+            aria-label="Ngày đến hết hạn"
+            min="1"
+            [(ngModel)]="days"
+            (ngModelChange)="load()"
+          />
+          ngày</label
+        >
+      }
+    }
+  </div>
+  @if (facade.loading()) {
+    <p role="status">Đang tải báo cáo…</p>
+  }
+  @if (facade.error()) {
+    <p class="banner error" role="alert">{{ facade.error() }}</p>
+  }
+  @if (facade.exporting()) {
+    <p class="banner" role="status">
+      Đang xuất {{ facade.progress() }}
+      <button class="button small" (click)="facade.cancelExport()">Hủy xuất</button>
+    </p>
+  }
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          @for (header of headers(); track header) {
+            <th>{{ header }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of facade.rows(); track row.id) {
+          <tr>
+            @for (cell of row.cells; track $index) {
+              <td>{{ cell ?? '—' }}</td>
+            }
+          </tr>
+        } @empty {
+          @if (!facade.loading()) {
+            <tr>
+              <td [attr.colspan]="headers().length" class="empty">Không có dữ liệu phù hợp.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-pagination [total]="facade.totalCount()" [page]="page" (changed)="load($event)" />
+</section>
+<p class="muted">
+  Dữ liệu có thể thay đổi trong lúc xuất; hệ thống dừng nếu phát hiện tổng số thay đổi.
+</p>

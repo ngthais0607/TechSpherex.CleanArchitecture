@@ -4,8 +4,12 @@ import { Injectable, signal } from '@angular/core';
 export class Notifications {
   readonly toast = signal<{ message: string; kind: 'success' | 'error' } | null>(null);
   private timer?: ReturnType<typeof setTimeout>;
-  success(message: string): void { this.show(message, 'success'); }
-  error(message: string): void { this.show(message, 'error'); }
+  success(message: string): void {
+    this.show(message, 'success');
+  }
+  error(message: string): void {
+    this.show(message, 'error');
+  }
   private show(message: string, kind: 'success' | 'error'): void {
     clearTimeout(this.timer);
     this.toast.set({ message, kind });

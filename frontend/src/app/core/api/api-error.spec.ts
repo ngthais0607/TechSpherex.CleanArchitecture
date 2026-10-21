@@ -5,18 +5,28 @@ import { isApiUrl } from './api-config';
 
 describe('API transport contract', () => {
   it('normalizesProblemAndNonJsonNetworkError', () => {
-    const problem = normalizeApiError(new HttpErrorResponse({ status: 429,
-      headers: new HttpHeaders({ 'Retry-After': '12' }), error: {
-        code: 'RateLimit.TooManyRequests', detail: 'Chờ', traceId: 'trace-1',
-        ruleCode: 'G1', errors: { number: ['Sai định dạng'] },
-      } }));
+    const problem = normalizeApiError(
+      new HttpErrorResponse({
+        status: 429,
+        headers: new HttpHeaders({ 'Retry-After': '12' }),
+        error: {
+          code: 'RateLimit.TooManyRequests',
+          detail: 'Chờ',
+          traceId: 'trace-1',
+          ruleCode: 'G1',
+          errors: { number: ['Sai định dạng'] },
+        },
+      }),
+    );
     expect(problem.traceId).toBe('trace-1');
     expect(problem.status).toBe(429);
     expect(problem.errors?.['number']).toEqual(['Sai định dạng']);
     expect(problem.retryAfterSeconds).toBe(12);
     expect(problem.ruleCode).toBe('G1');
     expect(normalizeApiError(new HttpErrorResponse({ status: 0 })).detail).toContain('kết nối');
-    const html = normalizeApiError(new HttpErrorResponse({ status: 502, error: '<html>proxy error</html>' }));
+    const html = normalizeApiError(
+      new HttpErrorResponse({ status: 502, error: '<html>proxy error</html>' }),
+    );
     expect(html.status).toBe(502);
     expect(html.detail).not.toContain('<html>');
   });

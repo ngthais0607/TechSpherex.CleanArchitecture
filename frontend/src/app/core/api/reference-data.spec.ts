@@ -12,10 +12,20 @@ describe('reference cache', () => {
   let http: HttpTestingController;
   beforeEach(() => {
     user.set({ userId: '1', tenantId: 'A' });
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AuthService, useValue: { user } }] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AuthService, useValue: { user } },
+      ],
+    });
     http = TestBed.inject(HttpTestingController);
   });
-  afterEach(() => { http.verify(); vi.restoreAllMocks(); TestBed.resetTestingModule(); });
+  afterEach(() => {
+    http.verify();
+    vi.restoreAllMocks();
+    TestBed.resetTestingModule();
+  });
   it('cacheExpiresAndClearsOnIdentityChange', () => {
     let now = 1000;
     vi.spyOn(Date, 'now').mockImplementation(() => now);
@@ -38,7 +48,7 @@ describe('reference cache', () => {
     TestBed.tick();
     expect(old.cancelled).toBe(true);
     let fresh = false;
-    cache.lookups().subscribe(() => fresh = true);
+    cache.lookups().subscribe(() => (fresh = true));
     http.expectOne('/api/lookups').flush({ containerTypes: { Dry: 'Mới' } });
     expect(fresh).toBe(true);
   });
