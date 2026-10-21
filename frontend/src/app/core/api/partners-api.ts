@@ -18,5 +18,5 @@ export class PartnersApi {
   setActive(kind: 'customers' | 'line-operators', id: string, active: boolean) { return this.http.post<void>(`${API_BASE_URL}/${kind}/${id}/${active ? 'activate' : 'deactivate'}`, {}).pipe(this.changed()); }
   addOwnerCode(id: string, ownerCode: string) { return this.http.post<void>(`${API_BASE_URL}/line-operators/${id}/owner-codes`, { ownerCode }).pipe(this.changed()); }
   removeOwnerCode(id: string, ownerCode: string) { return this.http.delete<void>(`${API_BASE_URL}/line-operators/${id}/owner-codes/${encodeURIComponent(ownerCode)}`).pipe(this.changed()); }
-  private changed<T>() { return tap<T>(() => this.invalidation.invalidate(['partners', 'lookups', 'reports'])); }
+  private changed<T>() { return tap<T>(() => this.invalidation.invalidate(['partners', 'lookups', 'orders', 'containers', 'reports'])); }
 }
