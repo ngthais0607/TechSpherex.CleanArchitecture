@@ -103,13 +103,15 @@ public static class MasterDataEndpoints
         var operators = app.MapGroup("/api/line-operators").WithTags("LineOperators").RequireAuthorization().AddEndpointFilter<ValidationFilter>();
         RegisterLineOperatorEndpoints(operators, "");
 
-        var mdOperators = app.MapGroup("/api/master-data/line-operators").WithTags("LineOperators").RequireAuthorization().AddEndpointFilter<ValidationFilter>();
+        var mdOperators = app.MapGroup("/api/master-data/line-operators").WithTags("LineOperators")
+            .WithMetadata(new DeprecatedEndpointMetadata("/api/line-operators")).RequireAuthorization().AddEndpointFilter<ValidationFilter>();
         RegisterLineOperatorEndpoints(mdOperators, "Md");
 
         var customers = app.MapGroup("/api/customers").WithTags("Customers").RequireAuthorization().AddEndpointFilter<ValidationFilter>();
         RegisterCustomerEndpoints(customers, "");
 
-        var mdCustomers = app.MapGroup("/api/master-data/customers").WithTags("Customers").RequireAuthorization().AddEndpointFilter<ValidationFilter>();
+        var mdCustomers = app.MapGroup("/api/master-data/customers").WithTags("Customers")
+            .WithMetadata(new DeprecatedEndpointMetadata("/api/customers")).RequireAuthorization().AddEndpointFilter<ValidationFilter>();
         RegisterCustomerEndpoints(mdCustomers, "Md");
 
         var voyages = app.MapGroup("/api/voyages").WithTags("Voyages").RequireAuthorization().AddEndpointFilter<ValidationFilter>();

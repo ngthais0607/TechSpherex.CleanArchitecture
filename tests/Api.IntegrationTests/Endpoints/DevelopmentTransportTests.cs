@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using SnpDepotManagement.Api.IntegrationTests.Fixtures;
@@ -8,6 +10,24 @@ namespace SnpDepotManagement.Api.IntegrationTests.Endpoints;
 
 public sealed class DevelopmentTransportTests
 {
+    [Fact]
+    public async Task LegacyAliases_AreDeprecatedInOpenApi()
+    {
+        await using var factory = new DevelopmentApiFactory();
+        using var client = factory.CreateClient();
+        var document = await client.GetFromJsonAsync<JsonElement>("/openapi/v1.json", TestContext.Current.CancellationToken);
+        foreach (var (path, method) in new[]
+        {
+            ("/api/master-data/customers", "get"),
+            ("/api/master-data/line-operators", "get"),
+            ("/api/delivery-orders/{orderNumber}/assign", "post")
+        })
+        {
+            var operation = document.GetProperty("paths").GetProperty(path).GetProperty(method);
+            Assert.True(operation.TryGetProperty("deprecated", out var deprecated) && deprecated.GetBoolean(), path);
+        }
+    }
+
     [Fact]
     public async Task HttpsOptIn_RetainsRedirection()
     {

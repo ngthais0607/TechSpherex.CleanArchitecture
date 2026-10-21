@@ -9,10 +9,12 @@ namespace SnpDepotManagement.Application.Features.Operations.DeliveryOrders.Quer
 public sealed class GetDeliveryOrderByOrderNumberQueryHandler : IQueryHandler<GetDeliveryOrderByOrderNumberQuery, DeliveryOrderDto>
 {
     private readonly IAppDbContext _context;
+    private readonly TimeProvider _clock;
 
-    public GetDeliveryOrderByOrderNumberQueryHandler(IAppDbContext context)
+    public GetDeliveryOrderByOrderNumberQueryHandler(IAppDbContext context, TimeProvider? clock = null)
     {
         _context = context;
+        _clock = clock ?? TimeProvider.System;
     }
 
     public async Task<Result<DeliveryOrderDto>> Handle(GetDeliveryOrderByOrderNumberQuery query, CancellationToken cancellationToken = default)
@@ -51,7 +53,7 @@ public sealed class GetDeliveryOrderByOrderNumberQueryHandler : IQueryHandler<Ge
                 i.Type,
                 i.RequiredQuantity,
                 i.DeliveredQuantity,
-                i.RemainingQuantity)).ToList());
+                i.RemainingQuantity)).ToList(), order.GetDisplayStatus(_clock.GetUtcNow().UtcDateTime).ToString());
 
         return Result.Success(dto);
     }

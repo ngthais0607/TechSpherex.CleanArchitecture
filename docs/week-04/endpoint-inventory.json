@@ -9,7 +9,8 @@
       "Authentication"
     ],
     "policies": [],
-    "anonymous": true
+    "anonymous": true,
+    "deprecated": false
   },
   {
     "path": "/api/auth/logout",
@@ -23,7 +24,8 @@
     "policies": [
       "AuthenticatedUser"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/auth/me",
@@ -37,7 +39,8 @@
     "policies": [
       "AuthenticatedUser"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/auth/refresh",
@@ -49,7 +52,8 @@
       "Authentication"
     ],
     "policies": [],
-    "anonymous": true
+    "anonymous": true,
+    "deprecated": false
   },
   {
     "path": "/api/auth/register",
@@ -63,7 +67,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/containers/",
@@ -77,7 +82,8 @@
     "policies": [
       "ReadContainers"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/containers/",
@@ -91,7 +97,8 @@
     "policies": [
       "RegisterContainer"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/containers/by-number/{number}",
@@ -105,7 +112,8 @@
     "policies": [
       "ReadContainers"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/containers/summary",
@@ -119,7 +127,8 @@
     "policies": [
       "ReadContainers"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/containers/{id:guid}/damage",
@@ -133,7 +142,8 @@
     "policies": [
       "ManageYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/containers/{number}/orders",
@@ -147,7 +157,8 @@
     "policies": [
       "ReadContainers"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/customers/",
@@ -161,7 +172,8 @@
     "policies": [
       "ReadMasterData"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/customers/",
@@ -175,7 +187,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/customers/{id:guid}",
@@ -189,7 +202,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/customers/{id:guid}/activate",
@@ -203,7 +217,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/customers/{id:guid}/deactivate",
@@ -217,7 +232,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/delivery-orders/",
@@ -231,7 +247,8 @@
     "policies": [
       "ReadDeliveryOrders"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/delivery-orders/",
@@ -245,7 +262,8 @@
     "policies": [
       "ManageDeliveryOrders"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/delivery-orders/bookings/{id:guid}",
@@ -259,7 +277,8 @@
     "policies": [
       "ManageDeliveryOrders"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/delivery-orders/by-number/{number}",
@@ -273,7 +292,8 @@
     "policies": [
       "ReadDeliveryOrders"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/delivery-orders/{id:guid}",
@@ -287,7 +307,8 @@
     "policies": [
       "ReadDeliveryOrders"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/delivery-orders/{orderNumber}/assign",
@@ -301,7 +322,8 @@
     "policies": [
       "ManageDeliveryOrders"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/delivery-orders/{orderNumber}/assign-containers",
@@ -315,7 +337,23 @@
     "policies": [
       "ManageDeliveryOrders"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/delivery-orders/{orderNumber}/bookings",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetOrderBookings",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ReadDeliveryOrders"
+    ],
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/gate/in",
@@ -329,7 +367,8 @@
     "policies": [
       "ManageGate"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/gate/out",
@@ -343,7 +382,8 @@
     "policies": [
       "ManageGate"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/gate/transactions",
@@ -357,7 +397,8 @@
     "policies": [
       "ManageGate"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/gate/transactions/{id:guid}",
@@ -371,7 +412,8 @@
     "policies": [
       "ManageGate"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/gate/transactions/{id:guid}/cancel",
@@ -385,7 +427,8 @@
     "policies": [
       "ManageGate"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/gate/transactions/{id:guid}/cancel",
@@ -399,7 +442,8 @@
     "policies": [
       "ManageGate"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/gate/validate",
@@ -413,7 +457,8 @@
     "policies": [
       "ManageGate"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/line-operators/",
@@ -427,7 +472,8 @@
     "policies": [
       "ReadMasterData"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/line-operators/",
@@ -441,7 +487,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/line-operators/{id:guid}",
@@ -455,7 +502,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/line-operators/{id:guid}/activate",
@@ -469,7 +517,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/line-operators/{id:guid}/deactivate",
@@ -483,7 +532,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/line-operators/{id:guid}/owner-codes",
@@ -497,7 +547,8 @@
     "policies": [
       "ReadMasterData"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/line-operators/{id:guid}/owner-codes",
@@ -511,7 +562,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/line-operators/{id:guid}/owner-codes/{ownerCode}",
@@ -525,7 +577,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/lookups",
@@ -539,7 +592,8 @@
     "policies": [
       "ReadMasterData"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/master-data/customers/",
@@ -553,7 +607,8 @@
     "policies": [
       "ReadMasterData"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/customers/",
@@ -567,7 +622,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/customers/{id:guid}",
@@ -581,7 +637,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/customers/{id:guid}/activate",
@@ -595,7 +652,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/customers/{id:guid}/deactivate",
@@ -609,7 +667,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/line-operators/",
@@ -623,7 +682,8 @@
     "policies": [
       "ReadMasterData"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/line-operators/",
@@ -637,7 +697,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/line-operators/{id:guid}",
@@ -651,7 +712,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/line-operators/{id:guid}/activate",
@@ -665,7 +727,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/line-operators/{id:guid}/deactivate",
@@ -679,7 +742,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/line-operators/{id:guid}/owner-codes",
@@ -693,7 +757,8 @@
     "policies": [
       "ReadMasterData"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/line-operators/{id:guid}/owner-codes",
@@ -707,7 +772,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/master-data/line-operators/{id:guid}/owner-codes/{ownerCode}",
@@ -721,7 +787,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": true
   },
   {
     "path": "/api/reports/block-capacity",
@@ -735,7 +802,8 @@
     "policies": [
       "ReadReports"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/reports/containers/{number}/history",
@@ -749,7 +817,8 @@
     "policies": [
       "ReadReports"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/reports/dwell-times",
@@ -763,7 +832,8 @@
     "policies": [
       "ReadReports"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/reports/expiring-orders",
@@ -777,7 +847,8 @@
     "policies": [
       "ReadExpiringOrders"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/reports/gate-traffic",
@@ -791,7 +862,8 @@
     "policies": [
       "ReadReports"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/reports/summary",
@@ -805,7 +877,8 @@
     "policies": [
       "ReadReports"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/reports/yard-inventory",
@@ -819,7 +892,8 @@
     "policies": [
       "ReadReports"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/vehicles/",
@@ -833,7 +907,8 @@
     "policies": [
       "ReadMasterData"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/vehicles/",
@@ -847,7 +922,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/voyages/",
@@ -861,7 +937,8 @@
     "policies": [
       "ReadMasterData"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/voyages/",
@@ -875,7 +952,8 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/blocks",
@@ -889,7 +967,8 @@
     "policies": [
       "ReadYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/blocks",
@@ -903,7 +982,8 @@
     "policies": [
       "ManageYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/blocks/{id:guid}/expand",
@@ -917,7 +997,8 @@
     "policies": [
       "ManageYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/blocks/{id:guid}/shrink",
@@ -931,7 +1012,8 @@
     "policies": [
       "ManageYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/blocks/{idOrCode}/layout",
@@ -945,7 +1027,8 @@
     "policies": [
       "ReadYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/free-slots",
@@ -959,7 +1042,8 @@
     "policies": [
       "ReadYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/placements",
@@ -973,7 +1057,8 @@
     "policies": [
       "ManageYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/relocations",
@@ -987,7 +1072,8 @@
     "policies": [
       "ManageYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/removals",
@@ -1001,7 +1087,8 @@
     "policies": [
       "ManageYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/search",
@@ -1015,7 +1102,8 @@
     "policies": [
       "ReadYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/virtual-blocks/{code}/containers",
@@ -1029,7 +1117,8 @@
     "policies": [
       "ReadYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/api/yard/virtual-blocks/{code}/containers/{id:guid}/place",
@@ -1043,7 +1132,8 @@
     "policies": [
       "ManageYard"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   },
   {
     "path": "/health/live",
@@ -1053,7 +1143,8 @@
       "Health"
     ],
     "policies": [],
-    "anonymous": true
+    "anonymous": true,
+    "deprecated": false
   },
   {
     "path": "/health/ready",
@@ -1065,6 +1156,7 @@
     "policies": [
       "Admin"
     ],
-    "anonymous": false
+    "anonymous": false,
+    "deprecated": false
   }
 ]

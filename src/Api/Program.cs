@@ -74,6 +74,14 @@ builder.Services.AddRateLimiter(options =>
             });
     });
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (rejected, cancellationToken) =>
+    {
+        if (rejected.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            rejected.HttpContext.Response.Headers["Retry-After"] = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds))
+                .ToString(System.Globalization.CultureInfo.InvariantCulture);
+        await ResultExtensions.Problem(429, "RateLimit.TooManyRequests", "Vui lòng chờ trước khi thử lại.")
+            .ExecuteAsync(rejected.HttpContext);
+    };
 });
 
 // Register application & infrastructure services
@@ -84,7 +92,16 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApiAuthorization();
 
 // Configure OpenAPI
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options => options.AddOperationTransformer((operation, context, cancellationToken) =>
+{
+    var deprecated = context.Description.ActionDescriptor.EndpointMetadata.OfType<DeprecatedEndpointMetadata>().FirstOrDefault();
+    if (deprecated is not null)
+    {
+        operation.Deprecated = true;
+        operation.Description = (operation.Description ?? "") + $" Deprecated. Use {deprecated.Replacement}.";
+    }
+    return Task.CompletedTask;
+}));
 
 var app = builder.Build();
 

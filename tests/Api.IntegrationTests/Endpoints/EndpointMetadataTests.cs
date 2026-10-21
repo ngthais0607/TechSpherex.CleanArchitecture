@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using SnpDepotManagement.Api.IntegrationTests.Fixtures;
+using SnpDepotManagement.Api.Contracts;
 using Xunit;
 
 namespace SnpDepotManagement.Api.IntegrationTests.Endpoints;
@@ -46,7 +47,8 @@ public sealed class EndpointMetadataTests(ApiFactory factory)
             Assert.DoesNotContain("openapi", endpoint.RoutePattern.RawText!, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("scalar", endpoint.RoutePattern.RawText!, StringComparison.OrdinalIgnoreCase);
             inventory.Add(new { path = endpoint.RoutePattern.RawText, methods = endpoint.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods,
-                name, tags, policies, anonymous = allowsAnonymous });
+                name, tags, policies, anonymous = allowsAnonymous,
+                deprecated = endpoint.Metadata.GetMetadata<DeprecatedEndpointMetadata>() is not null });
         }
         Assert.Equal(new[] { "Liveness", "Login", "RefreshToken" }, anonymous.Order(StringComparer.Ordinal));
         var root = new DirectoryInfo(AppContext.BaseDirectory);

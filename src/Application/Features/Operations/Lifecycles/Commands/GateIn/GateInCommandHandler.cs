@@ -66,6 +66,10 @@ public sealed class GateInCommandHandler : ICommandHandler<GateInCommand, Guid>
         }
 
         var utcNow = _timeProvider.GetUtcNow().UtcDateTime;
+        var lineOperator = await (from mapping in _context.LineOperatorOwnerCodes
+            join line in _context.LineOperators on mapping.LineOperatorId equals line.Id
+            where mapping.OwnerCode == container.OwnerCode
+            select line.Code).FirstOrDefaultAsync(cancellationToken) ?? container.OwnerCode;
 
         // Xử lý block ảo
         bool isVirtualPlacement = !string.IsNullOrWhiteSpace(command.VirtualBlockCode)
@@ -86,7 +90,7 @@ public sealed class GateInCommandHandler : ICommandHandler<GateInCommand, Guid>
 
             var lifecycle = ContainerLifecycle.GateIn(
                 container.Id,
-                container.OwnerCode,
+                lineOperator,
                 command.EffectiveGrade,
                 command.Condition,
                 command.EffectiveVehicleNumber,
@@ -195,7 +199,7 @@ public sealed class GateInCommandHandler : ICommandHandler<GateInCommand, Guid>
         // Create lifecycle record
         var physicalLifecycle = ContainerLifecycle.GateIn(
             container.Id,
-            container.OwnerCode,
+            lineOperator,
             command.EffectiveGrade,
             command.Condition,
             command.EffectiveVehicleNumber,
