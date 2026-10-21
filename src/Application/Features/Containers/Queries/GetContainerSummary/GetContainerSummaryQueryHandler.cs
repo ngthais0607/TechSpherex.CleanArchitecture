@@ -16,14 +16,11 @@ public sealed class GetContainerSummaryQueryHandler : IQueryHandler<GetContainer
 
     public async Task<Result<ContainerSummaryDto>> Handle(GetContainerSummaryQuery query, CancellationToken cancellationToken = default)
     {
-        var dbQuery = _context.Containers.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(query.OwnerCode))
-        {
-            var normalizedOwner = query.OwnerCode.Trim().ToUpperInvariant();
-            dbQuery = dbQuery.Where(c => c.OwnerCode == normalizedOwner);
-        }
-
+        var filter = new ContainerFilter(query.Search, query.OwnerCode, query.Size, query.Condition,
+            query.Type, query.LineOperator, query.DisplayStatus, query.Booking);
+        if (!ContainerReadFilter.IsValid(filter))
+            return Result.Failure<ContainerSummaryDto>(Error.Validation("Validation.Failed", "Unsupported container filter."));
+        var dbQuery = ContainerReadFilter.Apply(_context.Containers.AsNoTracking(), _context, filter with { Type = null });
         var data = await dbQuery
             .GroupBy(c => new { c.Size, c.Type, c.Condition })
             .Select(g => new { g.Key.Size, g.Key.Type, g.Key.Condition, Count = g.Count() })

@@ -31,6 +31,12 @@ public static class ContainerEndpoints
             string? ownerCode,
             ContainerSize? size,
             ContainerCondition? condition,
+            ContainerType? type,
+            string? lineOperator,
+            string? displayStatus,
+            string? booking,
+            string? sort,
+            bool? descending,
             PaginationRequest pagination,
             IQueryHandler<GetContainersQuery, PagedResult<ContainerDto>> handler,
             CancellationToken cancellationToken) =>
@@ -41,7 +47,9 @@ public static class ContainerEndpoints
                 Size: size,
                 Condition: condition,
                 PageIndex: pagination.PageIndex,
-                PageSize: pagination.PageSize);
+                PageSize: pagination.PageSize,
+                Type: type, LineOperator: lineOperator, DisplayStatus: displayStatus,
+                Booking: booking, Sort: sort, Descending: descending ?? false);
 
             var result = await handler.Handle(query, cancellationToken);
             return result.ToHttpResult();
@@ -52,9 +60,11 @@ public static class ContainerEndpoints
 
         group.MapGet("/summary", async (
             string? ownerCode,
+            string? search, ContainerSize? size, ContainerCondition? condition, ContainerType? type,
+            string? lineOperator, string? displayStatus, string? booking,
             IQueryHandler<GetContainerSummaryQuery, ContainerSummaryDto> handler,
             CancellationToken ct) =>
-            (await handler.Handle(new(ownerCode), ct)).ToHttpResult())
+            (await handler.Handle(new(ownerCode, search, size, condition, type, lineOperator, displayStatus, booking), ct)).ToHttpResult())
             .WithName("GetContainerSummary").RequireAuthorization(Policies.ReadContainers);
 
         group.MapPost("/", async (
