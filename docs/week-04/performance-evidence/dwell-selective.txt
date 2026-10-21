@@ -1,4 +1,4 @@
--- Parameters: [{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__ToUpper_2","Type":"Varchar","Value":"BCH"},{"Name":"@__asOf_0","Type":"TimestampTz","Value":"2026-10-20T09:10:08.829625Z"},{"Name":"@__offset_1","Type":"Interval","Value":"07:00:00"},{"Name":"@__query_MinDays_3","Type":"Integer","Value":30}]
+-- Parameters: [{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__ToUpper_2","Type":"Varchar","Value":"BCH"},{"Name":"@__asOf_0","Type":"TimestampTz","Value":"2026-10-21T11:53:36.9112898Z"},{"Name":"@__offset_1","Type":"Interval","Value":"07:00:00"},{"Name":"@__query_MinDays_3","Type":"Integer","Value":30}]
 SELECT count(*)::int
 FROM container_lifecycles AS c
 INNER JOIN (
@@ -7,33 +7,33 @@ INNER JOIN (
     WHERE c0.tenant_id = @__ef_filter__p_0
 ) AS c1 ON c.container_id = c1.id
 WHERE c.tenant_id = @__ef_filter__p_0 AND c.status = 'InYard' AND c.line_operator = @__ToUpper_2 AND floor(date_part('day', date_trunc('day', COALESCE(c.out_date, @__asOf_0) + @__offset_1, 'UTC') - date_trunc('day', c.in_date + @__offset_1, 'UTC')))::int >= @__query_MinDays_3
-Aggregate  (cost=1529.78..1529.80 rows=1 width=4) (actual time=17.100..17.106 rows=1 loops=1)
+Aggregate  (cost=1529.78..1529.80 rows=1 width=4) (actual time=8.326..8.331 rows=1 loops=1)
   Buffers: shared hit=547
-  ->  Hash Join  (cost=932.72..1529.47 rows=125 width=0) (actual time=9.536..16.960 rows=499 loops=1)
+  ->  Hash Join  (cost=932.72..1529.47 rows=125 width=0) (actual time=3.872..8.277 rows=499 loops=1)
         Hash Cond: (c0.id = c.container_id)
         Buffers: shared hit=547
-        ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=16) (actual time=0.019..4.677 rows=10000 loops=1)
+        ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=16) (actual time=0.012..3.145 rows=10000 loops=1)
               Filter: ((tenant_id)::text = 'DEPOT-A'::text)
               Rows Removed by Filter: 10000
               Buffers: shared hit=308
-        ->  Hash  (cost=929.60..929.60 rows=250 width=16) (actual time=9.455..9.459 rows=499 loops=1)
+        ->  Hash  (cost=929.60..929.60 rows=250 width=16) (actual time=3.842..3.845 rows=499 loops=1)
               Buckets: 1024  Batches: 1  Memory Usage: 32kB
               Buffers: shared hit=239
-              ->  Bitmap Heap Scan on container_lifecycles c  (cost=244.60..929.60 rows=250 width=16) (actual time=0.983..8.949 rows=499 loops=1)
+              ->  Bitmap Heap Scan on container_lifecycles c  (cost=244.60..929.60 rows=250 width=16) (actual time=0.728..3.622 rows=499 loops=1)
                     Recheck Cond: (((tenant_id)::text = 'DEPOT-A'::text) AND ((status)::text = 'InYard'::text))
-                    Filter: (((line_operator)::text = 'BCH'::text) AND ((floor(date_part('day'::text, (date_trunc('day'::text, (COALESCE(out_date, '2026-10-20 09:10:08.829625+00'::timestamp with time zone) + '07:00:00'::interval), 'UTC'::text) - date_trunc('day'::text, (in_date + '07:00:00'::interval), 'UTC'::text)))))::integer >= 30))
+                    Filter: (((line_operator)::text = 'BCH'::text) AND ((floor(date_part('day'::text, (date_trunc('day'::text, (COALESCE(out_date, '2026-10-21 11:53:36.911289+00'::timestamp with time zone) + '07:00:00'::interval), 'UTC'::text) - date_trunc('day'::text, (in_date + '07:00:00'::interval), 'UTC'::text)))))::integer >= 30))
                     Rows Removed by Filter: 7001
                     Heap Blocks: exact=193
                     Buffers: shared hit=239
-                    ->  Bitmap Index Scan on ix_container_lifecycles_tenant_id_container_id  (cost=0.00..244.53 rows=7500 width=0) (actual time=0.890..0.890 rows=7500 loops=1)
+                    ->  Bitmap Index Scan on ix_container_lifecycles_tenant_id_container_id  (cost=0.00..244.53 rows=7500 width=0) (actual time=0.671..0.672 rows=7500 loops=1)
                           Index Cond: ((tenant_id)::text = 'DEPOT-A'::text)
                           Buffers: shared hit=46
 Planning:
   Buffers: shared hit=6
-Planning Time: 0.736 ms
-Execution Time: 17.355 ms
+Planning Time: 0.406 ms
+Execution Time: 8.446 ms
 
--- Parameters: [{"Name":"@__asOf_0","Type":"TimestampTz","Value":"2026-10-20T09:10:08.829625Z"},{"Name":"@__offset_1","Type":"Interval","Value":"07:00:00"},{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__ToUpper_2","Type":"Varchar","Value":"BCH"},{"Name":"@__query_MinDays_3","Type":"Integer","Value":30},{"Name":"@__p_5","Type":"Integer","Value":20},{"Name":"@__p_4","Type":"Integer","Value":0}]
+-- Parameters: [{"Name":"@__asOf_0","Type":"TimestampTz","Value":"2026-10-21T11:53:36.9112898Z"},{"Name":"@__offset_1","Type":"Interval","Value":"07:00:00"},{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__ToUpper_2","Type":"Varchar","Value":"BCH"},{"Name":"@__query_MinDays_3","Type":"Integer","Value":30},{"Name":"@__p_5","Type":"Integer","Value":20},{"Name":"@__p_4","Type":"Integer","Value":0}]
 SELECT c.id, c.container_id, c1.container_number, c.line_operator, c.in_date, c.out_date, floor(date_part('day', date_trunc('day', COALESCE(c.out_date, @__asOf_0) + @__offset_1, 'UTC') - date_trunc('day', c.in_date + @__offset_1, 'UTC')))::int
 FROM container_lifecycles AS c
 INNER JOIN (
@@ -44,33 +44,33 @@ INNER JOIN (
 WHERE c.tenant_id = @__ef_filter__p_0 AND c.status = 'InYard' AND c.line_operator = @__ToUpper_2 AND floor(date_part('day', date_trunc('day', COALESCE(c.out_date, @__asOf_0) + @__offset_1, 'UTC') - date_trunc('day', c.in_date + @__offset_1, 'UTC')))::int >= @__query_MinDays_3
 ORDER BY floor(date_part('day', date_trunc('day', COALESCE(c.out_date, @__asOf_0) + @__offset_1, 'UTC') - date_trunc('day', c.in_date + @__offset_1, 'UTC')))::int DESC, c.id
 LIMIT @__p_5 OFFSET @__p_4
-Limit  (cost=1535.30..1535.35 rows=20 width=68) (actual time=21.454..21.474 rows=20 loops=1)
+Limit  (cost=1535.30..1535.35 rows=20 width=68) (actual time=8.289..8.295 rows=20 loops=1)
   Buffers: shared hit=547
-  ->  Sort  (cost=1535.30..1535.61 rows=125 width=68) (actual time=21.447..21.459 rows=20 loops=1)
-        Sort Key: ((floor(date_part('day'::text, (date_trunc('day'::text, (COALESCE(c.out_date, '2026-10-20 09:10:08.829625+00'::timestamp with time zone) + '07:00:00'::interval), 'UTC'::text) - date_trunc('day'::text, (c.in_date + '07:00:00'::interval), 'UTC'::text)))))::integer) DESC, c.id
+  ->  Sort  (cost=1535.30..1535.61 rows=125 width=68) (actual time=8.288..8.291 rows=20 loops=1)
+        Sort Key: ((floor(date_part('day'::text, (date_trunc('day'::text, (COALESCE(c.out_date, '2026-10-21 11:53:36.911289+00'::timestamp with time zone) + '07:00:00'::interval), 'UTC'::text) - date_trunc('day'::text, (c.in_date + '07:00:00'::interval), 'UTC'::text)))))::integer) DESC, c.id
         Sort Method: top-N heapsort  Memory: 29kB
         Buffers: shared hit=547
-        ->  Hash Join  (cost=932.72..1531.97 rows=125 width=68) (actual time=8.655..20.957 rows=499 loops=1)
+        ->  Hash Join  (cost=932.72..1531.97 rows=125 width=68) (actual time=3.626..8.084 rows=499 loops=1)
               Hash Cond: (c0.id = c.container_id)
               Buffers: shared hit=547
-              ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=28) (actual time=0.048..7.048 rows=10000 loops=1)
+              ->  Seq Scan on containers c0  (cost=0.00..558.00 rows=10000 width=28) (actual time=0.014..2.768 rows=10000 loops=1)
                     Filter: ((tenant_id)::text = 'DEPOT-A'::text)
                     Rows Removed by Filter: 10000
                     Buffers: shared hit=308
-              ->  Hash  (cost=929.60..929.60 rows=250 width=52) (actual time=8.518..8.521 rows=499 loops=1)
+              ->  Hash  (cost=929.60..929.60 rows=250 width=52) (actual time=3.580..3.581 rows=499 loops=1)
                     Buckets: 1024  Batches: 1  Memory Usage: 47kB
                     Buffers: shared hit=239
-                    ->  Bitmap Heap Scan on container_lifecycles c  (cost=244.60..929.60 rows=250 width=52) (actual time=1.427..7.953 rows=499 loops=1)
+                    ->  Bitmap Heap Scan on container_lifecycles c  (cost=244.60..929.60 rows=250 width=52) (actual time=0.610..3.379 rows=499 loops=1)
                           Recheck Cond: (((tenant_id)::text = 'DEPOT-A'::text) AND ((status)::text = 'InYard'::text))
-                          Filter: (((line_operator)::text = 'BCH'::text) AND ((floor(date_part('day'::text, (date_trunc('day'::text, (COALESCE(out_date, '2026-10-20 09:10:08.829625+00'::timestamp with time zone) + '07:00:00'::interval), 'UTC'::text) - date_trunc('day'::text, (in_date + '07:00:00'::interval), 'UTC'::text)))))::integer >= 30))
+                          Filter: (((line_operator)::text = 'BCH'::text) AND ((floor(date_part('day'::text, (date_trunc('day'::text, (COALESCE(out_date, '2026-10-21 11:53:36.911289+00'::timestamp with time zone) + '07:00:00'::interval), 'UTC'::text) - date_trunc('day'::text, (in_date + '07:00:00'::interval), 'UTC'::text)))))::integer >= 30))
                           Rows Removed by Filter: 7001
                           Heap Blocks: exact=193
                           Buffers: shared hit=239
-                          ->  Bitmap Index Scan on ix_container_lifecycles_tenant_id_container_id  (cost=0.00..244.53 rows=7500 width=0) (actual time=1.290..1.290 rows=7500 loops=1)
+                          ->  Bitmap Index Scan on ix_container_lifecycles_tenant_id_container_id  (cost=0.00..244.53 rows=7500 width=0) (actual time=0.559..0.559 rows=7500 loops=1)
                                 Index Cond: ((tenant_id)::text = 'DEPOT-A'::text)
                                 Buffers: shared hit=46
 Planning:
   Buffers: shared hit=6
-Planning Time: 1.196 ms
-Execution Time: 21.869 ms
+Planning Time: 0.479 ms
+Execution Time: 8.498 ms
 
