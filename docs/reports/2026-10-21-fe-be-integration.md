@@ -1,5 +1,7 @@
 # Báo cáo FE–BE ngày 21/10/2026
 
+Kết quả sửa lỗi review và bàn giao tiếp theo nằm trong [báo cáo 22/10](2026-10-22-integration-handoff.md).
+
 ## Kết quả
 
 Đã chuyển toàn bộ màn Angular sang API .NET: auth/refresh/me/logout; container và chi tiết; lệnh giao/booking; validate/nhập/xuất/sửa/hủy cổng; sơ đồ bãi và bãi ảo; đối tác/owner codes; dashboard, tồn bãi, báo cáo, Excel đủ trang.

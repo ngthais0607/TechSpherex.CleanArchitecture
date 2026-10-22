@@ -1,5 +1,6 @@
 # Nhật ký và báo cáo ngày
 
+- [Bàn giao và sửa lỗi review 22/10/2026](2026-10-22-integration-handoff.md)
 - [Tích hợp FE–BE 21/10/2026](2026-10-21-fe-be-integration.md)
 - [Demo offline 20/10/2026](2026-10-20-angular-demo.md)
 
