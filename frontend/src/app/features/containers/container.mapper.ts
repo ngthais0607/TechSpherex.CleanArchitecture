@@ -45,7 +45,7 @@ export function normalizeContainerQuery(
     type: member('type', containerTypes),
     condition: member('condition', containerConditions),
     booking: member('booking', ['assigned', 'unassigned']),
-    displayStatus: member('displayStatus', ['InYard', 'Out', 'NeverIn', 'Reserved']),
+    displayStatus: member('displayStatus', ['InYard', 'OutOfYard', 'NeverIn', 'Reserved']),
     size: member('size', ['Ft20', 'Ft40']),
     ownerCode: String(raw['ownerCode'] ?? '').trim() || undefined,
     lineOperator: String(raw['lineOperator'] ?? '').trim() || undefined,

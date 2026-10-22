@@ -1,8 +1,8 @@
+import { debouncedQuery } from '../../core/api/debounced-query';
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   catchError,
-  debounceTime,
   EMPTY,
   finalize,
   map,
@@ -40,8 +40,7 @@ export class ReportsFacade {
   constructor() {
     this.queries
       .pipe(
-        debounceTime(300),
-        switchMap(() => {
+        debouncedQuery(() => {
           this.loading.set(true);
           this.error.set('');
           return this.page(this.mode(), this.query(), this.number()).pipe(

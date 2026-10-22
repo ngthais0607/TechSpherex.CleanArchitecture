@@ -1,8 +1,8 @@
+import { debouncedQuery } from '../../core/api/debounced-query';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   catchError,
-  debounceTime,
   defer,
   EMPTY,
   finalize,
@@ -69,8 +69,7 @@ export class GateFacade {
       .subscribe();
     this.queries
       .pipe(
-        debounceTime(300),
-        switchMap((query) => {
+        debouncedQuery((query) => {
           this.loading.set(true);
           return this.api.transactions(query).pipe(
             tap((page) => {

@@ -1,9 +1,9 @@
+import { debouncedQuery } from '../../core/api/debounced-query';
 import { inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   BehaviorSubject,
   catchError,
-  debounceTime,
   EMPTY,
   finalize,
   forkJoin,
@@ -36,8 +36,7 @@ export class ContainersFacade {
   constructor() {
     this.changes
       .pipe(
-        debounceTime(300),
-        switchMap((query) => {
+        debouncedQuery((query) => {
           this.loading.set(true);
           this.error.set(null);
           return forkJoin({ page: this.api.list(query), summary: this.api.summary(query) }).pipe(

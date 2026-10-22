@@ -10,7 +10,7 @@ export function containerTypeLabel(lookups: LookupsDto | null, code: string): st
 }
 export const containerStatusLabels: Record<string, string> = {
   InYard: 'Trong bãi',
-  Out: 'Đã xuất',
+  OutOfYard: 'Đã xuất',
   NeverIn: 'Chưa nhập bãi',
   Reserved: 'Đã giữ chỗ',
 };

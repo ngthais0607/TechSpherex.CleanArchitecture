@@ -31,6 +31,19 @@ import { Icon } from '../../shared/ui';
         <span class="pill">TRUNG TÂM ĐIỀU HÀNH</span>
         <h2>Chào mừng trở lại</h2>
         <p>Đăng nhập để bắt đầu ca vận hành của bạn.</p>
+        @if (session.status() === 'error' && session.storage.read()) {
+          <div class="banner warning" role="alert">
+            Chưa thể khôi phục phiên do lỗi kết nối máy chủ. Bạn có thể thử lại phiên hiện tại.
+            <button
+              class="button"
+              aria-label="Thử khôi phục phiên"
+              [disabled]="loading()"
+              (click)="retryRestore()"
+            >
+              Thử lại phiên
+            </button>
+          </div>
+        }
         <form [formGroup]="form" (ngSubmit)="login()">
           <div class="field">
             <label for="username">Tên đăng nhập</label
@@ -182,6 +195,23 @@ export class LoginPage {
     username: new FormControl('', Validators.required),
     password: new FormControl('', Validators.required),
   });
+  retryRestore(): void {
+    if (this.loading()) return;
+    this.loading.set(true);
+    this.error.set('');
+    this.session
+      .restore()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe(() => {
+        if (this.session.status() === 'authenticated') {
+          void this.router.navigateByUrl(
+            safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')),
+          );
+        } else if (this.session.status() === 'error') {
+          this.error.set('Máy chủ chưa phản hồi. Vui lòng thử khôi phục phiên lại sau.');
+        }
+      });
+  }
   login() {
     if (this.form.invalid || this.loading()) {
       this.form.markAllAsTouched();

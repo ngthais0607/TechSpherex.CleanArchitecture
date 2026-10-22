@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mapContainer, normalizeContainerQuery, registrationRequest } from './container.mapper';
 import { ContainerDto } from '../../core/api/containers.dto';
+import { containerStatusLabels } from '../../core/presentation/container-labels';
 const dto = {
   id: '1',
   containerNumber: 'MSCU9000000',
@@ -19,6 +20,13 @@ const dto = {
   currentSlot: { blockCode: 'VB01', bay: 0, row: 0, tier: 0 },
 } as ContainerDto;
 describe('container wire mapping', () => {
+  it('uses the departed-container status from the API for filtering and labels', () => {
+    expect(normalizeContainerQuery({ displayStatus: 'OutOfYard' })['displayStatus']).toBe(
+      'OutOfYard',
+    );
+    expect(normalizeContainerQuery({ displayStatus: 'Out' })['displayStatus']).toBeUndefined();
+    expect(containerStatusLabels['OutOfYard']).toBe('Đã xuất');
+  });
   it('keeps enum codes and distinguishes virtual location from absent location', () => {
     expect(mapContainer(dto).size).toBe(20);
     expect(mapContainer(dto).location?.kind).toBe('virtual');

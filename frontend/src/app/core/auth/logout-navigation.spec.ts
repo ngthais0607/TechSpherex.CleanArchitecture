@@ -8,10 +8,15 @@ describe('logout with unsaved gate form', () => {
   afterEach(() => TestBed.resetTestingModule());
   it('canceledNavigationKeepsTheSession', async () => {
     const logout = vi.fn(() => of(undefined));
-    TestBed.configureTestingModule({ providers: [
-      { provide: Router, useValue: { events: new Subject(), navigateByUrl: vi.fn(async () => false) } },
-      { provide: AuthService, useValue: { logout } },
-    ] });
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: Router,
+          useValue: { events: new Subject(), navigateByUrl: vi.fn(async () => false) },
+        },
+        { provide: AuthService, useValue: { logout, expired$: new Subject<void>() } },
+      ],
+    });
     const app = TestBed.runInInjectionContext(() => new App());
     await app.logout();
     expect(logout).not.toHaveBeenCalled();

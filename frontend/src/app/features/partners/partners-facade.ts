@@ -1,8 +1,8 @@
+import { debouncedQuery } from '../../core/api/debounced-query';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   catchError,
-  debounceTime,
   defer,
   EMPTY,
   finalize,
@@ -39,8 +39,7 @@ export class PartnersFacade {
   constructor() {
     this.requests
       .pipe(
-        debounceTime(300),
-        switchMap((query) => {
+        debouncedQuery((query) => {
           this.loading.set(true);
           this.error.set(null);
           const params = { search: query.search, pageIndex: query.pageIndex, pageSize: 8 };

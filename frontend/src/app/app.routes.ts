@@ -1,8 +1,12 @@
 import { Routes, CanDeactivateFn } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { Capability } from './core/auth/permissions';
+import { inject } from '@angular/core';
+import { AuthService } from './core/auth/auth-service';
 const pendingGateGuard: CanDeactivateFn<{ hasUnsavedChanges?: () => boolean }> = (component) =>
-  !component.hasUnsavedChanges?.() || confirm('Bỏ nội dung phiếu cổng chưa ghi nhận?');
+  inject(AuthService).status() === 'anonymous' ||
+  !component.hasUnsavedChanges?.() ||
+  confirm('Bỏ nội dung phiếu cổng chưa ghi nhận?');
 const dashboard = () => import('./features/dashboard/dashboard-page').then((m) => m.DashboardPage);
 const reports = () => import('./features/reports/reports-page').then((m) => m.ReportsPage);
 const inventory = () => import('./features/inventory/inventory-page').then((m) => m.InventoryPage);

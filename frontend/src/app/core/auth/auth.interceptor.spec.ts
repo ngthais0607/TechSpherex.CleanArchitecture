@@ -103,15 +103,13 @@ describe('auth transport', () => {
     expect(auth.status()).toBe('error');
     expect(auth.storage.read()?.refreshToken).toBe('refresh-new');
     auth.restore().subscribe();
-    http
-      .expectOne('/api/auth/me')
-      .flush({
-        userId: '1',
-        userName: 'gate',
-        roles: ['GateClerk'],
-        tenantId: 'DEPOT-A',
-        depotName: 'Depot A',
-      });
+    http.expectOne('/api/auth/me').flush({
+      userId: '1',
+      userName: 'gate',
+      roles: ['GateClerk'],
+      tenantId: 'DEPOT-A',
+      depotName: 'Depot A',
+    });
     expect(auth.status()).toBe('authenticated');
   });
   it('logoutDuringRefreshCannotRestoreUserOrReplayCommands', () => {
@@ -127,6 +125,17 @@ describe('auth transport', () => {
     expect(TestBed.inject(TokenStorage).read()).toBeNull();
     http.expectNone('/api/command');
     expect(commandSent).toBe(false);
+  });
+  it('identity change cancels an issued command instead of retrying it as the next user', () => {
+    const auth = TestBed.inject(AuthService);
+    auth.storage.write(tokens);
+    client.post('/api/command-from-A', { container: 'A' }).subscribe({ error: () => {} });
+    const old = http.expectOne('/api/command-from-A');
+    auth.logout().subscribe();
+    http.expectOne('/api/auth/logout').flush(null);
+    auth.storage.write({ ...tokens, userName: 'other-user', accessToken: 'other-access' });
+    expect(old.cancelled).toBe(true);
+    http.expectNone('/api/command-from-A');
   });
   it.each([401, 403, 500, 0])('refresh %s clears only rejected credentials', (status) => {
     const auth = TestBed.inject(AuthService);

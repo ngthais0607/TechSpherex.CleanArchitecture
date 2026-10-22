@@ -15,7 +15,12 @@
 </div>
 <div class="chips">
   @for (block of facade.blocks(); track block.id) {
-    <button class="chip" [class.active]="facade.blockId() === block.id" (click)="choose(block.id)">
+    <button
+      class="chip"
+      [class.active]="facade.blockId() === block.id"
+      [disabled]="facade.pending() || resolving()"
+      (click)="choose(block.id)"
+    >
       {{ block.code }} ·
       {{ block.isVirtual ? 'Bãi ảo' : block.occupiedSlots + '/' + block.totalSlots + ' ô' }}
     </button>
@@ -36,17 +41,21 @@
       </div>
       @if (canManage() && !block.isVirtual) {
         <div class="toolbar-group">
-          <button class="button" (click)="facade.error.set(null); placing.set(true)">
+          <button
+            class="button"
+            [disabled]="!facade.writable()"
+            (click)="facade.error.set(null); placing.set(true)"
+          >
             Phân vị trí container</button
           ><button
             class="button"
-            [disabled]="facade.pending()"
+            [disabled]="!facade.writable()"
             (click)="facade.error.set(null); mode.set('expand')"
           >
             Mở rộng bãi</button
           ><button
             class="button"
-            [disabled]="facade.pending()"
+            [disabled]="!facade.writable()"
             (click)="facade.error.set(null); mode.set('shrink')"
           >
             Thu hẹp bãi
@@ -60,6 +69,7 @@
           >Tầng
           <select
             aria-label="Tầng bãi"
+            [disabled]="facade.pending() || resolving()"
             [ngModel]="facade.tier()"
             (ngModelChange)="choose(block.id, +$event)"
           >
@@ -102,6 +112,7 @@
                   @if (canManage()) {
                     <button
                       class="button small"
+                      [disabled]="!facade.writable()"
                       (click)="facade.selectedContainer.set(container.id); moving.set(true)"
                     >
                       Phân vị trí
@@ -159,8 +170,9 @@
         <div class="banner">
           <strong>{{ card.number }}</strong> · {{ card.ownerCode }} · {{ card.condition }}
           @if (canManage()) {
-            <button class="button small" (click)="moving.set(true)">Di chuyển container</button
-            ><button class="button small" [disabled]="facade.pending()" (click)="remove()">
+            <button class="button small" [disabled]="!facade.writable()" (click)="moving.set(true)">
+              Di chuyển container</button
+            ><button class="button small" [disabled]="!facade.writable()" (click)="remove()">
               Dỡ khỏi vị trí
             </button>
           }
@@ -196,7 +208,7 @@
         class="button primary"
         type="submit"
         form="resize-api-form"
-        [disabled]="facade.pending()"
+        [disabled]="!facade.writable()"
       >
         {{
           facade.pending()
@@ -227,7 +239,7 @@
         class="button primary"
         type="submit"
         form="yard-move-form"
-        [disabled]="facade.pending()"
+        [disabled]="!facade.writable()"
       >
         Xác nhận di chuyển
       </button>
@@ -253,7 +265,7 @@
         class="button primary"
         form="yard-place-form"
         type="submit"
-        [disabled]="facade.pending() || resolving()"
+        [disabled]="!facade.writable() || resolving()"
       >
         Xác nhận phân vị trí
       </button>

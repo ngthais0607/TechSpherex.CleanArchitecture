@@ -1,8 +1,8 @@
+import { debouncedQuery } from '../../core/api/debounced-query';
 import { inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   catchError,
-  debounceTime,
   defer,
   EMPTY,
   finalize,
@@ -62,8 +62,7 @@ export class OrdersFacade {
   constructor() {
     this.queries
       .pipe(
-        debounceTime(300),
-        switchMap((query) => {
+        debouncedQuery((query) => {
           this.loading.set(true);
           this.error.set(null);
           const statuses = ['Active', 'ExpiringSoon', 'Expired', 'FullyDelivered'];
@@ -129,8 +128,7 @@ export class OrdersFacade {
       .subscribe();
     this.candidateQueries
       .pipe(
-        debounceTime(300),
-        switchMap((query) => {
+        debouncedQuery((query) => {
           this.candidatesLoading.set(true);
           this.candidateError.set(null);
           return this.containers.list(query).pipe(

@@ -11,7 +11,7 @@ import { Notifications } from '../../core/notifications/notifications';
 import { mapYardContainers, rowLabel } from './yard.mapper';
 import { normalizeContainerNumber } from '../../core/presentation/container-number';
 import { ContainersApi } from '../../core/api/containers-api';
-import { finalize, switchMap } from 'rxjs';
+import { finalize, switchMap, takeUntil } from 'rxjs';
 @Component({
   selector: 'app-yard',
   imports: [FormsModule, DynamicForm, Modal],
@@ -114,14 +114,16 @@ export class YardPage {
     { key: 'tier', label: 'Tier', type: 'number', required: true, min: 1 },
   ];
   place(value: Record<string, unknown>): void {
-    if (!this.canManage() || this.resolving()) return;
+    if (!this.canManage() || this.resolving() || !this.facade.writable()) return;
+    const blockId = this.facade.layout()!.blockId;
     this.resolving.set(true);
     this.containers
       .byNumber(normalizeContainerNumber(String(value['number'])))
       .pipe(
+        takeUntil(this.facade.contextChanges$),
         switchMap((container) =>
           this.facade.place({
-            blockId: this.facade.blockId(),
+            blockId,
             containerId: container.id,
             bay: Number(value['bay']),
             row: Number(value['row']),
@@ -140,9 +142,20 @@ export class YardPage {
   }
   remove(): void {
     const card = this.selected();
-    if (!card || !this.canManage() || !confirm('Dỡ container khỏi vị trí hiện tại?')) return;
+    if (
+      !card ||
+      !this.canManage() ||
+      !this.facade.writable() ||
+      !confirm('Dỡ container khỏi vị trí hiện tại?')
+    )
+      return;
     this.facade
-      .remove({ blockId: this.facade.blockId(), bay: card.bay, row: card.row, tier: card.tier })
+      .remove({
+        blockId: this.facade.layout()!.blockId,
+        bay: card.bay,
+        row: card.row,
+        tier: card.tier,
+      })
       .subscribe({
         next: () => this.notify.success('Đã dỡ container khỏi vị trí.'),
         error: () => {},
@@ -150,7 +163,7 @@ export class YardPage {
   }
   resize(value: Record<string, unknown>): void {
     const mode = this.mode();
-    if (!mode || !this.canManage()) return;
+    if (!mode || !this.canManage() || !this.facade.writable()) return;
     this.facade
       .resize(mode, {
         newBays: Number(value['newBays']),
@@ -199,7 +212,7 @@ export class YardPage {
     };
   }
   move(value: Record<string, unknown>): void {
-    if (!this.canManage()) return;
+    if (!this.canManage() || !this.facade.writable()) return;
     const id = String(value['containerId']),
       target = this.facade.blocks().find((block) => block.id === value['targetBlock']);
     if (!target) return;

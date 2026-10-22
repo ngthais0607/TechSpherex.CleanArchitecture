@@ -30,6 +30,9 @@ describe('server container queries', () => {
     );
     const oldSummary = http.expectOne('/api/containers/summary?search=A');
     facade.setQuery({ search: 'B' });
+    expect(old.cancelled).toBe(true);
+    expect(oldSummary.cancelled).toBe(true);
+    expect(facade.query()['search']).toBe('B');
     vi.advanceTimersByTime(300);
     expect(old.cancelled).toBe(true);
     expect(oldSummary.cancelled).toBe(true);

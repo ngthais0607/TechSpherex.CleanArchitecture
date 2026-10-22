@@ -1,16 +1,8 @@
+import { debouncedQuery } from '../api/debounced-query';
 import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  catchError,
-  debounceTime,
-  EMPTY,
-  finalize,
-  map,
-  Observable,
-  Subject,
-  switchMap,
-} from 'rxjs';
+import { catchError, EMPTY, finalize, map, Observable, Subject, switchMap } from 'rxjs';
 import { PartnersApi } from '../api/partners-api';
 import { ApiError } from '../api/api-error';
 import { Pagination } from '../../shared/ui';
@@ -76,21 +68,18 @@ export class MasterPicker {
   constructor() {
     this.requests
       .pipe(
-        debounceTime(300),
-        switchMap((query) => {
+        debouncedQuery((query) => {
           this.loading.set(true);
           this.error.set(null);
           const params = { search: query.search, pageIndex: query.page, pageSize: 8 };
           const source: Observable<{ items: MasterChoice[]; total: number }> =
             query.kind === 'customer'
-              ? this.api
-                  .customers(params)
-                  .pipe(
-                    map((page) => ({
-                      items: page.items.map((row) => ({ ...row, code: row.taxCode })),
-                      total: page.totalCount,
-                    })),
-                  )
+              ? this.api.customers(params).pipe(
+                  map((page) => ({
+                    items: page.items.map((row) => ({ ...row, code: row.taxCode })),
+                    total: page.totalCount,
+                  })),
+                )
               : this.api
                   .operators(params)
                   .pipe(map((page) => ({ items: page.items, total: page.totalCount })));

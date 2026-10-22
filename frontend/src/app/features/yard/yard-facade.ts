@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   catchError,
@@ -28,6 +28,8 @@ import {
 export class YardFacade {
   private readonly api = inject(YardApi);
   private readonly requests = new Subject<{ block: string; tier: number }>();
+  private readonly contextChanges = new Subject<void>();
+  readonly contextChanges$ = this.contextChanges.asObservable();
   readonly blocks = signal<YardBlockDto[]>([]);
   readonly layout = signal<YardLayoutDto | null>(null);
   readonly virtual = signal<VirtualBlockContainerDto[]>([]);
@@ -37,6 +39,9 @@ export class YardFacade {
   readonly loading = signal(false);
   readonly pending = signal(false);
   readonly error = signal<ApiError | null>(null);
+  readonly writable = computed(
+    () => !this.loading() && !this.pending() && this.layout()?.blockId === this.blockId(),
+  );
   constructor() {
     this.requests
       .pipe(
@@ -71,14 +76,16 @@ export class YardFacade {
       });
   }
   loadBlocks(): void {
-    this.api
-      .blocks()
-      .subscribe({
-        next: (blocks) => this.blocks.set(blocks),
-        error: (error) => this.error.set(error),
-      });
+    this.api.blocks().subscribe({
+      next: (blocks) => this.blocks.set(blocks),
+      error: (error) => this.error.set(error),
+    });
   }
   select(block: string, tier: number): void {
+    this.contextChanges.next();
+    this.layout.set(null);
+    this.virtual.set([]);
+    this.selectedContainer.set('');
     this.blockId.set(block);
     this.tier.set(Number.isInteger(tier) && tier > 0 ? tier : 1);
     this.error.set(null);
@@ -115,6 +122,15 @@ export class YardFacade {
     return defer(() => {
       if (this.pending())
         return throwError(() => new ApiError(409, 'Request.Pending', 'Thao tác đang được xử lý.'));
+      if (!this.writable())
+        return throwError(
+          () =>
+            new ApiError(
+              409,
+              'Yard.ContextLoading',
+              'Chờ sơ đồ bãi hiện tại tải xong trước khi thao tác.',
+            ),
+        );
       this.pending.set(true);
       this.error.set(null);
       return run().pipe(

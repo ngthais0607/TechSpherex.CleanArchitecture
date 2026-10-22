@@ -30,6 +30,12 @@ export class AuthService {
   );
   private generation = 0;
   private readonly canceled = new Subject<void>();
+  readonly identityChanges$ = this.canceled.asObservable();
+  private readonly expired = new Subject<void>();
+  readonly expired$ = this.expired.asObservable();
+  get sessionVersion(): number {
+    return this.generation;
+  }
   private refreshFlight?: Observable<string>;
   private restoreFlight?: Observable<void>;
 
@@ -116,7 +122,10 @@ export class AuthService {
       }),
       map((value) => value.accessToken),
       catchError((error) => {
-        if (generation === this.generation && this.rejected(error)) this.clear();
+        if (generation === this.generation && this.rejected(error)) {
+          this.clear();
+          this.expired.next();
+        }
         return throwError(() => error);
       }),
       finalize(() => {

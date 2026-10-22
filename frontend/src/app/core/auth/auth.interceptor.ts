@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-import { catchError, switchMap, throwError } from 'rxjs';
+import { catchError, EMPTY, switchMap, takeUntil, throwError } from 'rxjs';
 import { isApiUrl } from '../api/api-config';
 import { AuthService } from './auth-service';
 
@@ -11,12 +11,14 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   )
     return next(request);
   const auth = inject(AuthService);
+  const sessionVersion = auth.sessionVersion;
   const withToken = (token: string) =>
     request.clone({ setHeaders: { Authorization: 'Bearer ' + token } });
   return auth.validAccessToken().pipe(
     switchMap((token) =>
       next(withToken(token)).pipe(
         catchError((error) => {
+          if (auth.sessionVersion !== sessionVersion) return EMPTY;
           if (!(error instanceof HttpErrorResponse) || error.status !== 401)
             return throwError(() => error);
           // Another request may already have rotated the token while this one was in flight.
@@ -26,5 +28,6 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         }),
       ),
     ),
+    takeUntil(auth.identityChanges$),
   );
 };

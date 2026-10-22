@@ -5,6 +5,7 @@ import { AuthService } from './core/auth/auth-service';
 import { can, Capability } from './core/auth/permissions';
 import { Notifications } from './core/notifications/notifications';
 import { Icon } from './shared/ui';
+import { safeReturnUrl } from './core/auth/safe-return-url';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon],
@@ -32,6 +33,11 @@ export class App {
     this.items.filter((item) => can(item.capability, this.session.user()?.roles ?? [])),
   );
   constructor() {
+    this.session.expired$.pipe(takeUntilDestroyed()).subscribe(() => {
+      const returnUrl = safeReturnUrl(this.router.url);
+      this.notifications.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      void this.router.navigate(['/login'], { queryParams: { returnUrl } });
+    });
     this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event instanceof NavigationEnd)
         this.pageTitle.set(
