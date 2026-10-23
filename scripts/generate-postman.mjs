@@ -120,6 +120,13 @@ request('Full first-container timeline', 'GET', '/api/reports/containers/{{conta
 request('Dwell includes all four visits', 'GET', '/api/reports/dwell-times?lineOperator={{operatorCode}}&includeGatedOut=true&minDays=0', 'yard', 200, null, `pm.test('four visits',()=>pm.expect(data.totalCount).to.eql(4));`);
 request('Completed order absent from expiry', 'GET', '/api/reports/expiring-orders?lineOperator={{operatorCode}}&days=7', 'order', 200, null, `pm.test('no remaining order',()=>pm.expect(data.totalCount).to.eql(0));`);
 folder('07 - Negative contracts, tenant and refresh');
+const validationFailed = `pm.test('field validation',()=>{pm.expect(data.code).to.eql('Validation.Failed');pm.expect(data.errors).to.be.an('object');});`;
+request('400 oversized block rejected before allocation', 'POST', '/api/yard/blocks', 'admin', 400,
+  { ...block, Bays: 101 }, validationFailed);
+request('400 empty assignment rejected', 'POST', '/api/delivery-orders/{{orderNumber}}/assign-containers', 'order', 400,
+  { ContainerNumbers: [] }, validationFailed);
+request('400 oversized assignment rejected', 'POST', '/api/delivery-orders/{{orderNumber}}/assign-containers', 'order', 400,
+  { ContainerNumbers: Array(201).fill(variable('containerNumber1')) }, validationFailed);
 request('400 invalid container number', 'POST', '/api/containers', 'gate', 400, { ...registration('containerNumber6'), ContainerNumber: 'INVALID' });
 request('400 invalid nested enum', 'POST', '/api/delivery-orders', 'order', 400, { ...order('expiredOrderNumber'), Items: [{ Size: 999, Type: 85, Quantity: 1 }] });
 request('401 without token', 'GET', '/api/containers', null, 401);

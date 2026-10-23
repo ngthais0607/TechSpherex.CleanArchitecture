@@ -39,8 +39,8 @@ public sealed class GetGateTransactionsQueryHandler : IQueryHandler<GetGateTrans
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var search = query.Search.Trim().ToUpperInvariant();
-            txQuery = txQuery.Where(t => t.VehicleNumber.Contains(search)
-                || (!string.IsNullOrEmpty(t.DriverName) && t.DriverName.Contains(search)));
+            txQuery = txQuery.Where(t => t.VehicleNumber.ToUpper().Contains(search)
+                || (!string.IsNullOrEmpty(t.DriverName) && t.DriverName.ToUpper().Contains(search)));
         }
 
         var totalCount = await txQuery.CountAsync(cancellationToken);

@@ -77,33 +77,24 @@ public static class GateEndpoints
 
         group.MapDelete("/transactions/{id:guid}/cancel", async (
             Guid id,
-            HttpContext context,
+            [FromBody] CancelTransactionRequest? request,
             ICommandHandler<CancelTransactionCommand> handler,
             CancellationToken ct) =>
         {
-            CancelTransactionRequest? request = null;
-            if (context.Request.HasJsonContentType())
-            {
-                try { request = await context.Request.ReadFromJsonAsync<CancelTransactionRequest>(ct); } catch { /* ignore invalid body */ }
-            }
             var command = new CancelTransactionCommand(id, request?.Reason);
             var result = await handler.Handle(command, ct);
             return result.ToHttpResult();
         })
         .WithName("CancelGateTransaction")
+        .WithDescription("Deprecated. Use POST /api/gate/transactions/{id}/cancel.")
         .WithSummary("Hủy giao dịch cổng và hoàn tác trạng thái/vị trí");
 
         group.MapPost("/transactions/{id:guid}/cancel", async (
             Guid id,
-            HttpContext context,
+            [FromBody] CancelTransactionRequest? request,
             ICommandHandler<CancelTransactionCommand> handler,
             CancellationToken ct) =>
         {
-            CancelTransactionRequest? request = null;
-            if (context.Request.HasJsonContentType())
-            {
-                try { request = await context.Request.ReadFromJsonAsync<CancelTransactionRequest>(ct); } catch { /* ignore invalid body */ }
-            }
             var command = new CancelTransactionCommand(id, request?.Reason);
             var result = await handler.Handle(command, ct);
             return result.ToHttpResult();

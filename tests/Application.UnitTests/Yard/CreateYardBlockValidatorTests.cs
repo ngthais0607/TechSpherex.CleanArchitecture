@@ -5,6 +5,17 @@ namespace SnpDepotManagement.Application.UnitTests.Yard;
 
 public class CreateYardBlockValidatorTests
 {
+    [Theory]
+    [InlineData(101, 1, 1)]
+    [InlineData(1, 31, 1)]
+    [InlineData(1, 1, 7)]
+    [InlineData(int.MaxValue, int.MaxValue, int.MaxValue)]
+    public void Validate_ExcessiveDimensions_ReturnsErrors(int bays, int rows, int tiers)
+    {
+        var result = new CreateYardBlockCommandValidator().TestValidate(new CreateYardBlockCommand("LIMIT", "Test", false, bays, rows, tiers));
+        result.IsValid.Should().BeFalse();
+    }
+
     private readonly CreateYardBlockCommandValidator _validator = new();
 
     [Fact]

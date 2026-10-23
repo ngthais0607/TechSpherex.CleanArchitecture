@@ -6,6 +6,8 @@ public sealed class GateInCommandValidator : AbstractValidator<GateInCommand>
 {
     public GateInCommandValidator()
     {
+        RuleFor(x => x.DriverName).MaximumLength(100);
+
         RuleFor(x => x.ContainerId)
             .Must(id => id.HasValue && id.Value != Guid.Empty)
             .WithMessage("Container ID is required.")

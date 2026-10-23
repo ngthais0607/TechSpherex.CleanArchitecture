@@ -1,4 +1,5 @@
 using SnpDepotManagement.Domain.Common;
+using SnpDepotManagement.Domain.Common.Rules;
 using SnpDepotManagement.Domain.Enums;
 
 namespace SnpDepotManagement.Domain.Entities.Yard;
@@ -28,6 +29,9 @@ public sealed class YardBlock : AuditableEntity, ITenantEntity
         int tiers,
         string tenantId = "")
     {
+        var sizeRule = new YardBlockSizeRule(bays, rows, tiers);
+        if (sizeRule.IsBroken()) throw new BusinessRuleException(sizeRule);
+
         var block = new YardBlock
         {
             Code = code.Trim().ToUpperInvariant(),
@@ -76,6 +80,9 @@ public sealed class YardBlock : AuditableEntity, ITenantEntity
 
     public Result Expand(int newMaxBays, int newMaxRows, int newMaxTiers)
     {
+        if (!YardBlockLimits.IsWithinLimits(newMaxBays, newMaxRows, newMaxTiers))
+            return Result.Failure(YardBlockLimits.InvalidSize);
+
         if (IsVirtual)
         {
             return Result.Failure(
@@ -112,6 +119,9 @@ public sealed class YardBlock : AuditableEntity, ITenantEntity
 
     public Result Shrink(int newMaxBays, int newMaxRows, int newMaxTiers)
     {
+        if (!YardBlockLimits.IsWithinLimits(newMaxBays, newMaxRows, newMaxTiers))
+            return Result.Failure(YardBlockLimits.InvalidSize);
+
         if (IsVirtual)
         {
             return Result.Failure(

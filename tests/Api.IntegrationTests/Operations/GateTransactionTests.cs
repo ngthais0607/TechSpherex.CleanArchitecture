@@ -20,6 +20,39 @@ namespace SnpDepotManagement.Api.IntegrationTests.Operations;
 [Collection("Api")]
 public sealed class GateTransactionTests(ApiFactory factory)
 {
+    [Theory]
+    [InlineData("Nguyễn Văn A", "nguyễn")]
+    [InlineData("Nguyễn Văn A", "NGUYỄN VĂN A")]
+    [InlineData("Tài xế %", "%")]
+    [InlineData("Tài xế _", "_")]
+    [InlineData("Tài xế \\", "\\")]
+    [InlineData("Other driver", "59c-search")]
+    public async Task Search_MatchesCaseInsensitiveLiteralText(string driverName, string search)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var client = await ApiTestClient.LoginAsync(factory);
+        await EnsureMasterDataAsync(factory, "SRH", ct);
+        var container = OperationScenario.NewContainer("SRH", "DEPOT-A");
+        var decoyContainer = OperationScenario.NewContainer("SRH", "DEPOT-A");
+        var transaction = GateTransaction.CreateGateIn(container.Id, "59C-SEARCH", VehicleType.Truck,
+            driverName, null, null, "DEPOT-A");
+        var decoy = GateTransaction.CreateGateIn(decoyContainer.Id, "59C-OTHER", VehicleType.Truck,
+            "Other driver", null, null, "DEPOT-A");
+        await using (var db = factory.Context("DEPOT-A"))
+        {
+            db.Containers.AddRange(container, decoyContainer);
+            db.GateTransactions.AddRange(transaction, decoy);
+            await db.SaveChangesAsync(ct);
+        }
+
+        var response = await client.GetAsync($"/api/gate/transactions?search={Uri.EscapeDataString(search)}&pageSize=100", ct);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<GateTransactionDto>>(ct);
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, item => item.Id == transaction.Id);
+        Assert.DoesNotContain(result.Items, item => item.Id == decoy.Id);
+    }
+
     private static async Task EnsureMasterDataAsync(ApiFactory factory, string lineOpCode, CancellationToken ct)
     {
         await using var db = factory.Context("DEPOT-A");

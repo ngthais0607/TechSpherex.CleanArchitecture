@@ -28,8 +28,9 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, AuthResp
 
     public async Task<Result<AuthResponseDto>> Handle(LoginCommand command, CancellationToken cancellationToken = default)
     {
+        var userName = command.UserName.Trim();
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.UserName == command.UserName, cancellationToken);
+            .FirstOrDefaultAsync(u => u.UserName == userName, cancellationToken);
 
         if (user is null || !user.IsActive)
         {
