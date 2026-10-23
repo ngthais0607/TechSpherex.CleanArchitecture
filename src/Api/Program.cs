@@ -53,6 +53,10 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 }));
 builder.Services.AddHealthChecks();
 builder.Services.AddTransient<IValidator<YardBlockSizeRequest>, YardBlockSizeRequestValidator>();
+builder.Services.AddTransient<IValidator<UpdateTransactionRequest>, UpdateTransactionRequestValidator>();
+builder.Services.AddTransient<IValidator<CancelTransactionRequest>, CancelTransactionRequestValidator>();
+builder.Services.AddTransient<IValidator<PlaceFromVirtualBlockRequest>, PlaceFromVirtualBlockRequestValidator>();
+builder.Services.AddTransient<IValidator<AssignContainersRequest>, AssignContainersRequestValidator>();
 
 builder.Services.AddRateLimiter(options =>
 {
