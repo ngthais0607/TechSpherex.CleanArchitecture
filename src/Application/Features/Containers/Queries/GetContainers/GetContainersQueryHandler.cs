@@ -19,51 +19,17 @@ public sealed class GetContainersQueryHandler : IQueryHandler<GetContainersQuery
 
     public async Task<Result<PagedResult<ContainerDto>>> Handle(GetContainersQuery query, CancellationToken cancellationToken = default)
     {
-        var dbQuery = _context.Containers.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(query.Search))
-        {
-            var searchUpper = query.Search.Trim().ToUpperInvariant();
-            if (_context is DbContext dbContext && dbContext.Database.ProviderName?.Contains("InMemory") == true)
-            {
-                dbQuery = dbQuery.Where(c =>
-                    c.IsoCode.Contains(searchUpper) ||
-                    c.OwnerCode.Contains(searchUpper) ||
-                    c.ContainerNumber.Value.Contains(searchUpper));
-            }
-            else
-            {
-                dbQuery = dbQuery.Where(c =>
-                    EF.Functions.Like(c.IsoCode, $"%{searchUpper}%") ||
-                    EF.Functions.Like(c.OwnerCode, $"%{searchUpper}%") ||
-                    EF.Functions.Like((string)(object)c.ContainerNumber, $"%{searchUpper}%"));
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(query.OwnerCode))
-        {
-            var normalizedOwner = query.OwnerCode.Trim().ToUpperInvariant();
-            dbQuery = dbQuery.Where(c => c.OwnerCode == normalizedOwner);
-        }
-
-        if (query.Size.HasValue)
-        {
-            dbQuery = dbQuery.Where(c => c.Size == query.Size.Value);
-        }
-
-        if (query.Condition.HasValue)
-        {
-            dbQuery = dbQuery.Where(c => c.Condition == query.Condition.Value);
-        }
-
+        var filter = new ContainerFilter(query.Search, query.OwnerCode, query.Size, query.Condition,
+            query.Type, query.LineOperator, query.DisplayStatus, query.Booking);
+        if (!ContainerReadFilter.IsValid(filter) || !ContainerReadFilter.IsValidSort(query.Sort))
+            return Result.Failure<PagedResult<ContainerDto>>(Error.Validation("Validation.Failed", "Unsupported container filter or sort."));
+        var dbQuery = ContainerReadFilter.Apply(_context.Containers.AsNoTracking(), _context, filter);
         var totalCount = await dbQuery.CountAsync(cancellationToken);
 
         var pageIndex = Math.Max(1, query.PageIndex);
         var pageSize = Math.Max(1, Math.Min(100, query.PageSize));
 
-        var containers = await dbQuery
-            .OrderBy(c => c.IsoCode)
-            .ThenBy(c => c.Id)
+        var containers = await ContainerReadFilter.Order(dbQuery, query.Sort, query.Descending)
             .Skip((pageIndex - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);

@@ -1,63 +1,45 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { DemoRepository } from '../../demo/demo-repository';
-import { inventory } from '../../demo/queries/analytics';
-import { TYPES } from '../../core/models/entities';
-import { Icon } from '../../shared/ui';
-import { downloadWorkbook } from '../../core/export/workbook-export';
+import { Pagination } from '../../shared/ui';
+import { InventoryFacade } from './inventory-facade';
+import { ReferenceData } from '../../core/api/reference-data';
+import { LookupsDto } from '../../core/api/lookups.dto';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-inventory',
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, Icon],
+  imports: [FormsModule, Pagination],
+  providers: [InventoryFacade],
   templateUrl: './inventory-page.html',
 })
 export class InventoryPage {
-  store = inject(DemoRepository);
-  operator = signal('');
-  type = signal('');
-  size = signal('');
-  types = TYPES;
-  busy = signal(false);
-  error = signal('');
-  data = computed(() =>
-    inventory(
-      this.store.state(),
-      { operatorId: this.operator(), type: this.type(), size: this.size() },
-      this.store.now(),
-    ),
-  );
-  floor = Math.floor;
-  async export() {
-    this.busy.set(true);
-    this.error.set('');
-    try {
-      await downloadWorkbook(
-        'Tồn bãi',
-        [
-          'Số container',
-          'Hãng khai thác',
-          'Loại',
-          'Kích thước',
-          'Vị trí',
-          'Ngày nhập',
-          'Số ngày lưu',
-        ],
-        this.data().rows.map((r) => [
-          r.number,
-          this.store.operator(r.container.operatorId),
-          r.container.type,
-          r.container.size + 'ft',
-          this.store.location(r.number),
-          new Date(r.inAt),
-          r.days,
-        ]),
-        `Hãng: ${this.operator() ? this.store.operator(this.operator()) : 'Tất cả'} · Loại: ${this.type() || 'Tất cả'} · Cỡ: ${this.size() || 'Tất cả'}`,
-      );
-    } catch {
-      this.error.set('Không xuất được Excel. Vui lòng thử lại.');
-    } finally {
-      this.busy.set(false);
-    }
+  readonly facade = inject(InventoryFacade);
+  readonly lookups = signal<LookupsDto | null>(null);
+  lineOperator = '';
+  size = '';
+  type = '';
+  condition = '';
+  page = 1;
+  constructor() {
+    inject(ReferenceData)
+      .lookups()
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (value) => this.lookups.set(value),
+        error: (error) => this.facade.error.set(error.detail),
+      });
+    this.load();
+  }
+  load(page = 1): void {
+    this.page = page;
+    this.facade.load({
+      lineOperator: this.lineOperator,
+      size: this.size,
+      type: this.type,
+      condition: this.condition,
+      pageIndex: page,
+    });
+  }
+  options(key: keyof LookupsDto) {
+    return Object.entries(this.lookups()?.[key] ?? {}).map(([value, label]) => ({ value, label }));
   }
 }

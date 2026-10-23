@@ -31,7 +31,7 @@ const saveId = name => `pm.environment.set('${name}', data.id);`;
 const token = role => `pm.environment.set('${role}AccessToken', data.accessToken); pm.environment.set('${role}RefreshToken', data.refreshToken); pm.test('tokens received', () => { pm.expect(data.accessToken).to.be.a('string'); pm.expect(data.refreshToken).to.be.a('string'); });`;
 const block = { Code: variable('operatorCode'), Name: 'Postman test block', Bays: 7, Rows: 1, Tiers: 2, IsVirtual: false };
 const order = (number = 'orderNumber', expiry = 'futureExpiry') => ({ OrderNumber: variable(number), LineOperator: variable('operatorCode'), CustomerTaxCode: variable('customerTaxCode'), CustomerName: 'Postman test customer', OutboundVessel: 'Postman test vessel', ExpiryDate: variable(expiry), Items: [{ Size: 20, Type: 85, Quantity: 3 }] });
-const registration = number => ({ ContainerNumber: variable(number), IsoCode: '22G1', Size: 20, Type: 85, TareWeight: 2000, MaxGrossWeight: 30000, OwnerCode: variable('operatorCode') });
+const registration = number => ({ ContainerNumber: variable(number), IsoCode: '22G1', Size: 20, Type: 85, TareWeight: 2000, MaxGrossWeight: 30000 });
 const gateOut = (n, orderId = 'orderId') => ({ ContainerId: variable('containerId' + n), DeliveryOrderId: variable(orderId), OutVehicleNumber: variable('vehiclePlate'), VehicleType: 0 });
 const position = { BlockId: variable('blockId'), Bay: 1, Row: 1, Tier: 1 };
 const initialize = `
@@ -39,6 +39,8 @@ if (!pm.environment.get('adminPassword') || !pm.environment.get('testUserPasswor
 const suffix = Date.now().toString(36).slice(-6) + Math.random().toString(36).slice(2,4);
 pm.environment.set('runSuffix', suffix);
 pm.environment.set('operatorCode', ('P' + suffix).toUpperCase());
+const ownerCode = Array.from({length:3},()=>String.fromCharCode(65+Math.floor(Math.random()*26))).join('');
+pm.environment.set('ownerCode', ownerCode);
 pm.environment.set('orderNumber', 'DO-' + suffix);
 pm.environment.set('expiredOrderNumber', 'EXPIRED-' + suffix);
 pm.environment.set('fortyOrderNumber', 'FORTY-' + suffix);
@@ -52,7 +54,7 @@ for (const key of ['blockId','orderId','expiredOrderId','previousGateRefreshToke
 for (const role of ['admin','yard','order','gate']) { pm.environment.unset(role+'AccessToken'); pm.environment.unset(role+'RefreshToken'); }
 const serial = Math.floor(100000 + Math.random() * 899990);
 for (let n=1; n<=6; n++) {
-  const raw = 'TSTU' + String(serial+n).padStart(6,'0');
+  const raw = ownerCode + 'U' + String(serial+n).padStart(6,'0');
   let sum=0;
   for (let i=0; i<10; i++) {
     let value = /[0-9]/.test(raw[i]) ? Number(raw[i]) : raw.charCodeAt(i)-65+10;
@@ -67,7 +69,8 @@ folder('01 - Initialize and Admin setup');
 request('Initialize a unique test run - Liveness', 'GET', '/health/live', null, 200, null, '', { json: false, before: initialize });
 request('Admin login', 'POST', '/api/auth/login', null, 200, { UserName: variable('adminUserName'), Password: variable('adminPassword') }, token('admin'));
 request('Admin readiness', 'GET', '/health/ready', 'admin', 200, null, `pm.test('ready or optional degraded', () => pm.expect(['Healthy','Degraded']).to.include(data.status));`);
-request('Create shared line operator', 'POST', '/api/line-operators', 'admin', 201, { Code: variable('operatorCode'), Name: 'Postman test operator' });
+request('Create shared line operator', 'POST', '/api/line-operators', 'admin', 201, { Code: variable('operatorCode'), Name: 'Postman test operator' }, saveId('operatorId'));
+request('Map container owner prefix', 'POST', '/api/line-operators/{{operatorId}}/owner-codes', 'admin', 204, { OwnerCode: variable('ownerCode') });
 request('Create shared customer', 'POST', '/api/customers', 'admin', 201, { TaxCode: variable('customerTaxCode'), Name: 'Postman test customer' });
 request('Create shared voyage', 'POST', '/api/voyages', 'admin', 201, { VesselName: 'Postman test vessel', VoyageNumber: variable('runSuffix'), Etd: variable('futureExpiry') });
 request('Create shared vehicle', 'POST', '/api/vehicles', 'admin', 201, { PlateNumber: variable('vehiclePlate'), Type: 0 });
@@ -90,6 +93,8 @@ for (let n=1;n<=4;n++) {
   request('Gate-In container '+n, 'POST', '/api/gate/in', 'gate', 201, { ContainerId: variable('containerId'+n), InVehicleNumber: variable('vehiclePlate'), SlotId: variable('slotId'+n), Classification: 1, Condition: n === 4 ? 1 : 0, VehicleType: 0 });
 }
 request('Assign container 1 to order', 'POST', '/api/delivery-orders/{{orderNumber}}/assign-containers', 'order', 200, { ContainerNumbers: [variable('containerNumber1')] }, `pm.environment.set('bookingId1', data.bookingIds[0]);`);
+request('Read order bookings and quota', 'GET', '/api/delivery-orders/{{orderNumber}}/bookings?pageSize=1', 'order', 200, null,
+  `pm.test('booking ID and remaining quota',()=>{ pm.expect(data.bookings.totalCount).to.eql(1); pm.expect(data.bookings.items[0].id).to.eql(pm.environment.get('bookingId1')); pm.expect(data.itemCounts[0].reservedQuantity).to.eql(1); pm.expect(data.itemCounts[0].availableQuantity).to.eql(2); });`);
 request('Release booking for container 1', 'DELETE', '/api/delivery-orders/bookings/{{bookingId1}}', 'order', 204);
 request('Re-assign container 1 to order', 'POST', '/api/delivery-orders/{{orderNumber}}/assign-containers', 'order', 200, { ContainerNumbers: [variable('containerNumber1')] });
 folder('05 - YardPlanner moves and inventory');

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using SnpDepotManagement.Api.IntegrationTests.Fixtures;
 using Xunit;
 
@@ -26,5 +27,9 @@ public sealed class RateLimitTests(ApiFactory factory)
 
         Assert.NotNull(lastResponse);
         Assert.Equal(HttpStatusCode.TooManyRequests, lastResponse.StatusCode);
+        var problem = await lastResponse.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        Assert.Equal("RateLimit.TooManyRequests", problem.GetProperty("code").GetString());
+        Assert.Equal(429, problem.GetProperty("status").GetInt32());
+        Assert.False(string.IsNullOrWhiteSpace(problem.GetProperty("traceId").GetString()));
     }
 }

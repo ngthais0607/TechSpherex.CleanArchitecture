@@ -4,4 +4,4 @@ using SnpDepotManagement.Domain.Common;
 
 namespace SnpDepotManagement.Application.Features.MasterData.Customers.Queries.GetCustomers;
 
-public sealed record GetCustomersQuery(int PageIndex = 1, int PageSize = 20) : IQuery<PagedResult<CustomerDto>>;
+public sealed record GetCustomersQuery(int PageIndex = 1, int PageSize = 20, string? Search = null) : IQuery<PagedResult<CustomerDto>>;

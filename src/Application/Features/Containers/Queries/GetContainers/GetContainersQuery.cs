@@ -11,4 +11,10 @@ public sealed record GetContainersQuery(
     ContainerSize? Size = null,
     ContainerCondition? Condition = null,
     int PageIndex = 1,
-    int PageSize = 20) : IQuery<PagedResult<ContainerDto>>;
+    int PageSize = 20,
+    ContainerType? Type = null,
+    string? LineOperator = null,
+    string? DisplayStatus = null,
+    string? Booking = null,
+    string? Sort = null,
+    bool Descending = false) : IQuery<PagedResult<ContainerDto>>;

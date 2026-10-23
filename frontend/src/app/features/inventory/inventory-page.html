@@ -1,144 +1,106 @@
 <section class="page-header">
   <div>
-    <span class="eyebrow">BÁO CÁO · TỒN BÃI</span>
-    <h1>Tồn bãi & thời gian lưu</h1>
-    <p>Container đang lưu bãi tính đến {{ store.now() | date: 'dd/MM/yyyy HH:mm' }}.</p>
+    <span class="eyebrow">KIỂM SOÁT TỒN BÃI</span>
+    <h1>Tồn bãi</h1>
+    <p>Tổng container độc lập với số nhóm phân trang.</p>
   </div>
-  <button class="button" [disabled]="!data().total || busy()" (click)="export()">
-    <app-icon name="download" />{{ busy() ? 'Đang xuất...' : 'Xuất báo cáo' }}
+  <button
+    class="button primary"
+    [disabled]="facade.exporting() || facade.loading()"
+    (click)="facade.export()"
+  >
+    Xuất Excel
   </button>
 </section>
 <div class="kpis three">
   <div class="metric">
-    <div class="metric-value">{{ data().total | number }}</div>
-    <div class="metric-label">Đang lưu bãi</div>
-    <div class="metric-note">Bao gồm block ảo</div>
-  </div>
-  <div class="metric">
-    <div class="metric-value">
-      {{ data().total ? (data().average | number: '1.1-1') : '—' }} <small>ngày</small>
+    <div class="metric-label">Container trong bộ lọc</div>
+    <div class="metric-value" data-testid="inventory-total">
+      {{ facade.data()?.totalContainers ?? '—' }}
     </div>
-    <div class="metric-label">Thời gian lưu trung bình</div>
   </div>
   <div class="metric">
-    <div class="metric-value">{{ data().longStay }}</div>
-    <div class="metric-label">Lưu từ 3 ngày trở lên</div>
-    <div class="metric-note">Từ 72 giờ kể từ lần nhập gần nhất</div>
+    <div class="metric-label">Nhóm tồn bãi</div>
+    <div class="metric-value">{{ facade.data()?.groups?.totalCount ?? '—' }}</div>
   </div>
 </div>
-@if (error()) {
-  <p class="banner error" role="alert">{{ error() }}</p>
-}
 <section class="panel">
-  <div class="panel-header">
-    <div>
-      <h2>Tồn bãi theo hãng khai thác</h2>
-      <p>Theo dữ liệu hiện tại và bộ lọc đang chọn.</p>
-    </div>
-  </div>
   <div class="toolbar">
-    <div class="toolbar-group">
-      <select
-        aria-label="Lọc hãng khai thác"
-        [ngModel]="operator()"
-        (ngModelChange)="operator.set($event)"
-      >
-        <option value="">Tất cả hãng</option>
-        @for (o of store.state().operators; track o.id) {
-          <option [value]="o.id">{{ o.name }}</option>
-        }</select
-      ><select
-        aria-label="Lọc loại container"
-        [ngModel]="type()"
-        (ngModelChange)="type.set($event)"
-      >
-        <option value="">Tất cả loại</option>
-        @for (t of types; track t) {
-          <option>{{ t }}</option>
-        }</select
-      ><select aria-label="Lọc kích thước" [ngModel]="size()" (ngModelChange)="size.set($event)">
-        <option value="">Tất cả kích thước</option>
-        <option value="20">20ft</option>
-        <option value="40">40ft</option>
-      </select>
-    </div>
+    <input
+      aria-label="Hãng tồn bãi"
+      placeholder="Mã hãng khai thác"
+      [(ngModel)]="lineOperator"
+      (ngModelChange)="load()"
+    />
+    <select aria-label="Cỡ tồn bãi" [(ngModel)]="size" (ngModelChange)="load()">
+      <option value="">Mọi cỡ</option>
+      @for (option of options('containerSizes'); track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+    <select aria-label="Loại tồn bãi" [(ngModel)]="type" (ngModelChange)="load()">
+      <option value="">Mọi loại</option>
+      @for (option of options('containerTypes'); track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+    <select aria-label="Tình trạng tồn bãi" [(ngModel)]="condition" (ngModelChange)="load()">
+      <option value="">Mọi tình trạng</option>
+      @for (option of options('containerConditions'); track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
   </div>
+  @if (facade.loading()) {
+    <p role="status">Đang tải tồn bãi…</p>
+  }
+  @if (facade.error()) {
+    <p class="banner error" role="alert">{{ facade.error() }}</p>
+  }
+  @if (facade.exporting()) {
+    <p class="banner">
+      Đang xuất {{ facade.progress() }}
+      <button class="button small" (click)="facade.cancelExport()">Hủy xuất</button>
+    </p>
+  }
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th>Hãng khai thác</th>
-          <th class="numeric">Đang lưu</th>
-          <th class="numeric">TB (ngày)</th>
-          <th class="numeric">Lâu nhất (ngày)</th>
-          <th class="numeric">Từ 3 ngày</th>
+          <th>Hãng</th>
+          <th>Cỡ</th>
+          <th>Loại</th>
+          <th>Tình trạng</th>
+          <th>Block</th>
+          <th>Số container</th>
         </tr>
       </thead>
       <tbody>
-        @for (o of data().byOperator; track o.id) {
-          @if (!operator() || operator() === o.id) {
+        @for (row of facade.data()?.groups?.items || []; track $index) {
+          <tr>
+            <td>{{ row.lineOperator }}</td>
+            <td>{{ lookups()?.containerSizes?.[row.size] || row.size }}</td>
+            <td>{{ lookups()?.containerTypes?.[row.type] || row.type }}</td>
+            <td>{{ lookups()?.containerConditions?.[row.condition] || row.condition }}</td>
+            <td>{{ row.blockCode || 'Chưa xếp vị trí' }}</td>
+            <td>{{ row.containerCount }}</td>
+          </tr>
+        } @empty {
+          @if (!facade.loading()) {
             <tr>
-              <td>
-                <strong>{{ o.name }}</strong>
-              </td>
-              <td class="numeric">{{ o.count }}</td>
-              <td class="numeric">{{ o.count ? (o.avg | number: '1.1-1') : '—' }}</td>
-              <td class="numeric">{{ o.max | number: '1.0-0' }}</td>
-              <td class="numeric">{{ o.longStay }}</td>
+              <td colspan="6" class="empty">Không có tồn bãi phù hợp.</td>
             </tr>
           }
         }
       </tbody>
     </table>
   </div>
-  @if (!data().total) {
-    <div class="empty">
-      <h3>Chưa có container đang lưu bãi</h3>
-      <p>Ghi nhận nhập bãi hoặc thay đổi bộ lọc để xem dữ liệu.</p>
-      <a class="button" routerLink="/gate">Nhập bãi</a>
-    </div>
-  }
+  <app-pagination
+    [total]="facade.data()?.groups?.totalCount || 0"
+    [page]="page"
+    (changed)="load($event)"
+  />
 </section>
-<section class="panel section-gap">
-  <div class="panel-header">
-    <div>
-      <h2>Container lưu bãi lâu nhất</h2>
-      <p>Top 5 · Chọn số container để xem chi tiết</p>
-    </div>
-    <span class="pill">THỜI GIAN LƯU</span>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Số container</th>
-          <th>Hãng</th>
-          <th>Vị trí</th>
-          <th>Ngày nhập</th>
-          <th class="numeric">Số ngày</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (r of data().top; track r.id) {
-          <tr>
-            <td>
-              <a class="mono" routerLink="/containers" [queryParams]="{ container: r.number }">{{
-                r.number
-              }}</a>
-            </td>
-            <td>{{ store.operator(r.container.operatorId) }}</td>
-            <td class="mono">{{ store.location(r.number) }}</td>
-            <td class="nowrap">{{ r.inAt | date: 'dd/MM/yyyy' }}</td>
-            <td class="numeric">
-              <strong>{{ floor(r.days) }}</strong>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="empty">Chưa có dữ liệu lưu bãi.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-</section>
+<p class="muted">
+  Export lấy đủ các nhóm. Kết quả không bảo đảm snapshot đồng thời nếu có giao dịch đang diễn ra.
+</p>

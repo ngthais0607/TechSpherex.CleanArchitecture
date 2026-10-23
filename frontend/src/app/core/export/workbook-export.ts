@@ -7,12 +7,12 @@ export async function buildWorkbook(
 ): Promise<Uint8Array> {
   const ExcelJS = await import('exceljs');
   const book = new ExcelJS.Workbook();
-  book.creator = 'SNP Depot Demo';
+  book.creator = 'SNP Depot Management';
   book.created = now;
   const sheet = book.addWorksheet('Báo cáo');
   sheet.addRow([title]);
   sheet.addRow(['Điều kiện: ' + filters]);
-  sheet.addRow(['Xuất lúc: ' + now.toLocaleString('vi-VN', { timeZone: 'Asia/Bangkok' })]);
+  sheet.addRow(['Xuất lúc: ' + now.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })]);
   sheet.addRow(headers);
   rows.forEach((r) => sheet.addRow(r));
   sheet.getRow(1).font = { size: 18, bold: true, color: { argb: 'FF0084A0' } };
@@ -41,8 +41,10 @@ export async function downloadWorkbook(
   headers: string[],
   rows: (string | number | Date | null)[][],
   filters: string,
+  signal?: AbortSignal,
 ) {
   const bytes = await buildWorkbook(title, headers, rows, filters, new Date());
+  if (signal?.aborted) throw new DOMException('Đã hủy xuất báo cáo.', 'AbortError');
   const url = URL.createObjectURL(
     new Blob([bytes as BlobPart], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

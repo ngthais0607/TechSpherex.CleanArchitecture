@@ -2,294 +2,377 @@
   <div>
     <span class="eyebrow">KIỂM SOÁT GIAO NHẬN</span>
     <h1>Lệnh giao container</h1>
-    <p>Theo dõi hạn lệnh, số lượng và tiến độ giao container.</p>
+    <p>Theo dõi hạn lệnh và tiến độ giao container.</p>
   </div>
-  <button class="button primary" (click)="startCreate()">
-    <app-icon name="plus" />Thêm lệnh giao
-  </button>
+  @if (canManage()) {
+    <button class="button primary" (click)="startCreate()">Thêm lệnh giao</button>
+  }
 </section>
-<div class="kpis three">
-  <button class="metric" (click)="filter('active')" [class.selected]="status() === 'active'">
-    <div class="metric-label">Lệnh còn hiệu lực</div>
-    <div class="metric-value">{{ count('active') }}</div>
-    <div class="metric-note">Bấm để lọc danh sách</div></button
-  ><button class="metric alert" (click)="filter('Sắp hết hạn')">
-    <div class="metric-label">Sắp hết hạn</div>
-    <div class="metric-value">{{ count('Sắp hết hạn') }}</div>
-    <div class="metric-note">Còn tối đa 3 ngày</div>
-  </button>
-  <div class="metric">
-    <div class="metric-label">Đã giao hôm nay</div>
-    <div class="metric-value">{{ store.state().gateTransactions.length ? shippedToday() : 0 }}</div>
-    <div class="metric-note">Giao dịch xuất chưa hủy</div>
-  </div>
+<div class="kpis">
+  @for (code of statuses; track code) {
+    <button
+      class="metric"
+      [class.selected]="status() === code"
+      (click)="status.set(code); update()"
+    >
+      <div class="metric-label">{{ statusLabels[code] || code }}</div>
+      <div class="metric-value">{{ facade.counts()[code] || 0 }}</div>
+    </button>
+  }
 </div>
 <section class="panel">
   <div class="panel-header">
-    <div>
-      <h2>Danh sách lệnh giao</h2>
-      <p>Thông tin khách hàng, hạn lệnh và container đã giao / tổng.</p>
-    </div>
+    <h2>Danh sách lệnh giao</h2>
+    <span>{{ facade.totalCount() }} lệnh</span>
   </div>
   <div class="toolbar">
-    <div class="search-box">
-      <app-icon name="search" /><input
-        aria-label="Tìm lệnh giao"
-        placeholder="Tìm số lệnh, khách hàng..."
-        [ngModel]="search()"
-        (ngModelChange)="search.set($event); page.set(1)"
-      />
-    </div>
-    @if (status() || customer()) {
-      <span class="muted"
-        >Đang lọc: {{ status() || 'Theo khách hàng' }} · {{ rows().length }} lệnh
-        <button class="text-button" (click)="status.set(''); customer.set(''); filter('')">
-          Bỏ lọc
-        </button></span
-      >
-    }
+    <input
+      aria-label="Tìm lệnh giao"
+      placeholder="Tìm số lệnh, khách hàng…"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event); update()"
+    />
+    <select
+      aria-label="Trạng thái lệnh"
+      [ngModel]="status()"
+      (ngModelChange)="status.set($event); update()"
+    >
+      <option value="">Tất cả trạng thái</option>
+      @for (code of statuses; track code) {
+        <option [value]="code">{{ statusLabels[code] || code }}</option>
+      }
+    </select>
+    <select
+      aria-label="Sắp xếp lệnh"
+      [ngModel]="sort()"
+      (ngModelChange)="sort.set($event); update()"
+    >
+      <option value="createdAt">Mới tạo trước</option>
+      <option value="orderNumber">Số lệnh giảm dần</option>
+      <option value="expiryDate">Hạn xa trước</option>
+    </select>
   </div>
+  @if (facade.loading()) {
+    <p role="status">Đang tải…</p>
+  }
+  @if (facade.error(); as error) {
+    <p class="banner error" role="alert">{{ error.detail }}</p>
+  }
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
           <th>Số lệnh</th>
           <th>Khách hàng</th>
-          <th>Hãng khai thác</th>
+          <th>Hãng</th>
           <th>Hạn lệnh</th>
           <th>Chuyến tàu</th>
-          <th>Số lượng theo loại</th>
-          <th>Đã giao</th>
+          <th>Đã giao / Yêu cầu</th>
           <th>Trạng thái</th>
         </tr>
       </thead>
       <tbody>
-        @for (o of visible(); track o.id) {
-          <tr class="clickable" (click)="open(o.id)">
+        @for (order of facade.rows(); track order.id) {
+          <tr class="clickable" (click)="open(order.id)">
             <td>
-              <button class="text-button mono">{{ o.number }}</button>
+              <button class="text-button mono">{{ order.orderNumber }}</button>
             </td>
-            <td style="min-width: 170px; max-width: 230px">
-              {{ store.customer(o.customerId) }}<small>{{ taxCode(o.customerId) }}</small>
-            </td>
-            <td class="nowrap">{{ store.operator(o.operatorId) }}</td>
-            <td class="nowrap">{{ o.expiry | date: 'dd/MM/yyyy' }}</td>
-            <td>{{ o.voyage || '—' }}</td>
             <td>
-              @for (l of o.lines; track l.id) {
-                <small class="nowrap">{{ l.size }}ft {{ l.type }} ×{{ l.quantity }}</small>
+              {{ order.customerName }}<small>{{ order.customerTaxCode }}</small>
+            </td>
+            <td>{{ order.lineOperator }}</td>
+            <td>{{ order.expiryDate | date: 'dd/MM/yyyy' }}</td>
+            <td>{{ order.outboundVessel }}</td>
+            <td>
+              @for (item of order.items; track item.id) {
+                <small
+                  >{{ item.size === 'Ft40' ? 40 : 20 }}ft
+                  {{ lookups()?.containerTypes?.[item.type] || item.type }}:
+                  {{ item.deliveredQuantity }}/{{ item.requiredQuantity }}</small
+                >
               }
             </td>
-            <td style="min-width: 100px">
-              <strong>{{ shipped(o.id) }} / {{ total(o.id) }}</strong>
-              <div class="progress">
-                <span [style.width.%]="(shipped(o.id) / total(o.id)) * 100"></span>
-              </div>
-            </td>
-            <td><app-badge [value]="store.orderStatus(o.id)" /></td>
+            <td><app-badge [value]="statusLabels[order.status] || order.status" /></td>
           </tr>
         } @empty {
-          <tr>
-            <td colspan="8" class="empty">
-              <h3>Chưa có lệnh giao phù hợp</h3>
-              <p>Thêm lệnh giao hoặc thay đổi bộ lọc.</p>
-            </td>
-          </tr>
+          @if (!facade.loading()) {
+            <tr>
+              <td colspan="7" class="empty">Chưa có lệnh phù hợp.</td>
+            </tr>
+          }
         }
       </tbody>
     </table>
   </div>
-  <app-pagination [total]="rows().length" [page]="page()" (changed)="page.set($event)" />
+  <app-pagination
+    [total]="facade.totalCount()"
+    [page]="+(facade.query()['pageIndex'] || 1)"
+    (changed)="next($event)"
+  />
 </section>
-@if (showCreate()) {
+@if (selected()) {
   <app-modal
-    title="Thêm lệnh giao"
-    [width]="1040"
-    [dirty]="form.dirty || linesChanged()"
-    (closed)="showCreate.set(false)"
-    ><app-form #form [fields]="fields()" [errors]="errors()" (saved)="save($event)" />
-    <div class="panel-header section-gap" style="padding: 14px 0">
-      <h3>Số lượng theo loại</h3>
-      <button class="button small" (click)="lines.push({ type: 'Dry', size: 20, quantity: 1 })">
-        <app-icon name="plus" />Thêm dòng
-      </button>
-    </div>
-    <div class="order-lines">
-      @for (l of lines; track $index) {
-        <div class="order-line">
-          <label
-            >Loại container<select [(ngModel)]="l.type">
-              @for (t of types; track t) {
-                <option>{{ t }}</option>
-              }
-            </select></label
-          ><label
-            >Cỡ<select [(ngModel)]="l.size">
-              <option [ngValue]="20">20ft</option>
-              <option [ngValue]="40">40ft</option>
-            </select></label
-          ><label>Số lượng<input type="number" min="1" [(ngModel)]="l.quantity" /></label
-          ><button
-            class="icon-button"
-            aria-label="Xóa dòng"
-            [disabled]="lines.length === 1"
-            (click)="lines.splice($index, 1)"
-          >
-            <app-icon name="close" />
-          </button>
-        </div>
-      }
-    </div>
-    @if (error()) {
-      <p class="field-error" role="alert">{{ error() }} {{ errors()['lines'] }}</p>
-    }
-    <div footer>
-      <button class="button" (click)="cancelCreate(form.dirty || linesChanged())">Hủy</button
-      ><button class="button primary" form="entry-form" type="submit">Tạo lệnh giao</button>
-    </div></app-modal
+    [title]="facade.detail()?.orderNumber || 'Chi tiết lệnh giao'"
+    [width]="1100"
+    (closed)="close()"
   >
-}
-@if (detail(); as o) {
-  <app-modal [title]="o.number" [width]="1060" (closed)="close()"
-    ><div class="detail-grid">
-      <div class="detail-item">
-        <span>Khách hàng</span><strong>{{ store.customer(o.customerId) }}</strong>
-      </div>
-      <div class="detail-item">
-        <span>Hãng khai thác</span><strong>{{ store.operator(o.operatorId) }}</strong>
-      </div>
-      <div class="detail-item">
-        <span>Hạn lệnh</span><strong>{{ o.expiry | date: 'dd/MM/yyyy' }}</strong>
-        <app-badge [value]="store.orderStatus(o.id)" />
-      </div>
-      <div class="detail-item">
-        <span>Chuyến tàu xuất</span><strong>{{ o.voyage || '—' }}</strong>
-      </div>
-    </div>
-    <h3 class="section-gap">Số lượng theo loại</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Loại · Cỡ</th>
-            <th>Tổng</th>
-            <th>Giữ chỗ</th>
-            <th>Đã xuất</th>
-            <th>Còn lại</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (l of o.lines; track l.id) {
+    @if (facade.detailLoading()) {
+      <p role="status">Đang tải chi tiết…</p>
+    }
+    @if (facade.error(); as error) {
+      <p class="banner error" role="alert">{{ error.detail }}</p>
+    }
+    @if (facade.detail(); as order) {
+      <p>
+        {{ order.customerName }} · {{ order.lineOperator }} · Hạn
+        {{ order.expiryDate | date: 'dd/MM/yyyy' }}
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
             <tr>
-              <td>{{ l.type }} · {{ l.size }}ft</td>
-              <td>{{ l.quantity }}</td>
-              <td>{{ counts(l.id).held }}</td>
-              <td>{{ counts(l.id).shipped }}</td>
-              <td>{{ counts(l.id).remaining }}</td>
+              <th>Loại / Cỡ</th>
+              <th>Yêu cầu</th>
+              <th>Đang giữ</th>
+              <th>Đã giao</th>
+              <th>Còn có thể giữ</th>
             </tr>
+          </thead>
+          <tbody>
+            @for (item of order.items; track item.id) {
+              <tr>
+                <td>
+                  {{ item.size === 'Ft40' ? 40 : 20 }}ft
+                  {{ lookups()?.containerTypes?.[item.type] || item.type }}
+                </td>
+                <td>{{ item.requiredQuantity }}</td>
+                <td>{{ count(item.id)?.reservedQuantity ?? '—' }}</td>
+                <td>{{ count(item.id)?.shippedQuantity ?? '—' }}</td>
+                <td>{{ count(item.id)?.availableQuantity ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <h3>Container giữ chỗ</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Số container</th>
+              <th>Trạng thái</th>
+              <th>Ngày giữ</th>
+              <th>Ngày giao</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (booking of facade.bookings()?.bookings?.items || []; track booking.id) {
+              <tr>
+                <td class="mono">{{ booking.containerNumber }}</td>
+                <td>{{ booking.status }}</td>
+                <td>{{ booking.reservedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ (booking.shippedAt | date: 'dd/MM/yyyy HH:mm') || '—' }}</td>
+                <td>
+                  @if (canManage() && booking.status === 'Reserved') {
+                    <button
+                      class="button small"
+                      [disabled]="facade.pending()"
+                      (click)="release(booking.id)"
+                    >
+                      Gỡ giữ chỗ
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="empty">Chưa có booking.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-pagination
+        [total]="facade.bookings()?.bookings?.totalCount || 0"
+        [page]="facade.bookingPage()"
+        (changed)="facade.select(order.id, $event)"
+      />
+      @if (canManage()) {
+        <h3>Gán container</h3>
+        <p class="muted">Gợi ý theo hãng, cỡ và loại. Máy chủ kiểm tra điều kiện cuối cùng.</p>
+        <div class="toolbar">
+          <select
+            aria-label="Dòng lệnh cần gán"
+            [ngModel]="assignItem()"
+            (ngModelChange)="assignItem.set($event)"
+          >
+            @for (item of order.items; track item.id) {
+              <option [value]="item.id">
+                {{ item.size === 'Ft40' ? 40 : 20 }}ft {{ item.type }}
+              </option>
+            }</select
+          ><input
+            aria-label="Tìm container ứng viên"
+            [ngModel]="candidateSearch()"
+            (ngModelChange)="candidateSearch.set($event)"
+            placeholder="Tìm số container…"
+          />
+        </div>
+        @if (facade.candidatesLoading()) {
+          <p role="status">Đang tải ứng viên…</p>
+        }
+        @if (facade.candidateError(); as error) {
+          <p class="field-error">{{ error.detail }}</p>
+        }
+        <div class="toolbar-group">
+          @for (container of facade.candidates()?.items || []; track container.id) {
+            <label class="button small"
+              ><input
+                type="checkbox"
+                [checked]="facade.selectedNumbers().includes(container.containerNumber)"
+                (change)="toggle(container.containerNumber)"
+              />{{ container.containerNumber }}</label
+            >
           }
-        </tbody>
-      </table>
-    </div>
-    <div class="panel-header section-gap" style="padding: 12px 0">
-      <h3>Container đã gán</h3>
-      <button
-        class="button primary small"
-        [disabled]="['Hết hạn', 'Đã giao đủ'].includes(store.orderStatus(o.id))"
-        (click)="checks.set([]); error.set(''); showAssign.set(true)"
-      >
-        Gán container
-      </button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Container</th>
-            <th>Loại · ISO</th>
-            <th>Vị trí</th>
-            <th>Trạng thái</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (b of bookings(); track b.id) {
-            <tr>
-              <td>
-                <a class="mono" routerLink="/containers" [queryParams]="{ container: b.number }">{{
-                  b.number
-                }}</a>
-              </td>
-              <td>{{ container(b.number)?.type }} · {{ container(b.number)?.size }}ft</td>
-              <td class="mono">{{ store.location(b.number) }}</td>
-              <td><app-badge [value]="bookingLabel(b.status)" /></td>
-              <td>
-                @if (b.status === 'Reserved') {
-                  <button class="text-button" (click)="unassign(b.id)">Gỡ</button>
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="5" class="empty">Chưa gán container nào.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    @if (error()) {
-      <p role="alert" class="field-error">{{ error() }}</p>
+        </div>
+        <app-pagination
+          [total]="facade.candidates()?.totalCount || 0"
+          [page]="facade.candidates()?.pageIndex || 1"
+          (changed)="candidatesNext($event)"
+        />
+        <div class="field">
+          <label for="assign-numbers"
+            >Số container bổ sung (cách nhau bằng dấu phẩy hoặc xuống dòng)</label
+          ><textarea
+            id="assign-numbers"
+            [ngModel]="manualNumbers()"
+            (ngModelChange)="manualNumbers.set($event)"
+          ></textarea>
+        </div>
+        @if (facade.message()) {
+          <p class="banner" role="status">{{ facade.message() }}</p>
+        }
+        <button
+          class="button primary"
+          [disabled]="
+            facade.pending() || (!facade.selectedNumbers().length && !manualNumbers().trim())
+          "
+          (click)="assign()"
+        >
+          {{ facade.pending() ? 'Đang xử lý…' : 'Gán container đã chọn' }}
+        </button>
+      }
     }
   </app-modal>
 }
-@if (showAssign()) {
-  <app-modal title="Gán container vào lệnh giao" [width]="900" (closed)="showAssign.set(false)"
-    ><div class="banner">
-      Chỉ hiển thị container trong bãi, cùng hãng và đúng loại/cỡ còn số lượng.
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Chọn</th>
-            <th>Container</th>
-            <th>Loại</th>
-            <th>Kích thước</th>
-            <th>Vị trí</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (c of eligibleContainers(); track c.number) {
-            <tr>
-              <td>
-                <input
-                  type="checkbox"
-                  [attr.aria-label]="'Chọn ' + c.number"
-                  [checked]="checks().includes(c.number)"
-                  [disabled]="full(c.number)"
-                  (change)="toggle(c.number)"
-                />
-              </td>
-              <td class="mono">{{ c.number }}</td>
-              <td>{{ c.type }}</td>
-              <td>{{ c.size }}ft</td>
-              <td class="mono">{{ store.location(c.number) }}</td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="5" class="empty">Không có container phù hợp để gán.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    @if (error()) {
-      <p class="field-error" role="alert">{{ error() }}</p>
+@if (showCreate()) {
+  <app-modal
+    title="Thêm lệnh giao mới"
+    [width]="1000"
+    [dirty]="true"
+    (closed)="showCreate.set(false)"
+  >
+    <form id="create-order" #form="ngForm" (ngSubmit)="form.valid && create()">
+      <div class="form-grid">
+        <div class="field">
+          <label for="order-number">Số lệnh</label
+          ><input
+            id="order-number"
+            name="orderNumber"
+            [(ngModel)]="createForm.orderNumber"
+            required
+          />
+        </div>
+        <div class="field">
+          <label for="order-expiry">Ngày hết hạn</label
+          ><input
+            id="order-expiry"
+            type="date"
+            name="expiryDate"
+            [(ngModel)]="createForm.expiryDate"
+            required
+          />
+        </div>
+        <div class="field">
+          <label for="order-vessel">Chuyến tàu xuất</label
+          ><input
+            id="order-vessel"
+            name="outboundVessel"
+            [(ngModel)]="createForm.outboundVessel"
+            required
+          />
+        </div>
+      </div>
+      <app-master-picker
+        kind="customer"
+        label="Khách hàng"
+        (picked)="selectedCustomer.set($event)"
+      /><app-master-picker
+        kind="operator"
+        label="Hãng khai thác"
+        (picked)="selectedOperator.set($event)"
+      />
+      <h3>Chi tiết yêu cầu</h3>
+      @for (line of lines; track $index; let i = $index) {
+        <div class="toolbar">
+          <select
+            [attr.aria-label]="'Cỡ dòng ' + (i + 1)"
+            [name]="'size' + i"
+            [(ngModel)]="line.size"
+          >
+            <option value="Ft20">20ft</option>
+            <option value="Ft40">40ft</option>
+          </select>
+          <select
+            [attr.aria-label]="'Loại dòng ' + (i + 1)"
+            [name]="'type' + i"
+            [(ngModel)]="line.type"
+          >
+            @for (type of types; track type) {
+              <option [value]="type">{{ lookups()?.containerTypes?.[type] || type }}</option>
+            }
+          </select>
+          <input
+            type="number"
+            [attr.aria-label]="'Số lượng dòng ' + (i + 1)"
+            [name]="'qty' + i"
+            [(ngModel)]="line.quantity"
+            min="1"
+            step="1"
+            required
+          />
+          <button
+            type="button"
+            class="button small"
+            [disabled]="lines.length === 1"
+            (click)="lines.splice(i, 1)"
+          >
+            Xóa dòng
+          </button>
+        </div>
+      }
+      <button
+        type="button"
+        class="button small"
+        (click)="lines.push({ size: 'Ft20', type: 'Dry', quantity: 1 })"
+      >
+        Thêm dòng
+      </button>
+    </form>
+    @if (createError()) {
+      <p class="banner error" role="alert">{{ createError() }}</p>
     }
     <div footer>
-      <button class="button" (click)="showAssign.set(false)">Đóng</button
-      ><button class="button primary" [disabled]="!checks().length" (click)="assignSelected()">
-        Gán {{ checks().length }} container
+      <button class="button" [disabled]="facade.pending()" (click)="showCreate.set(false)">
+        Hủy</button
+      ><button
+        class="button primary"
+        form="create-order"
+        type="submit"
+        [disabled]="facade.pending()"
+      >
+        {{ facade.pending() ? 'Đang lưu…' : 'Lưu lệnh giao' }}
       </button>
     </div></app-modal
   >

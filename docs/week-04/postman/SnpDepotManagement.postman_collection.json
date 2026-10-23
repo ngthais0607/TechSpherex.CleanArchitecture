@@ -29,6 +29,8 @@
                   "const suffix = Date.now().toString(36).slice(-6) + Math.random().toString(36).slice(2,4);",
                   "pm.environment.set('runSuffix', suffix);",
                   "pm.environment.set('operatorCode', ('P' + suffix).toUpperCase());",
+                  "const ownerCode = Array.from({length:3},()=>String.fromCharCode(65+Math.floor(Math.random()*26))).join('');",
+                  "pm.environment.set('ownerCode', ownerCode);",
                   "pm.environment.set('orderNumber', 'DO-' + suffix);",
                   "pm.environment.set('expiredOrderNumber', 'EXPIRED-' + suffix);",
                   "pm.environment.set('fortyOrderNumber', 'FORTY-' + suffix);",
@@ -42,7 +44,7 @@
                   "for (const role of ['admin','yard','order','gate']) { pm.environment.unset(role+'AccessToken'); pm.environment.unset(role+'RefreshToken'); }",
                   "const serial = Math.floor(100000 + Math.random() * 899990);",
                   "for (let n=1; n<=6; n++) {",
-                  "  const raw = 'TSTU' + String(serial+n).padStart(6,'0');",
+                  "  const raw = ownerCode + 'U' + String(serial+n).padStart(6,'0');",
                   "  let sum=0;",
                   "  for (let i=0; i<10; i++) {",
                   "    let value = /[0-9]/.test(raw[i]) ? Number(raw[i]) : raw.charCodeAt(i)-65+10;",
@@ -182,6 +184,52 @@
                   "(function () {",
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const data = pm.response.json();",
+                  "pm.environment.set('operatorId', data.id);",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Map container owner prefix",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/line-operators/{{operatorId}}/owner-codes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"OwnerCode\": \"{{ownerCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));",
                   "})();"
                 ]
               }
@@ -905,7 +953,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber1}}\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000,\n  \"OwnerCode\": \"{{operatorCode}}\"\n}",
+              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber1}}\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -999,7 +1047,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber2}}\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000,\n  \"OwnerCode\": \"{{operatorCode}}\"\n}",
+              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber2}}\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1093,7 +1141,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber3}}\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000,\n  \"OwnerCode\": \"{{operatorCode}}\"\n}",
+              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber3}}\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1187,7 +1235,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber4}}\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000,\n  \"OwnerCode\": \"{{operatorCode}}\"\n}",
+              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber4}}\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1299,6 +1347,39 @@
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
                   "const data = pm.response.json();",
                   "pm.environment.set('bookingId1', data.bookingIds[0]);",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read order bookings and quota",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/delivery-orders/{{orderNumber}}/bookings?pageSize=1",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{orderAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('booking ID and remaining quota',()=>{ pm.expect(data.bookings.totalCount).to.eql(1); pm.expect(data.bookings.items[0].id).to.eql(pm.environment.get('bookingId1')); pm.expect(data.itemCounts[0].reservedQuantity).to.eql(1); pm.expect(data.itemCounts[0].availableQuantity).to.eql(2); });",
                   "})();"
                 ]
               }
@@ -1706,7 +1787,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber5}}\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000,\n  \"OwnerCode\": \"{{operatorCode}}\"\n}",
+              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber5}}\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2415,7 +2496,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ContainerNumber\": \"INVALID\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000,\n  \"OwnerCode\": \"{{operatorCode}}\"\n}",
+              "raw": "{\n  \"ContainerNumber\": \"INVALID\",\n  \"IsoCode\": \"22G1\",\n  \"Size\": 20,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3024,7 +3105,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber6}}\",\n  \"IsoCode\": \"42G1\",\n  \"Size\": 40,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000,\n  \"OwnerCode\": \"{{operatorCode}}\"\n}",
+              "raw": "{\n  \"ContainerNumber\": \"{{containerNumber6}}\",\n  \"IsoCode\": \"42G1\",\n  \"Size\": 40,\n  \"Type\": 85,\n  \"TareWeight\": 2000,\n  \"MaxGrossWeight\": 30000\n}",
               "options": {
                 "raw": {
                   "language": "json"

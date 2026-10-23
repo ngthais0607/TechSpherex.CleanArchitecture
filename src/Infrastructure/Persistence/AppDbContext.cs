@@ -10,6 +10,7 @@ using SnpDepotManagement.Domain.Entities.MasterData;
 using SnpDepotManagement.Domain.Entities.Operations;
 using SnpDepotManagement.Domain.Entities.Yard;
 using SnpDepotManagement.Domain.ValueObjects;
+using SnpDepotManagement.Infrastructure.Persistence.Seed;
 
 namespace SnpDepotManagement.Infrastructure.Persistence;
 
@@ -52,6 +53,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<DeliveryOrderBooking> Bookings => Set<DeliveryOrderBooking>();
     public DbSet<GateTransaction> GateTransactions => Set<GateTransaction>();
     public DbSet<GateTransactionChange> GateTransactionChanges => Set<GateTransactionChange>();
+    public DbSet<DemoSeedRun> DemoSeedRuns => Set<DemoSeedRun>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

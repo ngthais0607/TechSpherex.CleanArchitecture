@@ -1,7 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DemoSession, safeReturnUrl } from '../../core/session/demo-session';
+import { AuthService } from '../../core/auth/auth-service';
+import { safeReturnUrl } from '../../core/auth/safe-return-url';
+import { ApiError } from '../../core/api/api-error';
+import { finalize } from 'rxjs';
 import { Icon } from '../../shared/ui';
 @Component({
   selector: 'app-login',
@@ -25,9 +28,22 @@ import { Icon } from '../../shared/ui';
     </section>
     <section class="login-form">
       <div class="login-inner">
-        <span class="pill">BẢN DEMO TƯƠNG TÁC</span>
+        <span class="pill">TRUNG TÂM ĐIỀU HÀNH</span>
         <h2>Chào mừng trở lại</h2>
         <p>Đăng nhập để bắt đầu ca vận hành của bạn.</p>
+        @if (session.status() === 'error' && session.storage.read()) {
+          <div class="banner warning" role="alert">
+            Chưa thể khôi phục phiên do lỗi kết nối máy chủ. Bạn có thể thử lại phiên hiện tại.
+            <button
+              class="button"
+              aria-label="Thử khôi phục phiên"
+              [disabled]="loading()"
+              (click)="retryRestore()"
+            >
+              Thử lại phiên
+            </button>
+          </div>
+        }
         <form [formGroup]="form" (ngSubmit)="login()">
           <div class="field">
             <label for="username">Tên đăng nhập</label
@@ -45,15 +61,17 @@ import { Icon } from '../../shared/ui';
           @if (error()) {
             <p class="banner error" role="alert">{{ error() }}</p>
           }
-          <button class="button primary login-submit" type="submit">
-            Đăng nhập <app-icon name="arrow" />
+          <button
+            class="button primary login-submit"
+            type="submit"
+            [disabled]="loading() || form.invalid"
+          >
+            {{ loading() ? 'Đang đăng nhập…' : 'Đăng nhập' }} <app-icon name="arrow" />
           </button>
         </form>
-        <div class="demo-credentials">
-          <strong>Tài khoản trải nghiệm</strong
-          ><span>Tên đăng nhập: <b>demo</b> · Mật khẩu: <b>Demo&#64;123</b></span
-          ><small>Dữ liệu demo được lưu riêng trong trình duyệt của bạn.</small>
-        </div>
+        @if (session.storage.warning()) {
+          <p class="banner warning">{{ session.storage.warning() }}</p>
+        }
       </div>
     </section>
   </div>`,
@@ -168,18 +186,62 @@ import { Icon } from '../../shared/ui';
   `,
 })
 export class LoginPage {
-  session = inject(DemoSession);
+  session = inject(AuthService);
   router = inject(Router);
   route = inject(ActivatedRoute);
   error = signal('');
+  loading = signal(false);
   form = new FormGroup({
     username: new FormControl('', Validators.required),
     password: new FormControl('', Validators.required),
   });
+  retryRestore(): void {
+    if (this.loading()) return;
+    this.loading.set(true);
+    this.error.set('');
+    this.session
+      .restore()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe(() => {
+        if (this.session.status() === 'authenticated') {
+          void this.router.navigateByUrl(
+            safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')),
+          );
+        } else if (this.session.status() === 'error') {
+          this.error.set('Máy chủ chưa phản hồi. Vui lòng thử khôi phục phiên lại sau.');
+        }
+      });
+  }
   login() {
-    const r = this.session.login(this.form.value.username || '', this.form.value.password || '');
-    if (!r.ok) this.error.set(r.error.message);
-    else
-      this.router.navigateByUrl(safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')));
+    if (this.form.invalid || this.loading()) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.error.set('');
+    this.loading.set(true);
+    this.session
+      .login({
+        userName: this.form.value.username?.trim() || '',
+        password: this.form.value.password || '',
+      })
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: () => {
+          this.form.controls.password.reset();
+          this.router.navigateByUrl(
+            safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')),
+          );
+        },
+        error: (error: ApiError) => {
+          this.form.controls.password.reset();
+          this.error.set(
+            error.status === 401
+              ? 'Tên đăng nhập hoặc mật khẩu không đúng.'
+              : error.status === 429
+                ? `Đăng nhập quá nhiều lần. ${error.retryAfterSeconds ? 'Thử lại sau ' + error.retryAfterSeconds + ' giây.' : 'Vui lòng chờ rồi thử lại.'}`
+                : error.detail || 'Không thể đăng nhập. Vui lòng thử lại.',
+          );
+        },
+      });
   }
 }

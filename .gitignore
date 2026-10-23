@@ -18,18 +18,18 @@ docs/superpowers/
 .env
 .env.prod
 .env.local
+.env.query
 backups/
 migration-input/
 
-## Local docs
-*codebase-structure-and-files.md
-
-## Documentation markdown reports
-docs/*.md
+## Historical local documentation
 docs/archive/
 docs/week-01/
 docs/week-02/
 docs/week-03/
-docs/week-04/**/*.md
 !docs/design/
 !docs/design/**
+
+## Personal Markdown stays local; publish only the root project overview.
+*.md
+!/README.md

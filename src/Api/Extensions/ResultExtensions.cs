@@ -21,7 +21,9 @@ public static class ResultExtensions
         Add(409, "Conflict.ConcurrentUpdate Conflict.Duplicate Container.AlreadyExists Customer.AlreadyExists LineOperator.AlreadyExists LineOperator.OwnerCodeAlreadyExists Vehicle.AlreadyExists Voyage.AlreadyExists DeliveryOrder.AlreadyExists User.AlreadyExists YardBlock.AlreadyExists Lifecycle.ContainerAlreadyInYard Lifecycle.AlreadyGatedOut Lifecycle.NotInYard YardSlot.SlotAlreadyOccupied YardSlot.ContainerAlreadyPlaced YardRule.SlotAlreadyOccupied Booking.ContainerAlreadyReserved GateOut.WrongOrderReservation GateTransaction.AlreadyCancelled GateTransaction.CancelledCannotUpdate G9.SlotOccupied Customer.HasActiveOrders LineOperator.HasActiveResources");
         Add(422, "YardBlock.CannotPlaceInVirtual YardSlot.CannotRemoveWithContainersAbove YardBlock.CannotShrinkOccupiedSlots YardBlock.InvalidExpansion YardBlock.InvalidShrink YardBlock.VirtualCannotExpand YardBlock.VirtualCannotShrink DeliveryOrder.AlreadyCompleted DeliveryOrderItem.QuantityExceeded Booking.QuantityExceeded Booking.QuotaExceeded OrderRule.InsufficientQuota OrderRule.LineOperatorMismatch LifecycleRule.ContainerNotInYard OrderRule.NoRemainingQuantity OrderRule.DeliveryOrderExpired YardRule.SlotBelowNotOccupied YardRule.SlotNotFound YardRule.TierExceedsBlockLimit YardRule.InvalidBayForSize YardRule.StackIncompatible StackRule.EvenBayInvalidFor20Ft StackRule.SlotBelowEmpty StackRule.ContainerAboveMustBeEmpty");
         Add(409, "YardSlot.InvalidFootprint");
+        Add(409, "Booking.NotReserved");
         Add(400, "Movement.InvalidData");
+        Add(400, "AssignContainers.EmptyContainers");
         Add(429, "RateLimit.TooManyRequests");
         return map;
     }
