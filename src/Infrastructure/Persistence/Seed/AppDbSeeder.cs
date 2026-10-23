@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SnpDepotManagement.Application.Abstractions.Identity;
 using SnpDepotManagement.Domain.Entities.Identity;
+using SnpDepotManagement.Domain.Entities.MasterData;
 
 namespace SnpDepotManagement.Infrastructure.Persistence.Seed;
 
@@ -17,23 +18,65 @@ public sealed class AppDbSeeder : IAppDbSeeder
     private readonly IPasswordHasher _passwordHasher;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AppDbSeeder> _logger;
+    private readonly IDemoDataSeeder _demoDataSeeder;
 
     public AppDbSeeder(
         AppDbContext _context,
         IPasswordHasher passwordHasher,
         IConfiguration configuration,
-        ILogger<AppDbSeeder> logger)
+        ILogger<AppDbSeeder> logger,
+        IDemoDataSeeder demoDataSeeder)
     {
         this._context = _context;
         _passwordHasher = passwordHasher;
         _configuration = configuration;
         _logger = logger;
+        _demoDataSeeder = demoDataSeeder;
     }
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
+        if (_context.Database.IsRelational())
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            await _context.Database.ExecuteSqlRawAsync(DemoSeedCoordinator.GlobalLockSql, cancellationToken);
+            await SeedBootstrapAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        else
+        {
+            await SeedBootstrapAsync(cancellationToken);
+        }
+        await _demoDataSeeder.SeedAsync(cancellationToken);
+    }
+
+    private async Task SeedBootstrapAsync(CancellationToken cancellationToken)
+    {
+        await SeedDepotAsync(cancellationToken);
         await SeedRolesAsync(cancellationToken);
         await SeedAdminUserAsync(cancellationToken);
+    }
+
+    private async Task SeedDepotAsync(CancellationToken cancellationToken)
+    {
+        var depotName = _configuration["Depot:Name"] ?? "SNP Depot";
+        var depotTimezone = _configuration["Depot:Timezone"] ?? "Asia/Ho_Chi_Minh";
+        var tenantIdStr = _configuration["Admin:TenantId"] ?? "DEPOT-A";
+
+        if (!Guid.TryParse(tenantIdStr, out var depotId))
+        {
+            var hash = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(tenantIdStr));
+            depotId = new Guid(hash);
+        }
+
+        var exists = await _context.Depots.AnyAsync(d => d.Id == depotId || d.Name == depotName, cancellationToken);
+        if (!exists)
+        {
+            var depot = Depot.Create(depotId, depotName, depotTimezone);
+            _context.Depots.Add(depot);
+            await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Seeded depot: {DepotName}", depotName);
+        }
     }
 
     private async Task SeedRolesAsync(CancellationToken cancellationToken)
@@ -74,9 +117,11 @@ public sealed class AppDbSeeder : IAppDbSeeder
         var adminFirstName = _configuration["Admin:FirstName"] ?? "System";
         var adminLastName = _configuration["Admin:LastName"] ?? "Administrator";
 
-        var adminExists = await _context.Users.AnyAsync(u => u.UserName == adminUserName || u.Email == adminEmail, cancellationToken);
-        if (adminExists)
+        var existingAdmin = await _context.Users.FirstOrDefaultAsync(u => u.UserName == adminUserName || u.Email == adminEmail, cancellationToken);
+        if (existingAdmin is not null)
         {
+            if (existingAdmin.UserName != adminUserName || existingAdmin.TenantId != adminTenantId || existingAdmin.Role != "Admin")
+                throw new InvalidOperationException("Configured admin conflicts with an existing account; existing credentials and depot were not changed.");
             return;
         }
 

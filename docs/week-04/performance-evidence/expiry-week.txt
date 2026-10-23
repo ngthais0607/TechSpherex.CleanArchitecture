@@ -1,32 +1,32 @@
--- Parameters: [{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__from_0","Type":"TimestampTz","Value":"2026-10-15T17:00:00Z"},{"Name":"@__until_1","Type":"TimestampTz","Value":"2026-10-23T17:00:00Z"}]
+-- Parameters: [{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__from_0","Type":"TimestampTz","Value":"2026-10-19T17:00:00Z"},{"Name":"@__until_1","Type":"TimestampTz","Value":"2026-10-27T17:00:00Z"}]
 SELECT count(*)::int
 FROM delivery_orders AS d
 WHERE d.tenant_id = @__ef_filter__p_0 AND d.expiry_date >= @__from_0 AND d.expiry_date < @__until_1 AND EXISTS (
     SELECT 1
     FROM delivery_order_items AS d0
     WHERE d.id = d0.delivery_order_id AND d0.required_quantity > d0.delivered_quantity)
-Aggregate  (cost=127.52..127.53 rows=1 width=4) (actual time=1.685..1.687 rows=1 loops=1)
+Aggregate  (cost=127.52..127.53 rows=1 width=4) (actual time=3.129..3.133 rows=1 loops=1)
   Buffers: shared hit=56
-  ->  Hash Semi Join  (cost=54.34..127.15 rows=148 width=0) (actual time=1.125..1.648 rows=403 loops=1)
+  ->  Hash Semi Join  (cost=54.34..127.15 rows=148 width=0) (actual time=2.287..3.062 rows=403 loops=1)
         Hash Cond: (d.id = d0.delivery_order_id)
         Buffers: shared hit=56
-        ->  Seq Scan on delivery_orders d  (cost=0.00..70.00 rows=444 width=16) (actual time=0.096..0.519 rows=444 loops=1)
-              Filter: ((expiry_date >= '2026-10-15 17:00:00+00'::timestamp with time zone) AND (expiry_date < '2026-10-23 17:00:00+00'::timestamp with time zone) AND ((tenant_id)::text = 'DEPOT-A'::text))
+        ->  Seq Scan on delivery_orders d  (cost=0.00..70.00 rows=444 width=16) (actual time=0.031..0.604 rows=444 loops=1)
+              Filter: ((expiry_date >= '2026-10-19 17:00:00+00'::timestamp with time zone) AND (expiry_date < '2026-10-27 17:00:00+00'::timestamp with time zone) AND ((tenant_id)::text = 'DEPOT-A'::text))
               Rows Removed by Filter: 1556
               Buffers: shared hit=35
-        ->  Hash  (cost=46.00..46.00 rows=667 width=16) (actual time=1.002..1.003 rows=1818 loops=1)
+        ->  Hash  (cost=46.00..46.00 rows=667 width=16) (actual time=2.232..2.232 rows=1818 loops=1)
               Buckets: 2048 (originally 1024)  Batches: 1 (originally 1)  Memory Usage: 102kB
               Buffers: shared hit=21
-              ->  Seq Scan on delivery_order_items d0  (cost=0.00..46.00 rows=667 width=16) (actual time=0.012..0.427 rows=1818 loops=1)
+              ->  Seq Scan on delivery_order_items d0  (cost=0.00..46.00 rows=667 width=16) (actual time=0.012..0.834 rows=1818 loops=1)
                     Filter: (required_quantity > delivered_quantity)
                     Rows Removed by Filter: 182
                     Buffers: shared hit=21
 Planning:
   Buffers: shared hit=82
-Planning Time: 2.513 ms
-Execution Time: 1.925 ms
+Planning Time: 3.501 ms
+Execution Time: 3.411 ms
 
--- Parameters: [{"Name":"@__offset_4","Type":"Interval","Value":"07:00:00"},{"Name":"@__Date_5","Type":"TimestampTz","Value":"2026-10-16T00:00:00Z"},{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__from_0","Type":"TimestampTz","Value":"2026-10-15T17:00:00Z"},{"Name":"@__until_1","Type":"TimestampTz","Value":"2026-10-23T17:00:00Z"},{"Name":"@__p_3","Type":"Integer","Value":20},{"Name":"@__p_2","Type":"Integer","Value":0}]
+-- Parameters: [{"Name":"@__offset_4","Type":"Interval","Value":"07:00:00"},{"Name":"@__Date_5","Type":"TimestampTz","Value":"2026-10-20T00:00:00Z"},{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__from_0","Type":"TimestampTz","Value":"2026-10-19T17:00:00Z"},{"Name":"@__until_1","Type":"TimestampTz","Value":"2026-10-27T17:00:00Z"},{"Name":"@__p_3","Type":"Integer","Value":20},{"Name":"@__p_2","Type":"Integer","Value":0}]
 SELECT d.id, d.order_number, d.line_operator, d.customer_name, d.expiry_date, floor(date_part('day', date_trunc('day', d.expiry_date + @__offset_4, 'UTC') - @__Date_5))::int, (
     SELECT COALESCE(sum(d1.required_quantity - d1.delivered_quantity), 0)::int
     FROM delivery_order_items AS d1
@@ -38,36 +38,36 @@ WHERE d.tenant_id = @__ef_filter__p_0 AND d.expiry_date >= @__from_0 AND d.expir
     WHERE d.id = d0.delivery_order_id AND d0.required_quantity > d0.delivered_quantity)
 ORDER BY d.expiry_date, d.id
 LIMIT @__p_3 OFFSET @__p_2
-Limit  (cost=49.11..268.62 rows=20 width=66) (actual time=0.915..1.056 rows=20 loops=1)
+Limit  (cost=49.11..268.62 rows=20 width=66) (actual time=1.125..1.270 rows=20 loops=1)
   Buffers: shared hit=434
-  ->  Result  (cost=49.11..1673.49 rows=148 width=66) (actual time=0.913..1.048 rows=20 loops=1)
+  ->  Result  (cost=49.11..1673.49 rows=148 width=66) (actual time=1.122..1.263 rows=20 loops=1)
         Buffers: shared hit=434
-        ->  Incremental Sort  (cost=49.11..439.54 rows=148 width=62) (actual time=0.854..0.861 rows=20 loops=1)
+        ->  Incremental Sort  (cost=49.11..439.54 rows=148 width=62) (actual time=1.064..1.069 rows=20 loops=1)
               Sort Key: d.expiry_date, d.id
               Presorted Key: d.expiry_date
               Full-sort Groups: 1  Sort Method: top-N heapsort  Average Memory: 29kB  Peak Memory: 29kB
               Pre-sorted Groups: 1  Sort Method: top-N heapsort  Average Memory: 28kB  Peak Memory: 28kB
               Buffers: shared hit=374
-              ->  Nested Loop Semi Join  (cost=0.56..434.52 rows=148 width=62) (actual time=0.083..0.733 rows=101 loops=1)
+              ->  Nested Loop Semi Join  (cost=0.56..434.52 rows=148 width=62) (actual time=0.161..0.894 rows=101 loops=1)
                     Buffers: shared hit=374
-                    ->  Index Scan using ix_delivery_orders_expiry_date on delivery_orders d  (cost=0.28..170.73 rows=444 width=58) (actual time=0.040..0.182 rows=112 loops=1)
-                          Index Cond: ((expiry_date >= '2026-10-15 17:00:00+00'::timestamp with time zone) AND (expiry_date < '2026-10-23 17:00:00+00'::timestamp with time zone))
+                    ->  Index Scan using ix_delivery_orders_expiry_date on delivery_orders d  (cost=0.28..170.73 rows=444 width=58) (actual time=0.081..0.217 rows=112 loops=1)
+                          Index Cond: ((expiry_date >= '2026-10-19 17:00:00+00'::timestamp with time zone) AND (expiry_date < '2026-10-27 17:00:00+00'::timestamp with time zone))
                           Filter: ((tenant_id)::text = 'DEPOT-A'::text)
                           Rows Removed by Filter: 111
                           Buffers: shared hit=38
-                    ->  Index Scan using ix_delivery_order_items_delivery_order_id on delivery_order_items d0  (cost=0.28..0.59 rows=1 width=16) (actual time=0.003..0.003 rows=1 loops=112)
+                    ->  Index Scan using ix_delivery_order_items_delivery_order_id on delivery_order_items d0  (cost=0.28..0.59 rows=1 width=16) (actual time=0.004..0.004 rows=1 loops=112)
                           Index Cond: (delivery_order_id = d.id)
                           Filter: (required_quantity > delivered_quantity)
                           Rows Removed by Filter: 0
                           Buffers: shared hit=336
         SubPlan 1
-          ->  Aggregate  (cost=8.30..8.31 rows=1 width=4) (actual time=0.007..0.007 rows=1 loops=20)
+          ->  Aggregate  (cost=8.30..8.31 rows=1 width=4) (actual time=0.008..0.008 rows=1 loops=20)
                 Buffers: shared hit=60
-                ->  Index Scan using ix_delivery_order_items_delivery_order_id on delivery_order_items d1  (cost=0.28..8.29 rows=1 width=8) (actual time=0.005..0.005 rows=1 loops=20)
+                ->  Index Scan using ix_delivery_order_items_delivery_order_id on delivery_order_items d1  (cost=0.28..8.29 rows=1 width=8) (actual time=0.006..0.006 rows=1 loops=20)
                       Index Cond: (delivery_order_id = d.id)
                       Buffers: shared hit=60
 Planning:
   Buffers: shared hit=21
-Planning Time: 1.395 ms
-Execution Time: 1.337 ms
+Planning Time: 2.088 ms
+Execution Time: 2.078 ms
 

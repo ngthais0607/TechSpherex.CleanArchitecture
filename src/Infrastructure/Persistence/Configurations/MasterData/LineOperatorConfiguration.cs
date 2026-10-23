@@ -23,6 +23,10 @@ public sealed class LineOperatorConfiguration : IEntityTypeConfiguration<LineOpe
             .HasMaxLength(255)
             .IsRequired();
 
+        builder.Property(l => l.IsActive)
+            .HasDefaultValue(true)
+            .IsRequired();
+
         builder.Property(l => l.CreatedBy)
             .HasMaxLength(100);
 

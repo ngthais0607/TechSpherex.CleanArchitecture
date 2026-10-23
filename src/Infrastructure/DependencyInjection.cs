@@ -88,6 +88,7 @@ public static class DependencyInjection
 
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped<IAppDbSeeder, AppDbSeeder>();
+        services.AddScoped<IDemoDataSeeder, DemoDataSeeder>();
 
         // 4. Caching (.NET 9 HybridCache + Redis)
 #pragma warning disable EXTEXP0018
@@ -110,6 +111,9 @@ public static class DependencyInjection
 
         services.AddScoped<ICacheService, HybridCacheService>();
         services.AddHealthChecks().AddCheck<DependencyHealthCheck>("dependencies", timeout: TimeSpan.FromSeconds(5));
+
+        services.AddSingleton<SnpDepotManagement.Application.Abstractions.Configuration.IGateSettings, SnpDepotManagement.Infrastructure.Configuration.GateSettings>();
+        services.AddHostedService<SnpDepotManagement.Infrastructure.BackgroundServices.BookingExpirationService>();
 
         return services;
     }

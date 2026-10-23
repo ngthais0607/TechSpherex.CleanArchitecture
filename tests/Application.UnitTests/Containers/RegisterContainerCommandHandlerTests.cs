@@ -29,7 +29,8 @@ public class RegisterContainerCommandHandlerTests
             2200,
             30480,
             new DateTime(2021, 5, 10),
-            "CSQU");
+            Classification.B,
+            ContainerCondition.Damaged);
 
         // Act
         var result = await _handler.Handle(command);
@@ -41,8 +42,9 @@ public class RegisterContainerCommandHandlerTests
         var containerInDb = await _context.Containers.FindAsync(result.Value);
         containerInDb.Should().NotBeNull();
         containerInDb!.ContainerNumber.Value.Should().Be("CSQU3054383");
-        containerInDb.Condition.Should().Be(ContainerCondition.Normal);
-        containerInDb.Classification.Should().Be(Classification.A);
+        containerInDb.OwnerCode.Should().Be("CSQ");
+        containerInDb.Condition.Should().Be(ContainerCondition.Damaged);
+        containerInDb.Classification.Should().Be(Classification.B);
     }
 
     [Fact]
@@ -56,8 +58,7 @@ public class RegisterContainerCommandHandlerTests
             ContainerType.Dry,
             2200,
             30480,
-            null,
-            "CSQU");
+            null);
 
         // Act
         var result = await _handler.Handle(command);
@@ -79,8 +80,7 @@ public class RegisterContainerCommandHandlerTests
             ContainerType.Dry,
             2200,
             30480,
-            null,
-            "CSQU").Value!;
+            null).Value!;
 
         _context.Containers.Add(existingContainer);
         await _context.SaveChangesAsync();
@@ -92,8 +92,7 @@ public class RegisterContainerCommandHandlerTests
             ContainerType.Dry,
             2200,
             30480,
-            null,
-            "CSQU");
+            null);
 
         // Act
         var result = await _handler.Handle(command);
@@ -101,5 +100,63 @@ public class RegisterContainerCommandHandlerTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Be("Container.AlreadyExists");
+    }
+
+    [Theory]
+    [InlineData("22G")]
+    [InlineData("22G11")]
+    [InlineData("ABCD")]
+    [InlineData("")]
+    public async Task Handle_WhenIsoCodeInvalidFormat_ShouldReturnError(string invalidIso)
+    {
+        var command = new RegisterContainerCommand(
+            "CSQU3054383",
+            invalidIso,
+            ContainerSize.Ft20,
+            ContainerType.Dry,
+            2200,
+            30480,
+            null);
+
+        var result = await _handler.Handle(command);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Container.InvalidIsoCode");
+    }
+
+    [Fact]
+    public async Task Handle_WhenIsoCodeDoesNotMatchSize_ShouldReturnError()
+    {
+        var command = new RegisterContainerCommand(
+            "CSQU3054383",
+            "42G1", // 40ft prefix but command says Ft20
+            ContainerSize.Ft20,
+            ContainerType.Dry,
+            2200,
+            30480,
+            null);
+
+        var result = await _handler.Handle(command);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Container.IsoSizeMismatch");
+    }
+
+    [Fact]
+    public async Task Handle_WhenManufactureDateInFuture_ShouldReturnError()
+    {
+        var command = new RegisterContainerCommand(
+            "CSQU3054383",
+            "22G1",
+            ContainerSize.Ft20,
+            ContainerType.Dry,
+            2200,
+            30480,
+            DateTime.UtcNow.AddDays(10));
+
+        var result = await _handler.Handle(command);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be("Container.FutureManufactureDate");
     }
 }

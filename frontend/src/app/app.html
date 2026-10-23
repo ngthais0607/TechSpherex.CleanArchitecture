@@ -1,0 +1,56 @@
+@if (session.user(); as user) {
+  <div class="app-layout" [class.nav-open]="navOpen()">
+    <button class="nav-scrim" aria-label="Đóng menu" (click)="navOpen.set(false)"></button>
+    <aside class="sidebar">
+      <a routerLink="/dashboard" class="brand"
+        ><span class="brand-mark"><app-icon name="box" /></span
+        ><span>SNP Depot<small>MANAGEMENT</small></span></a
+      >
+      <p class="nav-label">ĐIỀU HÀNH</p>
+      <nav aria-label="Điều hướng chính">
+        @for (item of nav(); track item.path) {
+          <a [routerLink]="item.path" routerLinkActive="active" (click)="navOpen.set(false)"
+            ><app-icon [name]="item.icon" /><span>{{ item.label }}</span
+            ><i></i
+          ></a>
+        }
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="avatar">{{ user.userName.slice(0, 2).toUpperCase() }}</div>
+        <div>
+          <strong>{{ user.userName }}</strong
+          ><small>{{ user.roles.join(', ') }}</small>
+        </div>
+        <button class="icon-button" aria-label="Đăng xuất" (click)="logout()">
+          <app-icon name="logout" />
+        </button>
+      </div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <div class="breadcrumbs">
+          <button
+            class="icon-button menu-button"
+            aria-label="Mở menu"
+            (click)="navOpen.set(!navOpen())"
+          >
+            <app-icon name="menu" /></button
+          ><span>{{ user.depotName }}</span
+          ><span class="crumb-separator">›</span><strong>{{ pageTitle() }}</strong>
+        </div>
+        <div class="topbar-right">
+          <span class="system-state"><i></i> Đã đăng nhập</span>
+        </div>
+      </header>
+      @if (session.storage.warning()) {
+        <div class="banner warning" role="alert">{{ session.storage.warning() }}</div>
+      }
+      <main><router-outlet /></main>
+    </div>
+  </div>
+} @else {
+  <router-outlet />
+}
+@if (notifications.toast(); as toast) {
+  <div class="toast" [class.error]="toast.kind === 'error'" role="status">{{ toast.message }}</div>
+}

@@ -4,4 +4,4 @@ using SnpDepotManagement.Domain.Common;
 
 namespace SnpDepotManagement.Application.Features.MasterData.LineOperators.Queries.GetLineOperators;
 
-public sealed record GetLineOperatorsQuery(int PageIndex = 1, int PageSize = 20) : IQuery<PagedResult<LineOperatorDto>>;
+public sealed record GetLineOperatorsQuery(int PageIndex = 1, int PageSize = 20, string? Search = null) : IQuery<PagedResult<LineOperatorDto>>;

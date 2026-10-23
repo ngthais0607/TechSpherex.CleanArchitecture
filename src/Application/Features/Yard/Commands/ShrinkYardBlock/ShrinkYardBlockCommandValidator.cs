@@ -1,4 +1,5 @@
 using FluentValidation;
+using SnpDepotManagement.Domain.Entities.Yard;
 
 namespace SnpDepotManagement.Application.Features.Yard.Commands.ShrinkYardBlock;
 
@@ -10,12 +11,15 @@ public sealed class ShrinkYardBlockCommandValidator : AbstractValidator<ShrinkYa
             .NotEmpty().WithMessage("Block ID is required.");
 
         RuleFor(x => x.NewBays)
-            .GreaterThanOrEqualTo(0).WithMessage("New bays must be greater than or equal to zero.");
+            .InclusiveBetween(0, YardBlockLimits.MaxBays);
 
         RuleFor(x => x.NewRows)
-            .GreaterThanOrEqualTo(0).WithMessage("New rows must be greater than or equal to zero.");
+            .InclusiveBetween(0, YardBlockLimits.MaxRows);
 
         RuleFor(x => x.NewTiers)
-            .GreaterThanOrEqualTo(0).WithMessage("New tiers must be greater than or equal to zero.");
+            .InclusiveBetween(0, YardBlockLimits.MaxTiers);
+
+        RuleFor(x => x).Must(x => YardBlockLimits.IsWithinLimits(x.NewBays, x.NewRows, x.NewTiers))
+            .WithMessage(YardBlockLimits.InvalidSize.Description).OverridePropertyName("Dimensions");
     }
 }

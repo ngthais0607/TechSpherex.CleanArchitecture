@@ -15,7 +15,8 @@ public sealed class FullFlowTests(ApiFactory factory)
         var ct = TestContext.Current.CancellationToken;
         using var admin = await ApiTestClient.LoginAsync(factory);
         var suffix = Guid.NewGuid().ToString("N")[..6].ToUpperInvariant();
-        var owner = "F" + suffix;
+        const string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        var owner = $"F{letters[Random.Shared.Next(26)]}{letters[Random.Shared.Next(26)]}";
         async Task<JsonElement> Post(HttpClient client, string route, object body, HttpStatusCode status)
         {
             using var response = await client.PostAsJsonAsync(route, body, ct);
@@ -24,7 +25,8 @@ public sealed class FullFlowTests(ApiFactory factory)
             return string.IsNullOrEmpty(text) ? default : JsonSerializer.Deserialize<JsonElement>(text);
         }
         await Post(admin, "/api/line-operators", new { Code = owner, Name = "Flow operator" }, HttpStatusCode.Created);
-        await Post(admin, "/api/customers", new { TaxCode = Random.Shared.Next(1000000000, int.MaxValue).ToString(), Name = "Flow customer" }, HttpStatusCode.Created);
+        var custTaxCode = Random.Shared.Next(1000000000, int.MaxValue).ToString();
+        await Post(admin, "/api/customers", new { TaxCode = custTaxCode, Name = "Flow customer" }, HttpStatusCode.Created);
         await Post(admin, "/api/voyages", new { VesselName = "Flow vessel", VoyageNumber = suffix, Etd = DateTime.UtcNow.AddDays(5) }, HttpStatusCode.Created);
         await Post(admin, "/api/vehicles", new { PlateNumber = "51C" + suffix, Type = 0 }, HttpStatusCode.Created);
         var clients = new Dictionary<string, HttpClient>();
@@ -40,12 +42,12 @@ public sealed class FullFlowTests(ApiFactory factory)
             var block = await Post(admin, "/api/yard/blocks", new { Code = owner, Name = "Flow block", Bays = 7, Rows = 1, Tiers = 2, IsVirtual = false }, HttpStatusCode.Created);
             var blockId = block.GetProperty("id").GetGuid();
             var layout = await admin.GetFromJsonAsync<JsonElement>($"/api/yard/blocks/{blockId}/layout", ct);
-            var order = await Post(orderClient, "/api/delivery-orders", new { OrderNumber = owner, LineOperator = owner, CustomerTaxCode = "0101234567", CustomerName = "Flow customer", OutboundVessel = "Flow vessel", ExpiryDate = DateTime.UtcNow.AddDays(7), Items = new[] { new { Size = 20, Type = 85, Quantity = 3 } } }, HttpStatusCode.Created);
+            var order = await Post(orderClient, "/api/delivery-orders", new { OrderNumber = owner, LineOperator = owner, CustomerTaxCode = custTaxCode, CustomerName = "Flow customer", OutboundVessel = "Flow vessel", ExpiryDate = DateTime.UtcNow.AddDays(7), Items = new[] { new { Size = 20, Type = 85, Quantity = 3 } } }, HttpStatusCode.Created);
             var orderId = order.GetProperty("id").GetGuid();
             var ids = new List<Guid>(); var numbers = new List<string>();
             for (var i = 0; i < 4; i++)
             {
-                var number = OperationScenario.NewContainer().ContainerNumber.Value; numbers.Add(number);
+                var number = OperationScenario.NewContainer(owner).ContainerNumber.Value; numbers.Add(number);
                 var registered = await Post(gate, "/api/containers", new { ContainerNumber = number, IsoCode = "22G1", Size = 20, Type = 85, TareWeight = 2000, MaxGrossWeight = 30000, OwnerCode = owner }, HttpStatusCode.Created);
                 var id = registered.GetProperty("id").GetGuid(); ids.Add(id);
                 var slotId = layout.GetProperty("slots").EnumerateArray().Single(s => s.GetProperty("bay").GetInt32() == i * 2 + 1 && s.GetProperty("tier").GetInt32() == 1).GetProperty("id").GetGuid();

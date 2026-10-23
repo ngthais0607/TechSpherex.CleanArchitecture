@@ -1,0 +1,1162 @@
+[
+  {
+    "path": "/api/auth/login",
+    "methods": [
+      "POST"
+    ],
+    "name": "Login",
+    "tags": [
+      "Authentication"
+    ],
+    "policies": [],
+    "anonymous": true,
+    "deprecated": false
+  },
+  {
+    "path": "/api/auth/logout",
+    "methods": [
+      "POST"
+    ],
+    "name": "Logout",
+    "tags": [
+      "Authentication"
+    ],
+    "policies": [
+      "AuthenticatedUser"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/auth/me",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetCurrentUser",
+    "tags": [
+      "Authentication"
+    ],
+    "policies": [
+      "AuthenticatedUser"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/auth/refresh",
+    "methods": [
+      "POST"
+    ],
+    "name": "RefreshToken",
+    "tags": [
+      "Authentication"
+    ],
+    "policies": [],
+    "anonymous": true,
+    "deprecated": false
+  },
+  {
+    "path": "/api/auth/register",
+    "methods": [
+      "POST"
+    ],
+    "name": "Register",
+    "tags": [
+      "Authentication"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/containers/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetContainers",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "ReadContainers"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/containers/",
+    "methods": [
+      "POST"
+    ],
+    "name": "RegisterContainer",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "RegisterContainer"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/containers/by-number/{number}",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetContainerByNumber",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "ReadContainers"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/containers/summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetContainerSummary",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "ReadContainers"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/containers/{id:guid}/damage",
+    "methods": [
+      "POST"
+    ],
+    "name": "MarkContainerDamaged",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/containers/{number}/orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetContainerOrders",
+    "tags": [
+      "Containers"
+    ],
+    "policies": [
+      "ReadContainers"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/customers/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetCustomers",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/customers/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateCustomer",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/customers/{id:guid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "UpdateCustomer",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/customers/{id:guid}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "ActivateCustomer",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/customers/{id:guid}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "DeactivateCustomer",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/delivery-orders/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetDeliveryOrders",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ReadDeliveryOrders"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/delivery-orders/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateDeliveryOrder",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ManageDeliveryOrders"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/delivery-orders/bookings/{id:guid}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "ReleaseBooking",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ManageDeliveryOrders"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/delivery-orders/by-number/{number}",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetDeliveryOrderByOrderNumber",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ReadDeliveryOrders"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/delivery-orders/{id:guid}",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetDeliveryOrderById",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ReadDeliveryOrders"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/delivery-orders/{orderNumber}/assign",
+    "methods": [
+      "POST"
+    ],
+    "name": "AssignContainersToOrderShort",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ManageDeliveryOrders"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/delivery-orders/{orderNumber}/assign-containers",
+    "methods": [
+      "POST"
+    ],
+    "name": "AssignContainersToOrder",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ManageDeliveryOrders"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/delivery-orders/{orderNumber}/bookings",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetOrderBookings",
+    "tags": [
+      "DeliveryOrders"
+    ],
+    "policies": [
+      "ReadDeliveryOrders"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/gate/in",
+    "methods": [
+      "POST"
+    ],
+    "name": "GateInContainer",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/gate/out",
+    "methods": [
+      "POST"
+    ],
+    "name": "GateOutContainer",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/gate/transactions",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetGateTransactions",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/gate/transactions/{id:guid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "UpdateGateTransaction",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/gate/transactions/{id:guid}/cancel",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "CancelGateTransaction",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/gate/transactions/{id:guid}/cancel",
+    "methods": [
+      "POST"
+    ],
+    "name": "CancelGateTransactionPost",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/gate/validate",
+    "methods": [
+      "POST"
+    ],
+    "name": "ValidateGate",
+    "tags": [
+      "Gate"
+    ],
+    "policies": [
+      "ManageGate"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/line-operators/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetLineOperators",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/line-operators/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateLineOperator",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "UpdateLineOperator",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "ActivateLineOperator",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "DeactivateLineOperator",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}/owner-codes",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetLineOperatorOwnerCodes",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}/owner-codes",
+    "methods": [
+      "POST"
+    ],
+    "name": "AddLineOperatorOwnerCode",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/line-operators/{id:guid}/owner-codes/{ownerCode}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "RemoveLineOperatorOwnerCode",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/lookups",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetLookups",
+    "tags": [
+      "Lookups"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/master-data/customers/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetCustomersMd",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/customers/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateCustomerMd",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/customers/{id:guid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "UpdateCustomerMd",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/customers/{id:guid}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "ActivateCustomerMd",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/customers/{id:guid}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "DeactivateCustomerMd",
+    "tags": [
+      "Customers"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/line-operators/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetLineOperatorsMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/line-operators/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateLineOperatorMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}",
+    "methods": [
+      "PUT"
+    ],
+    "name": "UpdateLineOperatorMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}/activate",
+    "methods": [
+      "POST"
+    ],
+    "name": "ActivateLineOperatorMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}/deactivate",
+    "methods": [
+      "POST"
+    ],
+    "name": "DeactivateLineOperatorMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}/owner-codes",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetLineOperatorOwnerCodesMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}/owner-codes",
+    "methods": [
+      "POST"
+    ],
+    "name": "AddLineOperatorOwnerCodeMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/master-data/line-operators/{id:guid}/owner-codes/{ownerCode}",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "RemoveLineOperatorOwnerCodeMd",
+    "tags": [
+      "LineOperators"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": true
+  },
+  {
+    "path": "/api/reports/block-capacity",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetBlockCapacity",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/reports/containers/{number}/history",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetContainerHistory",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/reports/dwell-times",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetDwellTimes",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/reports/expiring-orders",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetExpiringOrders",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadExpiringOrders"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/reports/gate-traffic",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetGateTraffic",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/reports/summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetDashboardSummary",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/reports/yard-inventory",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetYardInventory",
+    "tags": [
+      "Reports"
+    ],
+    "policies": [
+      "ReadReports"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/vehicles/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetVehicles",
+    "tags": [
+      "Vehicles"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/vehicles/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateVehicle",
+    "tags": [
+      "Vehicles"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/voyages/",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetVoyages",
+    "tags": [
+      "Voyages"
+    ],
+    "policies": [
+      "ReadMasterData"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/voyages/",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateVoyage",
+    "tags": [
+      "Voyages"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/blocks",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetYardBlocks",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/blocks",
+    "methods": [
+      "POST"
+    ],
+    "name": "CreateYardBlock",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/blocks/{id:guid}/expand",
+    "methods": [
+      "POST"
+    ],
+    "name": "ExpandYardBlock",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/blocks/{id:guid}/shrink",
+    "methods": [
+      "POST"
+    ],
+    "name": "ShrinkYardBlock",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/blocks/{idOrCode}/layout",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetYardLayout",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/free-slots",
+    "methods": [
+      "GET"
+    ],
+    "name": "FindFreeSlots",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/placements",
+    "methods": [
+      "POST"
+    ],
+    "name": "PlaceContainer",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/relocations",
+    "methods": [
+      "POST"
+    ],
+    "name": "RelocateContainer",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/removals",
+    "methods": [
+      "POST"
+    ],
+    "name": "RemoveContainer",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/search",
+    "methods": [
+      "GET"
+    ],
+    "name": "YardSearch",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/virtual-blocks/{code}/containers",
+    "methods": [
+      "GET"
+    ],
+    "name": "GetVirtualBlockContainers",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ReadYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/api/yard/virtual-blocks/{code}/containers/{id:guid}/place",
+    "methods": [
+      "POST"
+    ],
+    "name": "PlaceFromVirtualBlock",
+    "tags": [
+      "Yard"
+    ],
+    "policies": [
+      "ManageYard"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  },
+  {
+    "path": "/health/live",
+    "methods": null,
+    "name": "Liveness",
+    "tags": [
+      "Health"
+    ],
+    "policies": [],
+    "anonymous": true,
+    "deprecated": false
+  },
+  {
+    "path": "/health/ready",
+    "methods": null,
+    "name": "Readiness",
+    "tags": [
+      "Health"
+    ],
+    "policies": [
+      "Admin"
+    ],
+    "anonymous": false,
+    "deprecated": false
+  }
+]

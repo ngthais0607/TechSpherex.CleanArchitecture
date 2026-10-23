@@ -12,8 +12,21 @@ using SnpDepotManagement.Application;
 using SnpDepotManagement.Infrastructure;
 using SnpDepotManagement.Infrastructure.Persistence.Seed;
 using SnpDepotManagement.Infrastructure.Tenancy;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    options.SerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict;
+});
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    options.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict;
+});
 var trustedProxy = builder.Configuration["ReverseProxy:TrustedProxy"];
 if (!string.IsNullOrWhiteSpace(trustedProxy))
 {
@@ -40,6 +53,40 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 }));
 builder.Services.AddHealthChecks();
 builder.Services.AddTransient<IValidator<YardBlockSizeRequest>, YardBlockSizeRequestValidator>();
+builder.Services.AddTransient<IValidator<UpdateTransactionRequest>, UpdateTransactionRequestValidator>();
+builder.Services.AddTransient<IValidator<CancelTransactionRequest>, CancelTransactionRequestValidator>();
+builder.Services.AddTransient<IValidator<PlaceFromVirtualBlockRequest>, PlaceFromVirtualBlockRequestValidator>();
+builder.Services.AddTransient<IValidator<AssignContainersRequest>, AssignContainersRequestValidator>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("login", context =>
+    {
+        var partitionKey = context.Connection.RemoteIpAddress?.ToString()
+            ?? context.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+            ?? context.TraceIdentifier;
+
+        return RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: partitionKey,
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 6,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (rejected, cancellationToken) =>
+    {
+        if (rejected.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            rejected.HttpContext.Response.Headers["Retry-After"] = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds))
+                .ToString(System.Globalization.CultureInfo.InvariantCulture);
+        await ResultExtensions.Problem(429, "RateLimit.TooManyRequests", "Vui lòng chờ trước khi thử lại.")
+            .ExecuteAsync(rejected.HttpContext);
+    };
+});
 
 // Register application & infrastructure services
 builder.Services.AddApplication();
@@ -49,7 +96,16 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApiAuthorization();
 
 // Configure OpenAPI
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options => options.AddOperationTransformer((operation, context, cancellationToken) =>
+{
+    var deprecated = context.Description.ActionDescriptor.EndpointMetadata.OfType<DeprecatedEndpointMetadata>().FirstOrDefault();
+    if (deprecated is not null)
+    {
+        operation.Deprecated = true;
+        operation.Description = (operation.Description ?? "") + $" Deprecated. Use {deprecated.Replacement}.";
+    }
+    return Task.CompletedTask;
+}));
 
 var app = builder.Build();
 
@@ -77,7 +133,9 @@ app.UseStatusCodePages(async statusContext =>
     await ResultExtensions.Problem(status, code).ExecuteAsync(http);
 });
 app.UseCors();
-if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
+app.UseRateLimiter();
+if (app.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("Transport:UseHttpsRedirection"))
+    app.UseHttpsRedirection();
 
 // Resolve tenant only after authentication and authorization; header cannot select a depot.
 app.UseAuthentication();

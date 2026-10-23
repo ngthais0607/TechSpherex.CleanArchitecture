@@ -16,7 +16,7 @@ public sealed class TierWithinBlockLimitRule : IBusinessRule
 
     public Error Error => Error.Validation(
         "YardRule.TierExceedsBlockLimit",
-        $"Tier '{_tier}' exceeds the maximum allowed tier '{_maxTiers}' for this block.");
+        $"Tầng '{_tier}' vượt quá giới hạn tầng tối đa '{_maxTiers}' của dãy.");
 
     public string Message => Error.Description;
 

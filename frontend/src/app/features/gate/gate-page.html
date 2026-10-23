@@ -1,0 +1,319 @@
+<section class="page-header">
+  <div>
+    <span class="eyebrow">KIỂM SOÁT GIAO NHẬN</span>
+    <h1>Cổng nhập / xuất</h1>
+    <p>Kiểm tra và ghi nhận giao dịch với máy chủ.</p>
+  </div>
+</section>
+<section class="panel">
+  <div class="panel-header"><h2>Phiếu giao dịch cổng</h2></div>
+  <form #entry="ngForm" (ngSubmit)="entry.valid && submit()" class="panel-body">
+    <div class="form-grid">
+      <div class="field">
+        <label for="gate-type">Nghiệp vụ</label
+        ><select id="gate-type" name="type" [(ngModel)]="form.type" (ngModelChange)="changed()">
+          <option value="GateIn">Nhập bãi</option>
+          <option value="GateOut">Xuất bãi</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="gate-number">Số container</label
+        ><input
+          id="gate-number"
+          name="containerNumber"
+          [(ngModel)]="form.containerNumber"
+          (ngModelChange)="changed()"
+          required
+        />
+      </div>
+      @if (form.type === 'GateOut') {
+        <div class="field">
+          <label for="gate-order">Số lệnh giao</label
+          ><input
+            id="gate-order"
+            name="orderNumber"
+            [(ngModel)]="form.orderNumber"
+            (ngModelChange)="changed()"
+            required
+          />
+        </div>
+      } @else {
+        <div class="field">
+          <label for="gate-block">Block nhập bãi</label
+          ><select
+            id="gate-block"
+            name="blockCode"
+            [(ngModel)]="form.blockCode"
+            (ngModelChange)="changed()"
+            required
+          >
+            <option value="">Chọn block…</option>
+            @for (block of blocks(); track block.id) {
+              <option [value]="block.code">
+                {{ block.code }} · {{ block.isVirtual ? 'Bãi ảo' : block.name }}
+              </option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="gate-bay">Bay</label
+          ><input
+            id="gate-bay"
+            type="number"
+            name="bay"
+            [(ngModel)]="form.bay"
+            (ngModelChange)="changed()"
+            min="1"
+          />
+        </div>
+        <div class="field">
+          <label for="gate-row">Row (số)</label
+          ><input
+            id="gate-row"
+            type="number"
+            name="row"
+            [(ngModel)]="form.row"
+            (ngModelChange)="changed()"
+            min="1"
+          />
+        </div>
+        <div class="field">
+          <label for="gate-tier">Tier</label
+          ><input
+            id="gate-tier"
+            type="number"
+            name="tier"
+            [(ngModel)]="form.tier"
+            (ngModelChange)="changed()"
+            min="1"
+          />
+        </div>
+      }
+      <div class="field">
+        <label for="gate-vehicle">Biển số xe</label
+        ><input
+          id="gate-vehicle"
+          name="vehicleNumber"
+          [(ngModel)]="form.vehicleNumber"
+          (ngModelChange)="dirty.set(true)"
+          required
+        />
+      </div>
+      <div class="field">
+        <label for="gate-vehicle-type">Phương tiện</label
+        ><select
+          id="gate-vehicle-type"
+          name="vehicleType"
+          [(ngModel)]="form.vehicleType"
+          (ngModelChange)="dirty.set(true)"
+        >
+          @for (option of options('vehicleTypes'); track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="gate-driver">Tài xế</label
+        ><input
+          id="gate-driver"
+          name="driverName"
+          [(ngModel)]="form.driverName"
+          (ngModelChange)="dirty.set(true)"
+        />
+      </div>
+      @if (form.type === 'GateIn') {
+        <div class="field">
+          <label>Phân loại</label
+          ><select
+            aria-label="Phân loại nhập"
+            name="grade"
+            [(ngModel)]="form.grade"
+            (ngModelChange)="dirty.set(true)"
+          >
+            @for (option of options('classifications'); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>Tình trạng</label
+          ><select
+            aria-label="Tình trạng nhập"
+            name="condition"
+            [(ngModel)]="form.condition"
+            (ngModelChange)="dirty.set(true)"
+          >
+            @for (option of options('containerConditions'); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+    @if (form.type === 'GateIn') {
+      <button class="button small" type="button" (click)="suggest()">Gợi ý vị trí trống</button>
+      <div class="toolbar-group">
+        @for (slot of suggestions(); track $index) {
+          <button class="button small" type="button" (click)="useSlot(slot)">
+            {{ slot.bay }}-{{ slot.row }}-{{ slot.tier }}
+          </button>
+        }
+      </div>
+      @if (freeTotal()) {
+        <app-pagination [total]="freeTotal()" [page]="freePage()" (changed)="suggest($event)" />
+      }
+    }
+    @if (facade.validating()) {
+      <p role="status">Đang kiểm tra điều kiện cổng…</p>
+    }
+    <ul>
+      @for (check of checks(); track check.ruleCode) {
+        <li [class.field-error]="check.state === 'Fail'">
+          <strong>{{ check.labelState }} · {{ check.ruleCode }}</strong> {{ check.label }}
+          {{ check.detail }}
+        </li>
+      }
+    </ul>
+    @if (facade.error(); as error) {
+      <p class="banner error" role="alert">{{ error.detail }}</p>
+    }
+    <button
+      class="button primary"
+      type="submit"
+      [disabled]="facade.pending() || !facade.canSubmit() || entry.invalid"
+    >
+      {{ facade.pending() ? 'Đang ghi nhận…' : 'Ghi nhận giao dịch' }}
+    </button>
+  </form>
+</section>
+<section class="panel section-gap">
+  <div class="panel-header"><h2>Lịch sử giao dịch</h2></div>
+  <div class="toolbar">
+    <input
+      aria-label="Tìm xe hoặc tài xế"
+      placeholder="Tìm biển số xe hoặc tài xế…"
+      [(ngModel)]="history.search"
+      (ngModelChange)="loadHistory()"
+    />
+    <select aria-label="Loại giao dịch" [(ngModel)]="history.type" (ngModelChange)="loadHistory()">
+      <option value="">Nhập và xuất</option>
+      <option value="GateIn">Nhập</option>
+      <option value="GateOut">Xuất</option>
+    </select>
+    <select
+      aria-label="Trạng thái giao dịch"
+      [(ngModel)]="history.status"
+      (ngModelChange)="loadHistory()"
+    >
+      <option value="">Mọi trạng thái</option>
+      <option value="Active">Đang hiệu lực</option>
+      <option value="Cancelled">Đã hủy</option>
+    </select>
+  </div>
+  @if (facade.loading()) {
+    <p role="status">Đang tải lịch sử…</p>
+  }
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Thời điểm</th>
+          <th>Nghiệp vụ</th>
+          <th>Container</th>
+          <th>Xe / Tài xế</th>
+          <th>Vị trí</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of facade.rows(); track row.id) {
+          <tr class="clickable" (click)="open(row)">
+            <td>{{ row.occurredAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ row.type === 'GateIn' ? 'Nhập' : 'Xuất' }}</td>
+            <td class="mono">{{ row.containerNumber }}</td>
+            <td>
+              {{ row.vehicleNumber }}<small>{{ row.driverName }}</small>
+            </td>
+            <td>{{ row.position || '—' }}</td>
+            <td>{{ row.status === 'Active' ? 'Đang hiệu lực' : 'Đã hủy' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="empty">Chưa có giao dịch phù hợp.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-pagination
+    [total]="facade.totalCount()"
+    [page]="history.pageIndex"
+    (changed)="loadHistory($event)"
+  />
+</section>
+@if (facade.selected(); as row) {
+  <app-modal
+    [title]="row.containerNumber + ' · ' + row.vehicleNumber"
+    [width]="900"
+    (closed)="facade.selected.set(null)"
+  >
+    <p>{{ row.occurredAt | date: 'dd/MM/yyyy HH:mm' }} · {{ row.status }}</p>
+    @if (row.status === 'Active') {
+      <button class="button" (click)="editing.set(!editing())">Sửa thông tin giao dịch</button>
+      @if (editing()) {
+        <app-form
+          formId="gate-edit-form"
+          [fields]="editFields()"
+          [value]="editValue()"
+          (saved)="update($event)"
+        /><button
+          class="button primary"
+          type="submit"
+          form="gate-edit-form"
+          [disabled]="facade.pending()"
+        >
+          Lưu thay đổi
+        </button>
+      }
+      <div class="field">
+        <label for="cancel-reason">Lý do hủy</label
+        ><input
+          id="cancel-reason"
+          [ngModel]="cancelReason()"
+          (ngModelChange)="cancelReason.set($event)"
+        />
+      </div>
+      <button class="button" [disabled]="facade.pending()" (click)="cancel()">Hủy giao dịch</button>
+    }
+    @if (facade.error(); as error) {
+      <p class="banner error" role="alert">{{ error.detail }}</p>
+    }
+    <h3>Lịch sử thay đổi</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Thời điểm</th>
+            <th>Trường</th>
+            <th>Trước</th>
+            <th>Sau</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (change of row.changes; track change.id) {
+            <tr>
+              <td>{{ change.changedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ change.fieldName }}</td>
+              <td>{{ change.oldValue || '—' }}</td>
+              <td>{{ change.newValue || '—' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4">Chưa có chỉnh sửa.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div></app-modal
+  >
+}

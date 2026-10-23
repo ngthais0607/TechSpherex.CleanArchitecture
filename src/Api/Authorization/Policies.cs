@@ -13,4 +13,5 @@ public static class Policies
     public const string ManageGate = nameof(ManageGate);
     public const string ReadReports = nameof(ReadReports);
     public const string ReadExpiringOrders = nameof(ReadExpiringOrders);
+    public const string AuthenticatedUser = nameof(AuthenticatedUser);
 }

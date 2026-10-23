@@ -27,6 +27,11 @@ public class TestAppDbContext : DbContext, IAppDbContext
     public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Depot> Depots => Set<Depot>();
+    public DbSet<LineOperatorOwnerCode> LineOperatorOwnerCodes => Set<LineOperatorOwnerCode>();
+    public DbSet<DeliveryOrderBooking> Bookings => Set<DeliveryOrderBooking>();
+    public DbSet<GateTransaction> GateTransactions => Set<GateTransaction>();
+    public DbSet<GateTransactionChange> GateTransactionChanges => Set<GateTransactionChange>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

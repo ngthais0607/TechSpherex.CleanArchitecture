@@ -23,6 +23,11 @@ public interface IAppDbContext
     DbSet<ApplicationUser> Users { get; }
     DbSet<Role> Roles { get; }
     DbSet<UserRole> UserRoles { get; }
+    DbSet<Depot> Depots { get; }
+    DbSet<LineOperatorOwnerCode> LineOperatorOwnerCodes { get; }
+    DbSet<DeliveryOrderBooking> Bookings { get; }
+    DbSet<GateTransaction> GateTransactions { get; }
+    DbSet<GateTransactionChange> GateTransactionChanges { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -3,13 +3,13 @@ SELECT c.id
 FROM containers AS c
 WHERE c.tenant_id = @__ef_filter__p_0 AND c.container_number = @__parsed_Value_0
 LIMIT 2
-Limit  (cost=0.29..8.31 rows=1 width=16) (actual time=0.098..0.101 rows=1 loops=1)
+Limit  (cost=0.29..8.31 rows=1 width=16) (actual time=0.113..0.116 rows=1 loops=1)
   Buffers: shared hit=3
-  ->  Index Scan using ix_containers_tenant_id_container_number on containers c  (cost=0.29..8.31 rows=1 width=16) (actual time=0.096..0.098 rows=1 loops=1)
+  ->  Index Scan using ix_containers_tenant_id_container_number on containers c  (cost=0.29..8.31 rows=1 width=16) (actual time=0.111..0.113 rows=1 loops=1)
         Index Cond: (((tenant_id)::text = 'DEPOT-A'::text) AND ((container_number)::text = 'MSKU6016334'::text))
         Buffers: shared hit=3
-Planning Time: 0.275 ms
-Execution Time: 0.156 ms
+Planning Time: 0.175 ms
+Execution Time: 0.289 ms
 
 -- Parameters: [{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__containerId_0","Type":"Uuid","Value":"000c9253-5d94-acdd-7f8e-63e6294a9ccd"}]
 SELECT count(*)::int
@@ -20,40 +20,54 @@ FROM (
     UNION ALL
     SELECT 1
     FROM container_lifecycles AS c0
-    WHERE c0.tenant_id = @__ef_filter__p_0 AND c0.container_id = @__containerId_0 AND c0.movement_history_version = 0
+    WHERE c0.tenant_id = @__ef_filter__p_0 AND c0.container_id = @__containerId_0 AND c0.movement_history_version = 0 AND NOT EXISTS (
+        SELECT 1
+        FROM container_movements AS c1
+        WHERE c1.tenant_id = @__ef_filter__p_0 AND c1.container_lifecycle_id = c0.id AND c1.event_type = 'GateIn')
     UNION ALL
     SELECT 1
-    FROM container_lifecycles AS c1
-    WHERE c1.tenant_id = @__ef_filter__p_0 AND c1.container_id = @__containerId_0 AND c1.movement_history_version = 0 AND c1.out_date IS NOT NULL
+    FROM container_lifecycles AS c2
+    WHERE c2.tenant_id = @__ef_filter__p_0 AND c2.container_id = @__containerId_0 AND c2.movement_history_version = 0 AND NOT EXISTS (
+        SELECT 1
+        FROM container_movements AS c3
+        WHERE c3.tenant_id = @__ef_filter__p_0 AND c3.container_lifecycle_id = c2.id AND c3.event_type = 'GateOut') AND c2.out_date IS NOT NULL
 ) AS u0
-Aggregate  (cost=24.98..24.99 rows=1 width=4) (actual time=0.115..0.118 rows=1 loops=1)
-  Buffers: shared hit=9
-  ->  Append  (cost=0.29..24.97 rows=3 width=0) (actual time=0.053..0.112 rows=1 loops=1)
-        Buffers: shared hit=9
-        ->  Subquery Scan on "*SELECT* 1"  (cost=0.29..8.32 rows=1 width=0) (actual time=0.052..0.054 rows=1 loops=1)
+Aggregate  (cost=1507.03..1507.04 rows=1 width=4) (actual time=19.595..19.601 rows=1 loops=1)
+  Buffers: shared hit=773
+  ->  Append  (cost=0.29..1507.02 rows=3 width=0) (actual time=0.078..19.591 rows=1 loops=1)
+        Buffers: shared hit=773
+        ->  Subquery Scan on "*SELECT* 1"  (cost=0.29..4.32 rows=1 width=0) (actual time=0.077..0.080 rows=1 loops=1)
               Buffers: shared hit=3
-              ->  Index Only Scan using ix_container_movements_tenant_id_container_id_occurred_at_utc_ on container_movements c  (cost=0.29..8.31 rows=1 width=4) (actual time=0.051..0.052 rows=1 loops=1)
+              ->  Index Only Scan using ix_container_movements_tenant_id_container_id_occurred_at_utc_ on container_movements c  (cost=0.29..4.31 rows=1 width=4) (actual time=0.076..0.078 rows=1 loops=1)
                     Index Cond: ((tenant_id = 'DEPOT-A'::text) AND (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid))
-                    Heap Fetches: 1
+                    Heap Fetches: 0
                     Buffers: shared hit=3
-        ->  Subquery Scan on "*SELECT* 2"  (cost=0.29..8.32 rows=1 width=0) (actual time=0.036..0.036 rows=0 loops=1)
-              Buffers: shared hit=3
-              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c0  (cost=0.29..8.31 rows=1 width=4) (actual time=0.036..0.036 rows=0 loops=1)
-                    Index Cond: (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid)
-                    Filter: (((tenant_id)::text = 'DEPOT-A'::text) AND (movement_history_version = 0))
-                    Rows Removed by Filter: 1
-                    Buffers: shared hit=3
-        ->  Subquery Scan on "*SELECT* 3"  (cost=0.29..8.32 rows=1 width=0) (actual time=0.019..0.020 rows=0 loops=1)
-              Buffers: shared hit=3
-              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c1  (cost=0.29..8.31 rows=1 width=4) (actual time=0.019..0.019 rows=0 loops=1)
-                    Index Cond: (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid)
-                    Filter: ((out_date IS NOT NULL) AND ((tenant_id)::text = 'DEPOT-A'::text) AND (movement_history_version = 0))
-                    Rows Removed by Filter: 1
-                    Buffers: shared hit=3
+        ->  Subquery Scan on "*SELECT* 2"  (cost=0.29..751.34 rows=1 width=0) (actual time=13.989..13.991 rows=0 loops=1)
+              Buffers: shared hit=385
+              ->  Nested Loop Anti Join  (cost=0.29..751.33 rows=1 width=4) (actual time=13.988..13.990 rows=0 loops=1)
+                    Buffers: shared hit=385
+                    ->  Seq Scan on container_lifecycles c0  (cost=0.00..735.00 rows=1 width=16) (actual time=13.986..13.986 rows=0 loops=1)
+                          Filter: (((tenant_id)::text = 'DEPOT-A'::text) AND (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid) AND (movement_history_version = 0))
+                          Rows Removed by Filter: 20000
+                          Buffers: shared hit=385
+                    ->  Index Scan using ix_container_movements_tenant_id_container_lifecycle_id on container_movements c1  (cost=0.29..8.31 rows=1 width=16) (never executed)
+                          Index Cond: (((tenant_id)::text = 'DEPOT-A'::text) AND (container_lifecycle_id = c0.id))
+                          Filter: ((event_type)::text = 'GateIn'::text)
+        ->  Subquery Scan on "*SELECT* 3"  (cost=0.29..751.34 rows=1 width=0) (actual time=5.511..5.512 rows=0 loops=1)
+              Buffers: shared hit=385
+              ->  Nested Loop Anti Join  (cost=0.29..751.33 rows=1 width=4) (actual time=5.510..5.511 rows=0 loops=1)
+                    Buffers: shared hit=385
+                    ->  Seq Scan on container_lifecycles c2  (cost=0.00..735.00 rows=1 width=16) (actual time=5.508..5.508 rows=0 loops=1)
+                          Filter: ((out_date IS NOT NULL) AND ((tenant_id)::text = 'DEPOT-A'::text) AND (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid) AND (movement_history_version = 0))
+                          Rows Removed by Filter: 20000
+                          Buffers: shared hit=385
+                    ->  Index Scan using ix_container_movements_tenant_id_container_lifecycle_id on container_movements c3  (cost=0.29..8.31 rows=1 width=16) (never executed)
+                          Index Cond: (((tenant_id)::text = 'DEPOT-A'::text) AND (container_lifecycle_id = c2.id))
+                          Filter: ((event_type)::text = 'GateOut'::text)
 Planning:
-  Buffers: shared hit=50
-Planning Time: 1.940 ms
-Execution Time: 0.265 ms
+  Buffers: shared hit=84
+Planning Time: 4.122 ms
+Execution Time: 19.818 ms
 
 -- Parameters: [{"Name":"@__ef_filter__p_0","Type":"Varchar","Value":"DEPOT-A"},{"Name":"@__containerId_0","Type":"Uuid","Value":"000c9253-5d94-acdd-7f8e-63e6294a9ccd"},{"Name":"@__p_2","Type":"Integer","Value":20},{"Name":"@__p_1","Type":"Integer","Value":0}]
 SELECT u0."Id", u0."Source", u0."LifecycleId", u0."OccurredAtUtc", u0."EventType", u0."ActorUserId", u0."VehicleNumber", u0."VehicleType", u0."DeliveryOrderId", u0."FromBlockId", u0."FromBlockCode", u0."FromBay", u0."FromRow", u0."FromTier", u0."ToBlockId", u0."ToBlockCode", u0."ToBay", u0."ToRow", u0."ToTier"
@@ -70,37 +84,51 @@ FROM (
     UNION ALL
     SELECT c0.id AS "Id", 'LegacyLifecycle' AS "Source", c0.id AS "LifecycleId", c0.in_date AS "OccurredAtUtc", 'GateIn' AS "EventType", NULL AS "ActorUserId", c0.in_vehicle_number AS "VehicleNumber", c0.in_vehicle_type AS "VehicleType", NULL AS "DeliveryOrderId", NULL AS "FromBlockId", NULL AS "FromBlockCode", NULL AS "FromBay", NULL AS "FromRow", NULL AS "FromTier", NULL AS "ToBlockId", NULL AS "ToBlockCode", NULL AS "ToBay", NULL AS "ToRow", NULL AS "ToTier"
     FROM container_lifecycles AS c0
-    WHERE c0.tenant_id = @__ef_filter__p_0 AND c0.container_id = @__containerId_0 AND c0.movement_history_version = 0
+    WHERE c0.tenant_id = @__ef_filter__p_0 AND c0.container_id = @__containerId_0 AND c0.movement_history_version = 0 AND NOT EXISTS (
+        SELECT 1
+        FROM container_movements AS c1
+        WHERE c1.tenant_id = @__ef_filter__p_0 AND c1.container_lifecycle_id = c0.id AND c1.event_type = 'GateIn')
     UNION ALL
-    SELECT c1.id AS "Id", 'LegacyLifecycle' AS "Source", c1.id AS "LifecycleId", c1.out_date AS "OccurredAtUtc", 'GateOut' AS "EventType", NULL AS "ActorUserId", c1.out_vehicle_number AS "VehicleNumber", c1.out_vehicle_type AS "VehicleType", c1.delivery_order_id AS "DeliveryOrderId", NULL AS "FromBlockId", NULL AS "FromBlockCode", NULL AS "FromBay", NULL AS "FromRow", NULL AS "FromTier", NULL AS "ToBlockId", NULL AS "ToBlockCode", NULL AS "ToBay", NULL AS "ToRow", NULL AS "ToTier"
-    FROM container_lifecycles AS c1
-    WHERE c1.tenant_id = @__ef_filter__p_0 AND c1.container_id = @__containerId_0 AND c1.movement_history_version = 0 AND c1.out_date IS NOT NULL
+    SELECT c2.id AS "Id", 'LegacyLifecycle' AS "Source", c2.id AS "LifecycleId", c2.out_date AS "OccurredAtUtc", 'GateOut' AS "EventType", NULL AS "ActorUserId", c2.out_vehicle_number AS "VehicleNumber", c2.out_vehicle_type AS "VehicleType", c2.delivery_order_id AS "DeliveryOrderId", NULL AS "FromBlockId", NULL AS "FromBlockCode", NULL AS "FromBay", NULL AS "FromRow", NULL AS "FromTier", NULL AS "ToBlockId", NULL AS "ToBlockCode", NULL AS "ToBay", NULL AS "ToRow", NULL AS "ToTier"
+    FROM container_lifecycles AS c2
+    WHERE c2.tenant_id = @__ef_filter__p_0 AND c2.container_id = @__containerId_0 AND c2.movement_history_version = 0 AND NOT EXISTS (
+        SELECT 1
+        FROM container_movements AS c3
+        WHERE c3.tenant_id = @__ef_filter__p_0 AND c3.container_lifecycle_id = c2.id AND c3.event_type = 'GateOut') AND c2.out_date IS NOT NULL
 ) AS u0
 ORDER BY u0."OccurredAtUtc", u0."Source", u0."Id", u0."EventType"
 LIMIT @__p_2 OFFSET @__p_1
-Limit  (cost=24.98..24.98 rows=3 width=255) (actual time=0.132..0.134 rows=1 loops=1)
-  Buffers: shared hit=9
-  ->  Sort  (cost=24.98..24.98 rows=3 width=255) (actual time=0.130..0.132 rows=1 loops=1)
+Limit  (cost=1511.02..1511.03 rows=3 width=255) (actual time=17.538..17.545 rows=1 loops=1)
+  Buffers: shared hit=773
+  ->  Sort  (cost=1511.02..1511.03 rows=3 width=255) (actual time=17.535..17.540 rows=1 loops=1)
         Sort Key: c.occurred_at_utc, ('Movement'::text), c.id, (CASE WHEN ((c.event_type)::text = 'GateIn'::text) THEN 'GateIn'::text WHEN ((c.event_type)::text = 'Place'::text) THEN 'Place'::text WHEN ((c.event_type)::text = 'Relocate'::text) THEN 'Relocate'::text WHEN ((c.event_type)::text = 'Remove'::text) THEN 'Remove'::text ELSE 'GateOut'::text END)
         Sort Method: quicksort  Memory: 25kB
-        Buffers: shared hit=9
-        ->  Append  (cost=0.29..24.95 rows=3 width=255) (actual time=0.047..0.094 rows=1 loops=1)
-              Buffers: shared hit=9
-              ->  Index Scan using ix_container_movements_tenant_id_container_id_occurred_at_utc_ on container_movements c  (cost=0.29..8.32 rows=1 width=223) (actual time=0.046..0.047 rows=1 loops=1)
+        Buffers: shared hit=773
+        ->  Append  (cost=0.29..1511.00 rows=3 width=255) (actual time=0.052..17.501 rows=1 loops=1)
+              Buffers: shared hit=773
+              ->  Index Scan using ix_container_movements_tenant_id_container_id_occurred_at_utc_ on container_movements c  (cost=0.29..8.32 rows=1 width=223) (actual time=0.051..0.054 rows=1 loops=1)
                     Index Cond: (((tenant_id)::text = 'DEPOT-A'::text) AND (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid))
                     Buffers: shared hit=3
-              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c0  (cost=0.29..8.31 rows=1 width=271) (actual time=0.027..0.027 rows=0 loops=1)
-                    Index Cond: (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid)
-                    Filter: (((tenant_id)::text = 'DEPOT-A'::text) AND (movement_history_version = 0))
-                    Rows Removed by Filter: 1
-                    Buffers: shared hit=3
-              ->  Index Scan using ix_container_lifecycles_container_id on container_lifecycles c1  (cost=0.29..8.31 rows=1 width=272) (actual time=0.018..0.018 rows=0 loops=1)
-                    Index Cond: (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid)
-                    Filter: ((out_date IS NOT NULL) AND ((tenant_id)::text = 'DEPOT-A'::text) AND (movement_history_version = 0))
-                    Rows Removed by Filter: 1
-                    Buffers: shared hit=3
+              ->  Nested Loop Anti Join  (cost=0.29..751.33 rows=1 width=271) (actual time=10.052..10.054 rows=0 loops=1)
+                    Buffers: shared hit=385
+                    ->  Seq Scan on container_lifecycles c0  (cost=0.00..735.00 rows=1 width=39) (actual time=10.050..10.050 rows=0 loops=1)
+                          Filter: (((tenant_id)::text = 'DEPOT-A'::text) AND (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid) AND (movement_history_version = 0))
+                          Rows Removed by Filter: 20000
+                          Buffers: shared hit=385
+                    ->  Index Scan using ix_container_movements_tenant_id_container_lifecycle_id on container_movements c1  (cost=0.29..8.31 rows=1 width=16) (never executed)
+                          Index Cond: (((tenant_id)::text = 'DEPOT-A'::text) AND (container_lifecycle_id = c0.id))
+                          Filter: ((event_type)::text = 'GateIn'::text)
+              ->  Nested Loop Anti Join  (cost=0.29..751.33 rows=1 width=272) (actual time=7.383..7.384 rows=0 loops=1)
+                    Buffers: shared hit=385
+                    ->  Seq Scan on container_lifecycles c2  (cost=0.00..735.00 rows=1 width=56) (actual time=7.380..7.381 rows=0 loops=1)
+                          Filter: ((out_date IS NOT NULL) AND ((tenant_id)::text = 'DEPOT-A'::text) AND (container_id = '000c9253-5d94-acdd-7f8e-63e6294a9ccd'::uuid) AND (movement_history_version = 0))
+                          Rows Removed by Filter: 20000
+                          Buffers: shared hit=385
+                    ->  Index Scan using ix_container_movements_tenant_id_container_lifecycle_id on container_movements c3  (cost=0.29..8.31 rows=1 width=16) (never executed)
+                          Index Cond: (((tenant_id)::text = 'DEPOT-A'::text) AND (container_lifecycle_id = c2.id))
+                          Filter: ((event_type)::text = 'GateOut'::text)
 Planning:
-  Buffers: shared hit=71
-Planning Time: 2.896 ms
-Execution Time: 0.384 ms
+  Buffers: shared hit=87
+Planning Time: 4.661 ms
+Execution Time: 18.223 ms
 

@@ -16,7 +16,7 @@ public sealed class DeliveryOrderNotExpiredRule : IBusinessRule
 
     public Error Error => Error.Validation(
         "OrderRule.DeliveryOrderExpired",
-        "Delivery order has expired and is no longer valid for dispatch.");
+        "Lệnh giao hàng đã hết hạn.");
 
     public string Message => Error.Description;
 

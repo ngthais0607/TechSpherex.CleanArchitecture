@@ -67,12 +67,31 @@ public sealed class PlaceContainerCommandHandler : ICommandHandler<PlaceContaine
         if (lifecycle is null)
             return Result.Failure(Error.Conflict("Lifecycle.NotInYard", "Container is not currently in the depot."));
 
+        var belowTier = command.Tier - 1;
+        var occupiedBelowIds = block.Slots
+            .Where(s => s.Row == command.Row && s.Tier == belowTier && s.ContainerId.HasValue)
+            .Select(s => s.ContainerId!.Value)
+            .Distinct()
+            .ToList();
+
+        var containerSizes = occupiedBelowIds.Count > 0
+            ? await _context.Containers
+                .Where(c => occupiedBelowIds.Contains(c.Id))
+                .Select(c => new { c.Id, c.Size })
+                .ToDictionaryAsync(c => c.Id, c => (ContainerSize?)c.Size, cancellationToken)
+            : new Dictionary<Guid, ContainerSize?>();
+
+        var belowSlotTuples = block.Slots
+            .Where(s => s.Row == command.Row && s.Tier == belowTier)
+            .Select(s => (s.Bay, s.Row, s.Tier, s.ContainerId, s.ContainerId.HasValue && containerSizes.TryGetValue(s.ContainerId.Value, out var sz) ? sz : null));
+
         var rules = new IBusinessRule[]
         {
             new ValidBayContainerSizeRule(command.Bay, container.Size, block.MaxBays),
             new TierWithinBlockLimitRule(command.Tier, block.MaxTiers),
             new SlotIsFreeRule(container.Size, command.Bay, command.Row, command.Tier, block.Slots),
-            new SlotBelowMustBeOccupiedRule(command.Tier, container.Size, command.Bay, command.Row, block.Slots)
+            new SlotBelowMustBeOccupiedRule(command.Tier, container.Size, command.Bay, command.Row, block.Slots),
+            new StackCompatibilityRule(container.Size, command.Bay, command.Row, command.Tier, belowSlotTuples)
         };
 
         var ruleResult = _ruleEngine.Evaluate(rules);

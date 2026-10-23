@@ -20,7 +20,7 @@ public sealed class DeliveryOrderHasRemainingQuantityRule : IBusinessRule
 
     public Error Error => Error.Conflict(
         "OrderRule.NoRemainingQuantity",
-        $"Delivery order '{_order.OrderNumber}' has no remaining quantity for size '{_size}' and type '{_type}'.");
+        $"Lệnh giao '{_order.OrderNumber}' đã hết số lượng khả dụng cho kích thước '{_size}' và loại '{_type}'.");
 
     public string Message => Error.Description;
 

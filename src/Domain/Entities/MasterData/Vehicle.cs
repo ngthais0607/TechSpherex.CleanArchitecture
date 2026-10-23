@@ -15,7 +15,7 @@ public sealed class Vehicle : AuditableEntity
         if (string.IsNullOrWhiteSpace(plateNumber))
         {
             return Result.Failure<Vehicle>(
-                Error.Validation("Vehicle.EmptyPlateNumber", "Vehicle plate number cannot be empty."));
+                Error.Validation("Vehicle.EmptyPlateNumber", "Biển số xe không được để trống."));
         }
 
         return Result.Success(new Vehicle

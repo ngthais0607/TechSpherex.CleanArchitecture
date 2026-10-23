@@ -28,25 +28,26 @@ public sealed class Container : AuditableEntity, ITenantEntity
         decimal tareWeight,
         decimal maxGrossWeight,
         DateTime? dateOfManufacture,
-        string ownerCode,
+        Classification grade = Classification.A,
+        ContainerCondition condition = ContainerCondition.Normal,
         string tenantId = "")
     {
         if (containerNumber == null)
         {
             return Result.Failure<Container>(
-                Error.Validation("Container.EmptyNumber", "Container number is required."));
+                Error.Validation("Container.EmptyNumber", "Số container không được để trống."));
         }
 
         if (tareWeight <= 0)
         {
             return Result.Failure<Container>(
-                Error.Validation("Container.InvalidTareWeight", "Tare weight must be greater than zero."));
+                Error.Validation("Container.InvalidTareWeight", "Trọng lượng vỏ phải lớn hơn 0."));
         }
 
         if (maxGrossWeight <= tareWeight)
         {
             return Result.Failure<Container>(
-                Error.Validation("Container.InvalidMaxGrossWeight", "Max gross weight must be greater than tare weight."));
+                Error.Validation("Container.InvalidMaxGrossWeight", "Trọng lượng toàn tải tối đa phải lớn hơn trọng lượng vỏ."));
         }
 
         return Result.Success(new Container
@@ -58,11 +59,30 @@ public sealed class Container : AuditableEntity, ITenantEntity
             TareWeight = tareWeight,
             MaxGrossWeight = maxGrossWeight,
             DateOfManufacture = dateOfManufacture,
-            OwnerCode = string.IsNullOrWhiteSpace(ownerCode) ? containerNumber.OwnerCode : ownerCode.Trim().ToUpperInvariant(),
+            OwnerCode = containerNumber.OwnerCode,
             TenantId = tenantId,
-            Condition = ContainerCondition.Normal,
-            Classification = Classification.A
+            Condition = condition,
+            Classification = grade
         });
+    }
+
+    public static Result<Container> Create(
+        ContainerNumber containerNumber,
+        string isoCode,
+        ContainerSize size,
+        ContainerType type,
+        decimal tareWeight,
+        decimal maxGrossWeight,
+        DateTime? dateOfManufacture,
+        string ownerCode,
+        string tenantId = "")
+    {
+        var res = Create(containerNumber, isoCode, size, type, tareWeight, maxGrossWeight, dateOfManufacture, Classification.A, ContainerCondition.Normal, tenantId);
+        if (res.IsSuccess && !string.IsNullOrWhiteSpace(ownerCode))
+        {
+            res.Value!.OwnerCode = ownerCode.Trim().ToUpperInvariant();
+        }
+        return res;
     }
 
     public Result MarkDamaged(ContainerCondition condition)
@@ -70,10 +90,16 @@ public sealed class Container : AuditableEntity, ITenantEntity
         if (condition == ContainerCondition.Normal)
         {
             return Result.Failure(
-                Error.Validation("Container.InvalidCondition", "Damaged condition cannot be Normal."));
+                Error.Validation("Container.InvalidCondition", "Tình trạng hư hỏng không thể là Normal."));
         }
 
         Condition = condition;
         return Result.Success();
+    }
+
+    public void UpdateConditionAndClassification(ContainerCondition? condition, Classification? grade)
+    {
+        if (condition.HasValue) Condition = condition.Value;
+        if (grade.HasValue) Classification = grade.Value;
     }
 }

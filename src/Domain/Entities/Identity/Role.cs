@@ -14,7 +14,7 @@ public sealed class Role : BaseEntity
         if (string.IsNullOrWhiteSpace(name))
         {
             return Result.Failure<Role>(
-                Error.Validation("Role.EmptyName", "Role name cannot be empty."));
+                Error.Validation("Role.EmptyName", "Tên vai trò không được để trống."));
         }
 
         return Result.Success(new Role

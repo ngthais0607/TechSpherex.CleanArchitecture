@@ -1,0 +1,106 @@
+<section class="page-header">
+  <div>
+    <span class="eyebrow">KIỂM SOÁT TỒN BÃI</span>
+    <h1>Tồn bãi</h1>
+    <p>Tổng container độc lập với số nhóm phân trang.</p>
+  </div>
+  <button
+    class="button primary"
+    [disabled]="facade.exporting() || facade.loading()"
+    (click)="facade.export()"
+  >
+    Xuất Excel
+  </button>
+</section>
+<div class="kpis three">
+  <div class="metric">
+    <div class="metric-label">Container trong bộ lọc</div>
+    <div class="metric-value" data-testid="inventory-total">
+      {{ facade.data()?.totalContainers ?? '—' }}
+    </div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Nhóm tồn bãi</div>
+    <div class="metric-value">{{ facade.data()?.groups?.totalCount ?? '—' }}</div>
+  </div>
+</div>
+<section class="panel">
+  <div class="toolbar">
+    <input
+      aria-label="Hãng tồn bãi"
+      placeholder="Mã hãng khai thác"
+      [(ngModel)]="lineOperator"
+      (ngModelChange)="load()"
+    />
+    <select aria-label="Cỡ tồn bãi" [(ngModel)]="size" (ngModelChange)="load()">
+      <option value="">Mọi cỡ</option>
+      @for (option of options('containerSizes'); track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+    <select aria-label="Loại tồn bãi" [(ngModel)]="type" (ngModelChange)="load()">
+      <option value="">Mọi loại</option>
+      @for (option of options('containerTypes'); track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+    <select aria-label="Tình trạng tồn bãi" [(ngModel)]="condition" (ngModelChange)="load()">
+      <option value="">Mọi tình trạng</option>
+      @for (option of options('containerConditions'); track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </div>
+  @if (facade.loading()) {
+    <p role="status">Đang tải tồn bãi…</p>
+  }
+  @if (facade.error()) {
+    <p class="banner error" role="alert">{{ facade.error() }}</p>
+  }
+  @if (facade.exporting()) {
+    <p class="banner">
+      Đang xuất {{ facade.progress() }}
+      <button class="button small" (click)="facade.cancelExport()">Hủy xuất</button>
+    </p>
+  }
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Hãng</th>
+          <th>Cỡ</th>
+          <th>Loại</th>
+          <th>Tình trạng</th>
+          <th>Block</th>
+          <th>Số container</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of facade.data()?.groups?.items || []; track $index) {
+          <tr>
+            <td>{{ row.lineOperator }}</td>
+            <td>{{ lookups()?.containerSizes?.[row.size] || row.size }}</td>
+            <td>{{ lookups()?.containerTypes?.[row.type] || row.type }}</td>
+            <td>{{ lookups()?.containerConditions?.[row.condition] || row.condition }}</td>
+            <td>{{ row.blockCode || 'Chưa xếp vị trí' }}</td>
+            <td>{{ row.containerCount }}</td>
+          </tr>
+        } @empty {
+          @if (!facade.loading()) {
+            <tr>
+              <td colspan="6" class="empty">Không có tồn bãi phù hợp.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-pagination
+    [total]="facade.data()?.groups?.totalCount || 0"
+    [page]="page"
+    (changed)="load($event)"
+  />
+</section>
+<p class="muted">
+  Export lấy đủ các nhóm. Kết quả không bảo đảm snapshot đồng thời nếu có giao dịch đang diễn ra.
+</p>

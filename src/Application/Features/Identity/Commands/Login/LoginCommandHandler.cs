@@ -28,8 +28,9 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, AuthResp
 
     public async Task<Result<AuthResponseDto>> Handle(LoginCommand command, CancellationToken cancellationToken = default)
     {
+        var userName = command.UserName.Trim();
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.UserName == command.UserName, cancellationToken);
+            .FirstOrDefaultAsync(u => u.UserName == userName, cancellationToken);
 
         if (user is null || !user.IsActive)
         {
@@ -48,7 +49,11 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, AuthResp
         var rawRefreshToken = _tokenService.GenerateRefreshToken();
         var refreshTokenHash = _passwordHasher.HashPassword(rawRefreshToken);
 
-        var expiresAt = _timeProvider.GetUtcNow().AddDays(7).UtcDateTime;
+        var refreshDays = _tokenService.RefreshTokenExpirationDays > 0 ? _tokenService.RefreshTokenExpirationDays : 7;
+        var accessMinutes = _tokenService.AccessTokenExpirationMinutes > 0 ? _tokenService.AccessTokenExpirationMinutes : 60;
+
+        var expiresAt = _timeProvider.GetUtcNow().AddDays(refreshDays).UtcDateTime;
+        var accessExpiresAt = _timeProvider.GetUtcNow().AddMinutes(accessMinutes).UtcDateTime;
         user.SetRefreshToken(refreshTokenHash, expiresAt);
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -58,6 +63,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, AuthResp
             rawRefreshToken,
             user.UserName,
             user.Role,
-            expiresAt));
+            expiresAt,
+            accessExpiresAt));
     }
 }

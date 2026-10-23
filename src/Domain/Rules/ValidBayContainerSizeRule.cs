@@ -19,7 +19,7 @@ public sealed class ValidBayContainerSizeRule : IBusinessRule
 
     public Error Error => Error.Validation(
         "YardRule.InvalidBayForSize",
-        $"The bay '{_bay}' is not valid for container size '{_size}'.");
+        $"Vị trí bay '{_bay}' không hợp lệ cho kích thước container '{_size}'.");
 
     public string Message => Error.Description;
 

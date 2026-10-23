@@ -8,7 +8,7 @@ public sealed record ContainerNumber
     public string OwnerCode => Value.Substring(0, 3);
     public char CategoryIdentifier => Value[3];
     public string SerialNumber => Value.Substring(4, 6);
-    public int CheckDigit => Value[10] - '0';
+    public int CheckDigit => Value[10] == 'X' ? 10 : Value[10] - '0';
 
     private ContainerNumber(string value) => Value = value;
 
@@ -50,16 +50,19 @@ public sealed record ContainerNumber
         }
 
         char checkDigitChar = normalized[10];
-        if (!char.IsDigit(checkDigitChar))
+        bool isDigit = char.IsDigit(checkDigitChar);
+        bool isX = checkDigitChar == 'X';
+        if (!isDigit && !isX)
         {
             return Result.Failure<ContainerNumber>(
-                Error.Validation("ContainerNumber.InvalidCheckDigit", "Check digit must be a digit (0-9)."));
+                Error.Validation("ContainerNumber.InvalidCheckDigit", "Check digit must be a digit (0-9) or 'X'."));
         }
 
-        int expectedCheckDigit = CalculateCheckDigit(normalized.Substring(0, 10));
-        int actualCheckDigit = checkDigitChar - '0';
+        int remainder = CalculateRemainder(normalized.Substring(0, 10));
+        bool matches = (remainder == 10 && (checkDigitChar == 'X' || checkDigitChar == '0'))
+                       || (remainder < 10 && checkDigitChar - '0' == remainder);
 
-        if (expectedCheckDigit != actualCheckDigit)
+        if (!matches)
         {
             return Result.Failure<ContainerNumber>(
                 Error.Validation("ContainerNumber.CheckDigitMismatch", "Check digit does not match ISO 6346 Modulo 11 algorithm."));
@@ -68,7 +71,7 @@ public sealed record ContainerNumber
         return Result.Success(new ContainerNumber(normalized));
     }
 
-    private static int CalculateCheckDigit(string tenChars)
+    private static int CalculateRemainder(string tenChars)
     {
         int sum = 0;
         for (int i = 0; i < 10; i++)
@@ -78,8 +81,7 @@ public sealed record ContainerNumber
             sum += charValue * (1 << i);
         }
 
-        int remainder = sum % 11;
-        return remainder == 10 ? 0 : remainder;
+        return sum % 11;
     }
 
     private static int GetLetterValue(char letter)

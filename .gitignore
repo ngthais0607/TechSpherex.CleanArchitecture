@@ -17,8 +17,19 @@ docs/superpowers/
 ## Environment variables
 .env
 .env.prod
+.env.local
+.env.query
 backups/
 migration-input/
 
-## Local docs
-*codebase-structure-and-files.md
+## Historical local documentation
+docs/archive/
+docs/week-01/
+docs/week-02/
+docs/week-03/
+!docs/design/
+!docs/design/**
+
+## Personal Markdown stays local; publish only the root project overview.
+*.md
+!/README.md

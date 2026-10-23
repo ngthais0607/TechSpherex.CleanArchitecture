@@ -37,9 +37,12 @@ Compose -Arguments @('run','--rm','--no-deps','migrate') | Out-File (Join-Path $
 Compose -Arguments @('run','--rm','--no-deps','migrate') | Out-File (Join-Path $work 'upgrade-repeat.log')
 $mapped = Compose -Arguments @('run','--rm','--no-deps','--entrypoint','psql','migrate','-X','-tAc',"SELECT count(*) FROM application_users WHERE tenant_id='DEPOT-B' AND id='11111111-2222-3333-4444-555555555555'")
 Check (($mapped -join '').Trim() -eq '1') 'Approved synthetic mapping was not preserved'
-$migrations = Compose -Arguments @('run','--rm','--no-deps','--entrypoint','psql','migrate','-X','-tAc','SELECT count(*) FROM "__EFMigrationsHistory"')
-Check (($migrations -join '').Trim() -eq '5') 'Upgrade did not apply all migrations'
+$expectedMigrations = @(Get-ChildItem (Join-Path $root 'src/Infrastructure/Persistence/Migrations') -Filter '*.cs' |
+    Where-Object { $_.Name -match '^\d{14}_[^.]+\.cs$' } | ForEach-Object { $_.BaseName } | Sort-Object)
+$migrations = @(Compose -Arguments @('run','--rm','--no-deps','--entrypoint','psql','migrate','-X','-tAc','SELECT migration_id FROM "__EFMigrationsHistory" ORDER BY migration_id') |
+    ForEach-Object { $_.Trim() } | Where-Object { $_ })
+Check ($expectedMigrations.Count -gt 0 -and -not (Compare-Object $expectedMigrations $migrations)) 'Upgrade did not apply exactly the source migrations'
 @{ measuredAtUtc = [DateTime]::UtcNow.ToString('O'); project = $Project; database = $DatabaseName;
-    missingMap = 'Rejected'; invalidMap = 'Rejected'; validMap = 'Passed'; repeat = 'Passed'; migrations = 5 } |
+    missingMap = 'Rejected'; invalidMap = 'Rejected'; validMap = 'Passed'; repeat = 'Passed'; migrations = $migrations.Count } |
     ConvertTo-Json | Set-Content (Join-Path $work 'upgrade-result.json')
 Write-Output "Upgrade drill passed. Evidence: $work/upgrade-result.json"

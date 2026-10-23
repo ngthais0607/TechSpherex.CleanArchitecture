@@ -11,6 +11,7 @@ public sealed class YardBlockConfiguration : IEntityTypeConfiguration<YardBlock>
         builder.ToTable("yard_blocks");
 
         builder.HasKey(b => b.Id);
+        builder.Property<uint>("xmin").HasColumnType("xid").ValueGeneratedOnAddOrUpdate().IsConcurrencyToken();
 
         builder.Property(b => b.TenantId)
             .HasMaxLength(50)

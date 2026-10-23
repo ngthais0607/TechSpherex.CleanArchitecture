@@ -1,3 +1,3 @@
 namespace SnpDepotManagement.Domain.Enums;
 
-public enum ContainerMovementType { GateIn, Place, Relocate, Remove, GateOut }
+public enum ContainerMovementType { GateIn, Place, Relocate, Remove, GateOut, GateInCancelled, GateOutCancelled }

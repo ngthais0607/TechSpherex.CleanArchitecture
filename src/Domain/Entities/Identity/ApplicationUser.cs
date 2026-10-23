@@ -32,19 +32,19 @@ public sealed class ApplicationUser : AuditableEntity
         if (string.IsNullOrWhiteSpace(userName))
         {
             return Result.Failure<ApplicationUser>(
-                Error.Validation("User.EmptyUserName", "User name cannot be empty."));
+                Error.Validation("User.EmptyUserName", "Tên người dùng không được để trống."));
         }
 
         if (string.IsNullOrWhiteSpace(email))
         {
             return Result.Failure<ApplicationUser>(
-                Error.Validation("User.EmptyEmail", "Email cannot be empty."));
+                Error.Validation("User.EmptyEmail", "Email không được để trống."));
         }
 
         if (string.IsNullOrWhiteSpace(tenantId) || tenantId.Trim().Length > 50)
         {
             return Result.Failure<ApplicationUser>(
-                Error.Validation("User.InvalidTenant", "A depot assignment of up to 50 characters is required."));
+                Error.Validation("User.InvalidTenant", "Depot được gán tối đa 50 ký tự và không được để trống."));
         }
 
         return Result.Success(new ApplicationUser

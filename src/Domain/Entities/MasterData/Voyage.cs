@@ -15,13 +15,13 @@ public sealed class Voyage : AuditableEntity
         if (string.IsNullOrWhiteSpace(vesselName))
         {
             return Result.Failure<Voyage>(
-                Error.Validation("Voyage.EmptyVesselName", "Vessel name cannot be empty."));
+                Error.Validation("Voyage.EmptyVesselName", "Tên tàu không được để trống."));
         }
 
         if (string.IsNullOrWhiteSpace(voyageNumber))
         {
             return Result.Failure<Voyage>(
-                Error.Validation("Voyage.EmptyVoyageNumber", "Voyage number cannot be empty."));
+                Error.Validation("Voyage.EmptyVoyageNumber", "Số chuyến không được để trống."));
         }
 
         return Result.Success(new Voyage

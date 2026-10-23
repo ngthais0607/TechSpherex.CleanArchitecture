@@ -5,6 +5,53 @@ namespace SnpDepotManagement.Domain.UnitTests.Yard;
 
 public sealed class YardBlockTests
 {
+    [Theory]
+    [InlineData(101, 1, 1)]
+    [InlineData(1, 31, 1)]
+    [InlineData(1, 1, 7)]
+    public void CreateStandard_ExcessiveDimensions_RejectsBeforeAllocating(int bays, int rows, int tiers)
+    {
+        Action create = () => YardBlock.CreateStandard("A", "Test", bays, rows, tiers);
+        create.Should().Throw<SnpDepotManagement.Domain.Common.Rules.BusinessRuleException>();
+    }
+
+    [Theory]
+    [InlineData(101, 1, 1)]
+    [InlineData(1, 31, 1)]
+    [InlineData(1, 1, 7)]
+    public void Expand_ExcessiveDimensions_DoesNotChangeBlock(int bays, int rows, int tiers)
+    {
+        var block = YardBlock.CreateStandard("A", "Test", 1, 1, 1);
+        block.Expand(bays, rows, tiers).IsFailure.Should().BeTrue();
+        block.MaxBays.Should().Be(1);
+        block.MaxRows.Should().Be(1);
+        block.MaxTiers.Should().Be(1);
+        block.Slots.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void Shrink_NegativeDimensions_DoesNotRemoveSlots()
+    {
+        var block = YardBlock.CreateStandard("A", "Test", 1, 1, 1);
+        block.Shrink(-1, 1, 1).IsFailure.Should().BeTrue();
+        block.Slots.Should().HaveCount(1);
+        block.MaxBays.Should().Be(1);
+    }
+
+    [Fact]
+    public void CreateStandard_ExtremeIntegers_RejectsWithoutOverflowOrAllocation()
+    {
+        Action create = () => YardBlock.CreateStandard("A", "Test", int.MaxValue, int.MaxValue, int.MaxValue);
+        create.Should().Throw<SnpDepotManagement.Domain.Common.Rules.BusinessRuleException>();
+    }
+
+    [Fact]
+    public void CreateStandard_SeedAndMaximumDimensions_UseOnlyOddBaySlots()
+    {
+        YardBlock.CreateStandard("A", "Seed", 10, 6, 4).Slots.Should().HaveCount(120);
+        YardBlock.CreateStandard("B", "Maximum", 100, 30, 6).Slots.Should().HaveCount(9000);
+    }
+
     [Fact]
     public void CreateStandard_ShouldGenerateSlotsOnlyForOddBays()
     {

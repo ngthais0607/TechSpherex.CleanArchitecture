@@ -1,0 +1,154 @@
+<section class="page-header">
+  <div>
+    <span class="eyebrow">ĐIỀU HÀNH DEPOT</span>
+    <h1>Tổng quan</h1>
+    <p>Dữ liệu tổng hợp từ máy chủ cho {{ auth.user()?.depotName }}.</p>
+  </div>
+  <button class="button" (click)="facade.load()">Làm mới</button>
+</section>
+@if (facade.error()) {
+  <p class="banner error" role="alert">{{ facade.error() }}</p>
+}
+@if (facade.summary(); as summary) {
+  <div class="kpis">
+    <div class="metric">
+      <div class="metric-label">Container trong bãi</div>
+      <div class="metric-value" data-testid="yard-total">{{ summary.totalContainersInYard }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">TEU trong bãi</div>
+      <div class="metric-value">{{ summary.totalTeuInYard }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Lệnh còn hiệu lực</div>
+      <div class="metric-value">{{ summary.activeOrdersCount }}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Giao dịch hôm nay</div>
+      <div class="metric-value">{{ summary.todayGateTransactionsCount }}</div>
+    </div>
+  </div>
+} @else {
+  <p role="status">Đang tải tổng quan…</p>
+}
+<section class="panel">
+  <div class="panel-header"><h2>Giao dịch cổng 7 ngày</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Ngày</th>
+          <th>Nhập bãi</th>
+          <th>Xuất bãi</th>
+          <th>Tổng</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (day of facade.traffic(); track day.date) {
+          <tr>
+            <td>{{ day.date }}</td>
+            <td>{{ day.gateInCount }}</td>
+            <td>{{ day.gateOutCount }}</td>
+            <td>{{ day.totalCount }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="panel section-gap">
+  <div class="panel-header"><h2>Công suất bãi vật lý</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Block</th>
+          <th>Container</th>
+          <th>TEU chiếm / Sức chứa</th>
+          <th>Tỷ lệ</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (block of facade.capacity(); track block.blockId) {
+          <tr>
+            <td>{{ block.blockCode }} · {{ block.blockName }}</td>
+            <td>{{ block.containersCount }}</td>
+            <td>{{ block.occupiedTeu }} / {{ block.totalCapacityTeu }}</td>
+            <td>{{ block.occupancyRate | number: '1.0-1' }}%</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="panel section-gap">
+  <div class="panel-header">
+    <h2>Container lưu bãi lâu nhất</h2>
+    <a routerLink="/reports">Xem báo cáo</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Container</th>
+          <th>Hãng</th>
+          <th>Ngày nhập</th>
+          <th>Ngày lưu</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of facade.topDwell(); track row.lifecycleId) {
+          <tr>
+            <td>
+              <a routerLink="/containers" [queryParams]="{ container: row.containerNumber }">{{
+                row.containerNumber
+              }}</a>
+            </td>
+            <td>{{ row.lineOperator }}</td>
+            <td>{{ row.inDate | date: 'dd/MM/yyyy' }}</td>
+            <td>{{ row.daysInDepot }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="empty">Chưa có dữ liệu lưu bãi.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+@if (canReadExpiring()) {
+  <section class="panel section-gap">
+    <div class="panel-header"><h2>Lệnh sắp hết hạn (7 ngày)</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Số lệnh</th>
+            <th>Khách hàng</th>
+            <th>Hạn lệnh</th>
+            <th>Còn lượng</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of facade.expiring(); track order.id) {
+            <tr>
+              <td>
+                <a routerLink="/delivery-orders" [queryParams]="{ order: order.id }">{{
+                  order.orderNumber
+                }}</a>
+              </td>
+              <td>{{ order.customerName }}</td>
+              <td>{{ order.expiryDate | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ order.remainingQuantity }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4">Không có lệnh sắp hết hạn.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

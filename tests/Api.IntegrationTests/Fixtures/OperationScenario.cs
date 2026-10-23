@@ -12,7 +12,8 @@ internal sealed record OperationScenario(YardBlock Block, Container First, Conta
 
     public static Container NewContainer(string owner = "MSK", string tenant = "DEPOT-A", ContainerSize size = ContainerSize.Ft20)
     {
-        var value = $"MSKU{Interlocked.Increment(ref _serial):D6}";
+        var ownerPrefix = (owner.Length >= 3 && owner[..3].All(char.IsLetter)) ? owner[..3].ToUpperInvariant() : "MSK";
+        var value = $"{ownerPrefix}U{Interlocked.Increment(ref _serial):D6}";
         var sum = 0;
         for (var i = 0; i < value.Length; i++)
         {
@@ -31,6 +32,10 @@ internal sealed record OperationScenario(YardBlock Block, Container First, Conta
         var block = YardBlock.CreateStandard("B" + Guid.NewGuid().ToString("N")[..6], "HTTP test", 5, 1, 2, "DEPOT-A");
         var first = NewContainer(); var second = NewContainer(); var third = NewContainer();
         db.YardBlocks.Add(block); db.Containers.AddRange(first, second, third);
+        if (!db.LineOperators.Any(l => l.Code == "MSK"))
+            db.LineOperators.Add(Domain.Entities.MasterData.LineOperator.Create("MSK", "Maersk Line").Value!);
+        if (!db.Customers.Any(c => c.TaxCode == "0101234567"))
+            db.Customers.Add(Domain.Entities.MasterData.Customer.Create("0101234567", "Customer").Value!);
         var order = DeliveryOrder.Create("D" + Guid.NewGuid().ToString("N")[..8], "MSK", "0101234567", "Customer", DateTime.UtcNow.AddDays(7), "Vessel", "DEPOT-A").Value!;
         order.AddItem(ContainerSize.Ft20, ContainerType.Dry, 1);
         db.DeliveryOrders.Add(order);

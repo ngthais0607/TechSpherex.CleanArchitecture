@@ -10,6 +10,8 @@ using SnpDepotManagement.Application.Features.Containers.Commands.MarkContainerD
 using SnpDepotManagement.Application.Features.Containers.Queries.GetContainerByNumber;
 using SnpDepotManagement.Application.Features.Containers.Dtos;
 using SnpDepotManagement.Application.Features.Containers.Queries.GetContainers;
+using SnpDepotManagement.Application.Features.Containers.Queries.GetContainerSummary;
+using SnpDepotManagement.Application.Features.Containers.Queries.GetContainerOrders;
 using SnpDepotManagement.Domain.Common;
 using SnpDepotManagement.Domain.Enums;
 
@@ -25,19 +27,29 @@ public static class ContainerEndpoints
             .AddEndpointFilter<ValidationFilter>();
 
         group.MapGet("/", async (
+            string? search,
             string? ownerCode,
             ContainerSize? size,
             ContainerCondition? condition,
+            ContainerType? type,
+            string? lineOperator,
+            string? displayStatus,
+            string? booking,
+            string? sort,
+            bool? descending,
             PaginationRequest pagination,
             IQueryHandler<GetContainersQuery, PagedResult<ContainerDto>> handler,
             CancellationToken cancellationToken) =>
         {
             var query = new GetContainersQuery(
+                Search: search,
                 OwnerCode: ownerCode,
                 Size: size,
                 Condition: condition,
                 PageIndex: pagination.PageIndex,
-                PageSize: pagination.PageSize);
+                PageSize: pagination.PageSize,
+                Type: type, LineOperator: lineOperator, DisplayStatus: displayStatus,
+                Booking: booking, Sort: sort, Descending: descending ?? false);
 
             var result = await handler.Handle(query, cancellationToken);
             return result.ToHttpResult();
@@ -45,6 +57,15 @@ public static class ContainerEndpoints
         .RequireAuthorization(Policies.ReadContainers)
         .WithName("GetContainers")
         .WithSummary("Retrieve paged list of containers in current depot");
+
+        group.MapGet("/summary", async (
+            string? ownerCode,
+            string? search, ContainerSize? size, ContainerCondition? condition, ContainerType? type,
+            string? lineOperator, string? displayStatus, string? booking,
+            IQueryHandler<GetContainerSummaryQuery, ContainerSummaryDto> handler,
+            CancellationToken ct) =>
+            (await handler.Handle(new(ownerCode, search, size, condition, type, lineOperator, displayStatus, booking), ct)).ToHttpResult())
+            .WithName("GetContainerSummary").RequireAuthorization(Policies.ReadContainers);
 
         group.MapPost("/", async (
             RegisterContainerCommand command,
@@ -61,9 +82,15 @@ public static class ContainerEndpoints
         group.MapGet("/by-number/{number}", async (string number, IQueryHandler<GetContainerByNumberQuery, ContainerDto> handler, CancellationToken ct) =>
             (await handler.Handle(new(number), ct)).ToHttpResult())
             .WithName("GetContainerByNumber").RequireAuthorization(Policies.ReadContainers);
+
+        group.MapGet("/{number}/orders", async (string number, IQueryHandler<GetContainerOrdersQuery, ContainerOrdersDto> handler, CancellationToken ct) =>
+            (await handler.Handle(new(number), ct)).ToHttpResult())
+            .WithName("GetContainerOrders").RequireAuthorization(Policies.ReadContainers);
+
         group.MapPost("/{id:guid}/damage", async (Guid id, ContainerDamageRequest body, ICommandHandler<MarkContainerDamagedCommand> handler, CancellationToken ct) =>
             (await handler.Handle(new(id, body.Condition), ct)).ToHttpResult())
             .WithName("MarkContainerDamaged").RequireAuthorization(Policies.ManageYard);
+
         return app;
     }
 }

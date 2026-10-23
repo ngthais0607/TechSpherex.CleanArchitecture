@@ -29,7 +29,7 @@ public sealed class SlotBelowMustBeOccupiedRule : IBusinessRule
 
     public Error Error => Error.Validation(
         "YardRule.SlotBelowNotOccupied",
-        $"Cannot stack container at tier '{_tier}' because the supporting slot below at tier '{_tier - 1}' is not occupied.");
+        $"Không thể đặt container tại tầng '{_tier}' vì vị trí đỡ bên dưới tại tầng '{_tier - 1}' đang trống.");
 
     public string Message => Error.Description;
 

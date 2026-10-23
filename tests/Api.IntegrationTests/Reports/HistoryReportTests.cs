@@ -13,6 +13,29 @@ namespace SnpDepotManagement.Api.IntegrationTests.Reports;
 [Collection("Api")]
 public sealed class HistoryReportTests(ApiFactory factory)
 {
+    [Fact]
+    public async Task LegacyVisitClosedAfterRolloutHasOnlyOneGateOut()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var db = factory.Context("DEPOT-A");
+        var container = OperationScenario.NewContainer();
+        db.Containers.Add(container);
+        var now = DateTime.UtcNow;
+        var lifecycle = ContainerLifecycle.GateIn(container.Id, "MSK", Classification.A, ContainerCondition.Normal, "IN", Guid.NewGuid(), now.AddDays(-2), "DEPOT-A");
+        db.ContainerLifecycles.Add(lifecycle);
+        await db.SaveChangesAsync(ct);
+        await db.ContainerLifecycles.Where(l => l.Id == lifecycle.Id).ExecuteUpdateAsync(s => s.SetProperty(l => l.MovementHistoryVersion, 0), ct);
+        await db.Entry(lifecycle).ReloadAsync(ct);
+        lifecycle.GateOut("OUT", Guid.NewGuid(), now);
+        db.ContainerMovements.Add(ContainerMovement.Create(container.Id, lifecycle.Id, ContainerMovementType.GateOut, now, null, null, null, "DEPOT-A", "OUT", VehicleType.Truck, lifecycle.DeliveryOrderId).Value!);
+        await db.SaveChangesAsync(ct);
+        using var client = await ApiTestClient.LoginAsync(factory);
+        var page = await client.GetFromJsonAsync<JsonElement>($"/api/reports/containers/{container.ContainerNumber.Value}/history", ct);
+        Assert.Equal(2, page.GetProperty("totalCount").GetInt32());
+        var gateOut = Assert.Single(page.GetProperty("items").EnumerateArray(), r => r.GetProperty("eventType").GetString() == "GateOut");
+        Assert.Equal("Movement", gateOut.GetProperty("source").GetString());
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

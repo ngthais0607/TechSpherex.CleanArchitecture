@@ -22,6 +22,7 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
     public Guid? DeliveryOrderId { get; private set; }
 
     public Guid? CurrentSlotId { get; private set; }
+    public Guid? VirtualBlockId { get; private set; }
     public int MovementHistoryVersion { get; private set; }
 
     public bool IsInDepot => Status == LifecycleStatus.InYard && OutDate == null;
@@ -34,10 +35,11 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
         Classification classification,
         ContainerCondition condition,
         string inVehicleNumber,
-        Guid slotId,
+        Guid? slotId,
         DateTime utcNow,
         string tenantId = "",
-        VehicleType vehicleType = VehicleType.Truck)
+        VehicleType vehicleType = VehicleType.Truck,
+        Guid? virtualBlockId = null)
     {
         return new ContainerLifecycle
         {
@@ -50,6 +52,7 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
             InVehicleType = vehicleType,
             InDate = utcNow,
             CurrentSlotId = slotId,
+            VirtualBlockId = virtualBlockId,
             MovementHistoryVersion = 1,
             TenantId = tenantId
         };
@@ -59,6 +62,17 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
     {
         if (!IsInDepot) throw new InvalidOperationException("Only an active lifecycle can change yard position.");
         CurrentSlotId = slotId;
+        if (slotId != null)
+        {
+            VirtualBlockId = null;
+        }
+    }
+
+    public void SetVirtualBlock(Guid virtualBlockId)
+    {
+        if (!IsInDepot) throw new InvalidOperationException("Chỉ lifecycle đang hoạt động mới được thay đổi vị trí.");
+        VirtualBlockId = virtualBlockId;
+        CurrentSlotId = null;
     }
 
     public Result GateOut(string outVehicleNumber, Guid deliveryOrderId, DateTime utcNow, VehicleType vehicleType = VehicleType.Truck)
@@ -66,13 +80,13 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
         if (Status == LifecycleStatus.GatedOut || OutDate != null)
         {
             return Result.Failure(
-                Error.Conflict("Lifecycle.AlreadyGatedOut", "Container has already been gated out."));
+                Error.Conflict("Lifecycle.AlreadyGatedOut", "Container đã được xuất bãi."));
         }
 
         if (Status != LifecycleStatus.InYard)
         {
             return Result.Failure(
-                Error.Conflict("Lifecycle.NotInYard", "Container is not currently in the yard."));
+                Error.Conflict("Lifecycle.NotInYard", "Container hiện không có trong bãi."));
         }
 
         Status = LifecycleStatus.GatedOut;
@@ -83,5 +97,30 @@ public sealed class ContainerLifecycle : AuditableEntity, ITenantEntity
         CurrentSlotId = null;
 
         return Result.Success();
+    }
+
+    public void CancelGateIn(DateTime utcNow)
+    {
+        Status = LifecycleStatus.GatedOut;
+        OutDate = utcNow;
+        CurrentSlotId = null;
+        VirtualBlockId = null;
+    }
+
+    public void CancelGateOut(Guid? restoredSlotId, Guid? restoredVirtualBlockId = null)
+    {
+        Status = LifecycleStatus.InYard;
+        OutVehicleNumber = null;
+        OutVehicleType = null;
+        OutDate = null;
+        DeliveryOrderId = null;
+        CurrentSlotId = restoredSlotId;
+        VirtualBlockId = restoredVirtualBlockId;
+    }
+
+    public void UpdateConditionAndClassification(ContainerCondition? condition, Classification? grade)
+    {
+        if (condition.HasValue) Condition = condition.Value;
+        if (grade.HasValue) Classification = grade.Value;
     }
 }

@@ -25,6 +25,9 @@ public sealed class TokenService : ITokenService
         }
     }
 
+    public int AccessTokenExpirationMinutes => _options.AccessTokenExpirationMinutes;
+    public int RefreshTokenExpirationDays => _options.RefreshTokenExpirationDays;
+
     public string GenerateAccessToken(ApplicationUser user)
     {
         ArgumentNullException.ThrowIfNull(user);

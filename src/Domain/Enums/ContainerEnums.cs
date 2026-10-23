@@ -39,5 +39,6 @@ public enum ContainerCondition
     Normal,
     Damaged,
     Dented,
-    Bent
+    Bent,
+    Warped
 }

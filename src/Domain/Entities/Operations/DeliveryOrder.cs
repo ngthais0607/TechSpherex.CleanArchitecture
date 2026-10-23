@@ -32,31 +32,31 @@ public sealed class DeliveryOrder : AuditableEntity, ITenantEntity
         if (string.IsNullOrWhiteSpace(orderNumber))
         {
             return Result.Failure<DeliveryOrder>(
-                Error.Validation("DeliveryOrder.EmptyOrderNumber", "Order number cannot be empty."));
+                Error.Validation("DeliveryOrder.EmptyOrderNumber", "Số lệnh không được để trống."));
         }
 
         if (string.IsNullOrWhiteSpace(lineOperator))
         {
             return Result.Failure<DeliveryOrder>(
-                Error.Validation("DeliveryOrder.EmptyLineOperator", "Line operator cannot be empty."));
+                Error.Validation("DeliveryOrder.EmptyLineOperator", "Hãng tàu không được để trống."));
         }
 
         if (string.IsNullOrWhiteSpace(customerTaxCode))
         {
             return Result.Failure<DeliveryOrder>(
-                Error.Validation("DeliveryOrder.EmptyCustomerTaxCode", "Customer tax code cannot be empty."));
+                Error.Validation("DeliveryOrder.EmptyCustomerTaxCode", "Mã số thuế khách hàng không được để trống."));
         }
 
         if (string.IsNullOrWhiteSpace(customerName))
         {
             return Result.Failure<DeliveryOrder>(
-                Error.Validation("DeliveryOrder.EmptyCustomerName", "Customer name cannot be empty."));
+                Error.Validation("DeliveryOrder.EmptyCustomerName", "Tên khách hàng không được để trống."));
         }
 
         if (string.IsNullOrWhiteSpace(outboundVessel))
         {
             return Result.Failure<DeliveryOrder>(
-                Error.Validation("DeliveryOrder.EmptyOutboundVessel", "Outbound vessel cannot be empty."));
+                Error.Validation("DeliveryOrder.EmptyOutboundVessel", "Tàu xuất không được để trống."));
         }
 
         return Result.Success(new DeliveryOrder
@@ -77,13 +77,13 @@ public sealed class DeliveryOrder : AuditableEntity, ITenantEntity
         if (IsCompleted)
         {
             return Result.Failure(
-                Error.Conflict("DeliveryOrder.AlreadyCompleted", "Cannot modify items in a completed delivery order."));
+                Error.Conflict("DeliveryOrder.AlreadyCompleted", "Không thể chỉnh sửa các mục trong lệnh giao đã hoàn tất."));
         }
 
         if (quantity <= 0)
         {
             return Result.Failure(
-                Error.Validation("DeliveryOrder.InvalidQuantity", "Quantity must be greater than zero."));
+                Error.Validation("DeliveryOrder.InvalidQuantity", "Số lượng phải lớn hơn 0."));
         }
 
         var item = new DeliveryOrderItem(Id, size, type, quantity);
@@ -102,13 +102,37 @@ public sealed class DeliveryOrder : AuditableEntity, ITenantEntity
         if (IsCompleted)
         {
             return Result.Failure(
-                Error.Conflict("DeliveryOrder.AlreadyCompleted", "Delivery order has already been completed."));
+                Error.Conflict("DeliveryOrder.AlreadyCompleted", "Lệnh giao đã hoàn tất."));
         }
 
         return Result.Success();
     }
 
+    public OrderDisplayStatus GetDisplayStatus(DateTime utcNow)
+    {
+        var expiry = DateOnly.FromDateTime(ExpiryDate);
+        var now = DateOnly.FromDateTime(utcNow);
+
+        if (expiry < now)
+        {
+            return OrderDisplayStatus.Expired;
+        }
+
+        if (IsCompleted || (_items.Count > 0 && _items.All(i => i.RemainingQuantity == 0)))
+        {
+            return OrderDisplayStatus.FullyDelivered;
+        }
+
+        if ((expiry.DayNumber - now.DayNumber) <= 3)
+        {
+            return OrderDisplayStatus.ExpiringSoon;
+        }
+
+        return OrderDisplayStatus.Active;
+    }
+
     public void MarkCompleted() => IsCompleted = true;
+    public void Reopen() => IsCompleted = false;
 }
 
 public sealed class DeliveryOrderItem : BaseEntity
@@ -136,16 +160,34 @@ public sealed class DeliveryOrderItem : BaseEntity
         if (quantity <= 0)
         {
             return Result.Failure(
-                Error.Validation("DeliveryOrderItem.InvalidQuantity", "Allocation quantity must be greater than zero."));
+                Error.Validation("DeliveryOrderItem.InvalidQuantity", "Số lượng phân bổ phải lớn hơn 0."));
         }
 
         if (quantity > RemainingQuantity)
         {
             return Result.Failure(
-                Error.Conflict("DeliveryOrderItem.QuantityExceeded", "Requested quantity exceeds remaining quantity."));
+                Error.Conflict("DeliveryOrderItem.QuantityExceeded", "Số lượng yêu cầu vượt quá số lượng còn lại."));
         }
 
         DeliveredQuantity += quantity;
+        return Result.Success();
+    }
+
+    public Result Deallocate(int quantity = 1)
+    {
+        if (quantity <= 0)
+        {
+            return Result.Failure(
+                Error.Validation("DeliveryOrderItem.InvalidQuantity", "Số lượng hoàn trả phải lớn hơn 0."));
+        }
+
+        if (quantity > DeliveredQuantity)
+        {
+            return Result.Failure(
+                Error.Conflict("DeliveryOrderItem.QuantityExceeded", "Số lượng hoàn trả vượt quá số lượng đã giao."));
+        }
+
+        DeliveredQuantity -= quantity;
         return Result.Success();
     }
 }

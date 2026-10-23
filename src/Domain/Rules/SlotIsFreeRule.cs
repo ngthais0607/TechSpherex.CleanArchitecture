@@ -13,7 +13,7 @@ public sealed class SlotIsFreeRule : IBusinessRule
     private readonly int _tier;
     private readonly IEnumerable<YardSlot> _slots;
 
-    private Error _error = Error.Validation("YardRule.SlotAlreadyOccupied", "The requested slot is already occupied.");
+    private Error _error = Error.Validation("YardRule.SlotAlreadyOccupied", "Vị trí yêu cầu đã có container.");
 
     public SlotIsFreeRule(
         ContainerSize size,
@@ -41,7 +41,7 @@ public sealed class SlotIsFreeRule : IBusinessRule
             {
                 _error = Error.NotFound(
                     "YardRule.SlotNotFound",
-                    $"Slot at Bay '{_bay}', Row '{_row}', Tier '{_tier}' was not found.");
+                    $"Không tìm thấy vị trí tại Bay '{_bay}', Row '{_row}', Tier '{_tier}'.");
                 return true;
             }
 
@@ -49,7 +49,7 @@ public sealed class SlotIsFreeRule : IBusinessRule
             {
                 _error = Error.Conflict(
                     "YardRule.SlotAlreadyOccupied",
-                    $"Slot at Bay '{_bay}', Row '{_row}', Tier '{_tier}' is already occupied.");
+                    $"Vị trí tại Bay '{_bay}', Row '{_row}', Tier '{_tier}' đã có container.");
                 return true;
             }
 
@@ -68,7 +68,7 @@ public sealed class SlotIsFreeRule : IBusinessRule
             {
                 _error = Error.NotFound(
                     "YardRule.SlotNotFound",
-                    $"One or both required 40ft slots (Bays '{bayBefore}', '{bayAfter}') were not found.");
+                    $"Không tìm thấy một hoặc cả hai vị trí cho container 40ft (Bay '{bayBefore}', '{bayAfter}').");
                 return true;
             }
 
@@ -76,7 +76,7 @@ public sealed class SlotIsFreeRule : IBusinessRule
             {
                 _error = Error.Conflict(
                     "YardRule.SlotAlreadyOccupied",
-                    $"One or both slots for 40ft container (Bays '{bayBefore}', '{bayAfter}') are already occupied.");
+                    $"Một hoặc cả hai vị trí cho container 40ft (Bay '{bayBefore}', '{bayAfter}') đã có container.");
                 return true;
             }
 

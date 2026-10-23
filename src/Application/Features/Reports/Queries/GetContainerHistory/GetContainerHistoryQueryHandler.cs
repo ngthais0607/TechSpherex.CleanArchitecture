@@ -40,7 +40,13 @@ public sealed class GetContainerHistoryQueryHandler(IAppDbContext db)
             ToTier = m.ToPosition == null ? null : (int?)m.ToPosition.Tier,
         });
         var legacy = db.ContainerLifecycles.AsNoTracking().Where(l => l.ContainerId == containerId && l.MovementHistoryVersion == 0);
-        var rows = movements.Concat(LegacyRows(legacy, false)).Concat(LegacyRows(legacy, true));
+        // An open legacy visit can depart after rollout. Its recorded departure wins over
+        // the lifecycle fallback, while the genuine pre-rollout intake remains visible.
+        var legacyIntakes = legacy.Where(l => !db.ContainerMovements.Any(m =>
+            m.ContainerLifecycleId == l.Id && m.EventType == ContainerMovementType.GateIn));
+        var legacyDepartures = legacy.Where(l => !db.ContainerMovements.Any(m =>
+            m.ContainerLifecycleId == l.Id && m.EventType == ContainerMovementType.GateOut));
+        var rows = movements.Concat(LegacyRows(legacyIntakes, false)).Concat(LegacyRows(legacyDepartures, true));
         var total = await rows.CountAsync(cancellationToken);
         var page = await rows.OrderBy(r => r.OccurredAtUtc).ThenBy(r => r.Source).ThenBy(r => r.Id).ThenBy(r => r.EventType)
             .Skip((query.PageIndex - 1) * query.PageSize).Take(query.PageSize).ToListAsync(cancellationToken);
