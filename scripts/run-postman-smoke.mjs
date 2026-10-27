@@ -12,8 +12,8 @@ const settings = Object.fromEntries(readFileSync(resolve(smoke, 'smoke.env'), 'u
   .filter(line => line && !line.startsWith('#')).map(line => { const index = line.indexOf('='); return [line.slice(0,index),line.slice(index+1)]; }));
 const require = createRequire(import.meta.url);
 const newman = require(resolve(work,'postman-runner/node_modules/newman'));
-const collection = JSON.parse(readFileSync(resolve(root,'docs/week-04/postman/SnpDepotManagement.postman_collection.json'),'utf8'));
-const environment = JSON.parse(readFileSync(resolve(root,'docs/week-04/postman/SnpDepotManagement.local.postman_environment.json'),'utf8'));
+const collection = JSON.parse(readFileSync(resolve(root,'TestResults/postman/SnpDepotManagement.postman_collection.json'),'utf8'));
+const environment = JSON.parse(readFileSync(resolve(root,'TestResults/postman/SnpDepotManagement.local.postman_environment.json'),'utf8'));
 const overrides = {
   baseUrl: `http://127.0.0.1:${Number(settings.API_PORT)}`,
   adminUserName: settings.Admin__UserName,

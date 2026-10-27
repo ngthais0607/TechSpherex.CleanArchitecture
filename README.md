@@ -1,133 +1,220 @@
-# SnpDepotManagement
+# SNP Depot Management
 
-Hệ thống quản lý depot container vỏ rỗng, hỗ trợ theo dõi container từ khi đăng ký, nhập cổng, lưu và điều chuyển trong bãi đến khi cấp phát theo lệnh giao và xuất cổng.
+**Hệ thống quản lý depot container rỗng — từ vận hành cổng đến điều phối bãi.**
 
-Ứng dụng gồm giao diện Angular, API .NET và cơ sở dữ liệu PostgreSQL. Dữ liệu nghiệp vụ được đọc và ghi thông qua API; quyền truy cập được kiểm soát theo vai trò và depot của người dùng.
+SNP Depot Management hỗ trợ quản lý vòng đời container, vị trí lưu bãi, lệnh giao và giữ chỗ trên cùng một nền tảng. Ứng dụng gồm giao diện Angular, API ASP.NET Core và PostgreSQL, với quyền truy cập theo vai trò và phạm vi depot của người dùng.
 
-## Chức năng chính
+[Khởi chạy](#khởi-chạy-nhanh) · [Kiến trúc](#kiến-trúc-hệ-thống) · [Kiểm thử](#kiểm-thử-và-build)
 
-- **Tổng quan:** theo dõi tồn bãi, sức chứa, lệnh giao và hoạt động cổng.
-- **Quản lý container:** đăng ký hồ sơ, kích thước, chủng loại, tình trạng và lịch sử từng lượt vào/ra.
-- **Điều phối bãi:** quản lý block vật lý, block ảo, vị trí xếp container và điều chuyển trong bãi.
-- **Lệnh giao và giữ chỗ:** quản lý số lượng theo kích thước/chủng loại, gán container và theo dõi tiến độ giao.
-- **Vận hành cổng:** kiểm tra điều kiện nhập/xuất, ghi nhận giao dịch, chỉnh sửa và hủy theo quy tắc nghiệp vụ.
-- **Danh mục:** quản lý khách hàng, hãng khai thác, mã chủ sở hữu, phương tiện và chuyến tàu.
-- **Báo cáo:** tồn bãi, thời gian lưu bãi, lịch sử di chuyển, lệnh sắp hết hạn và xuất Excel.
+## Tổng quan nghiệp vụ
+
+```text
+Đăng ký container → Nhập cổng → Phân vị trí / lưu bãi / điều chuyển
+                            → Lệnh giao / giữ chỗ → Xuất cổng → Lịch sử & báo cáo
+```
+
+| Phân hệ | Khả năng chính |
+| --- | --- |
+| Tổng quan | Theo dõi tồn bãi, sức chứa, lệnh giao và hoạt động cổng |
+| Container | Quản lý hồ sơ, kích thước, chủng loại, tình trạng và lịch sử từng lượt vào/ra |
+| Điều phối bãi | Quản lý block vật lý, block ảo, vị trí xếp và điều chuyển container |
+| Lệnh giao & giữ chỗ | Quản lý số lượng theo kích thước/chủng loại, gán container và theo dõi tiến độ giao |
+| Vận hành cổng | Kiểm tra điều kiện nhập/xuất, ghi nhận, chỉnh sửa và hủy giao dịch theo quy tắc nghiệp vụ |
+| Danh mục | Quản lý khách hàng, hãng khai thác, mã chủ sở hữu, phương tiện và chuyến tàu |
+| Báo cáo | Tồn bãi, thời gian lưu bãi, lịch sử di chuyển, lệnh sắp hết hạn và xuất Excel |
+
+Các quy tắc nghiệp vụ kiểm tra vị trí, điều kiện xếp chồng, hãng khai thác, hạn lệnh và số lượng trước khi ghi nhận thay đổi. Dịch vụ nền kiểm tra booking hết hạn theo chu kỳ một phút.
+
+## Kiến trúc hệ thống
+
+![Kiến trúc SNP Depot Management](docs/images/architecture.svg)
+
+Backend tổ chức theo **Clean Architecture**, chia ca sử dụng theo feature và tách thao tác đọc/ghi bằng **CQRS nhẹ**. Đây là một backend phân lớp, triển khai trong một tiến trình API; dịch vụ xử lý booking hết hạn chạy trong cùng tiến trình.
+
+| Tầng | Trách nhiệm |
+| --- | --- |
+| **API** | Minimal API endpoints, validation, JWT, authorization, ánh xạ lỗi Problem Details và lắp ghép dependency injection |
+| **Application** | Command/query handlers, DTO, abstraction dữ liệu, cache, identity và tenancy; điều phối ca sử dụng |
+| **Domain** | Entity, value object và business rule của container, bãi và lệnh giao |
+| **Infrastructure** | EF Core/Npgsql, migrations, seed, JWT, tenant context, HybridCache/Redis và background service |
+
+**Quan hệ phụ thuộc mã nguồn:** Application → Domain; Infrastructure → Application; API tham chiếu Application và Infrastructure để lắp ghép hệ thống. Domain không phụ thuộc các tầng còn lại. Application sử dụng abstraction `IAppDbContext` và các API EF Core; implementation `AppDbContext` nằm trong Infrastructure.
+
+**Luồng xử lý:** Angular gọi HTTP API → endpoint xác thực, phân quyền và kiểm tra đầu vào → handler thực hiện ca sử dụng và quy tắc Domain → các triển khai Infrastructure truy cập PostgreSQL hoặc cache. Tenant được xác định từ danh tính đã xác thực; client không chọn depot bằng header tùy ý.
+
+Frontend tổ chức theo feature, với component hiển thị, facade điều phối trạng thái, API client giao tiếp backend và mapper chuyển DTO sang dữ liệu giao diện. Sơ đồ dùng nét liền cho luồng xử lý/tích hợp và nét đứt cho phụ thuộc mã nguồn hoặc thứ tự khởi động.
 
 ## Công nghệ
 
 | Thành phần | Công nghệ |
 | --- | --- |
-| Frontend | Angular 21, TypeScript, SCSS |
-| Backend | .NET 10, ASP.NET Core Minimal APIs |
-| Truy cập dữ liệu | Entity Framework Core, Npgsql |
-| Cơ sở dữ liệu | PostgreSQL 17 |
-| Cache | HybridCache, Redis |
-| Xác thực và phân quyền | JWT, role-based authorization |
-| Kiểm thử | xUnit, Testcontainers, Vitest, Playwright |
-| Hạ tầng | Docker Compose |
-
-## Kiến trúc và cấu trúc mã nguồn
-
-Backend tổ chức theo **Clean Architecture**, chia các ca sử dụng theo feature và tách thao tác đọc/ghi bằng **CQRS nhẹ**. Entity và value object biểu diễn nghiệp vụ; business rule kiểm tra điều kiện vận hành. Dependency injection kết nối các abstraction với triển khai hạ tầng.
-
-Frontend tổ chức theo từng màn chức năng. Component phụ trách giao diện, facade điều phối dữ liệu và trạng thái, API client giao tiếp với backend, mapper chuyển DTO sang dữ liệu hiển thị.
-
-```text
-frontend/             Giao diện Angular
-src/
-  Api/                Endpoint HTTP, validation, authorization và ánh xạ lỗi
-  Application/        Command/query handler, DTO và abstraction
-  Domain/             Entity, value object, enum và business rule
-  Infrastructure/     Persistence, migrations, seed, identity, tenancy và cache
-tests/                Kiểm thử nghiệp vụ, kiến trúc và tích hợp
-scripts/              Công cụ vận hành và kiểm chứng
-docs/                 Tài liệu thiết kế, kỹ thuật và vận hành
-```
-
-Domain độc lập với các tầng còn lại. Application phụ thuộc Domain; Infrastructure triển khai các abstraction của Application; API lắp ghép dịch vụ và cung cấp giao diện HTTP.
-
-## Luồng nghiệp vụ
-
-Đăng ký container → nhập cổng → phân vị trí và lưu bãi → tạo lệnh giao, giữ chỗ → xuất cổng → theo dõi lịch sử và báo cáo.
-
-Backend kiểm tra điều kiện về vị trí, sức đỡ, hãng khai thác, hạn lệnh và số lượng trước khi ghi nhận thay đổi. Lifecycle, vị trí bãi, booking, số lượng đã giao và lịch sử di chuyển được cập nhật theo từng nghiệp vụ.
+| Frontend | Angular 21, TypeScript 5.9, SCSS, RxJS, Angular CDK |
+| Backend | .NET 10, ASP.NET Core Minimal APIs, FluentValidation |
+| Dữ liệu | Entity Framework Core, Npgsql, PostgreSQL 17 |
+| Cache | HybridCache, Redis 7 |
+| Xác thực | JWT Bearer, phân quyền theo vai trò, phạm vi dữ liệu theo depot |
+| API documentation | OpenAPI, Scalar trong môi trường Development |
+| Kiểm thử | xUnit, NetArchTest, Testcontainers, Vitest, Playwright |
+| Triển khai | Docker, Docker Compose; frontend build và phục vụ riêng |
 
 ## Vai trò người dùng
 
 | Vai trò | Trách nhiệm chính |
 | --- | --- |
-| Admin | Quản trị tài khoản, danh mục và các nghiệp vụ |
-| YardPlanner | Quy hoạch bãi, phân vị trí và điều chuyển container |
-| OrderClerk | Quản lý lệnh giao và giữ chỗ container |
-| GateClerk | Đăng ký container và thực hiện giao dịch cổng |
+| `Admin` | Quản trị tài khoản, danh mục và nghiệp vụ |
+| `YardPlanner` | Quy hoạch bãi, phân vị trí và điều chuyển |
+| `OrderClerk` | Quản lý lệnh giao và giữ chỗ |
+| `GateClerk` | Đăng ký container và xử lý giao dịch cổng |
 
-## Cài đặt và chạy dự án
+Quyền cho từng endpoint được định nghĩa trong backend; giao diện hiển thị chức năng theo vai trò đã đăng nhập.
+
+## Khởi chạy nhanh
 
 ### Yêu cầu
 
-- Docker Desktop chạy **Linux containers**, có Docker Compose v2.
-- Node.js **22.12 trở lên trong nhánh 22**; dùng npm **11.5.2** để cài dependency frontend.
-- .NET SDK **10** nếu muốn chạy backend trực tiếp hoặc chạy bộ kiểm thử backend. Chạy backend bằng Docker không cần cài SDK trên máy.
-- Các lệnh bên dưới dùng PowerShell tại thư mục gốc repository.
+- Docker Desktop ở chế độ **Linux containers**, Docker Compose v2.
+- Node.js **22.12+ trong nhánh 22** và npm **11.5.2** cho frontend.
+- .NET SDK **10** khi build/test backend trực tiếp; chạy backend bằng Docker không cần SDK trên máy.
+
+Các lệnh dưới đây dùng **PowerShell tại thư mục gốc repository**, sau khi đã tải mã nguồn.
 
 ### 1. Chuẩn bị cấu hình
 
 ```powershell
-git clone --branch Thai-DMS https://github.com/ngthais0607/TechSpherex.CleanArchitecture.git
-cd TechSpherex.CleanArchitecture
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 ```
 
-Nếu đã có mã nguồn thì mở terminal tại thư mục dự án, bỏ qua bước clone. Mở `.env` và điền các giá trị sau; các biến khác có thể giữ mặc định trong `.env.example`:
+Mở `.env`, điền mật khẩu và JWT secret. Ví dụ các biến cần chú ý:
 
 ```dotenv
 POSTGRES_PASSWORD=<mat-khau-database>
 JWT_SECRET=<chuoi-ngau-nhien-it-nhat-32-ky-tu>
 ADMIN_PASSWORD=<mat-khau-admin>
-SEED_USER_PASSWORD=<mat-khau-cac-tai-khoan-mau>
 SEED_DEMO_DATA=true
-POSTGRES_PORT=5433
-REDIS_PORT=6380
+SEED_USER_PASSWORD=<mat-khau-tai-khoan-demo>
+POSTGRES_PORT=5432
+REDIS_PORT=6379
 API_PORT=5000
 ```
 
-Thay toàn bộ giá trị trong dấu `<...>` bằng giá trị của bạn. Giữ `ADMIN_TENANT_ID` ổn định cho depot. File `.env` chứa cấu hình riêng và được Git ignore. Với stack đã có dữ liệu, tiếp tục dùng đúng env-file đang sử dụng; thay biến password không tự đổi mật khẩu đã lưu trong database.
+Thay các placeholder `<...>` bằng giá trị riêng. `SEED_USER_PASSWORD` cần thiết khi bật dữ liệu demo; `.env.example` mặc định tắt demo. Giữ `ADMIN_TENANT_ID` ổn định cho depot. `.env` được Git ignore; thay biến mật khẩu không tự đổi mật khẩu đã lưu trong database.
 
-### 2. Chạy backend và hạ tầng
+### 2. Khởi động API và hạ tầng
 
 ```powershell
+docker compose --env-file .env config --quiet
 docker compose --env-file .env up -d --build
 docker compose --env-file .env ps -a
 ```
 
-Docker Desktop hiển thị nhóm **`snp-depot`** với API, PostgreSQL và Redis. Tác vụ `migrate` áp dụng schema trước khi API khởi động, rồi dừng ở trạng thái **Exited (0)** khi thành công. Frontend chạy riêng trên Windows.
+Compose tạo nhóm `snp-depot` gồm PostgreSQL, Redis, `migrate` và API. Tác vụ `migrate` áp dụng schema trước API, rồi kết thúc với **Exited (0)** khi thành công. API tạo role và tài khoản Admin lúc khởi động. Dữ liệu demo chỉ được seed trong Development khi bật cấu hình tương ứng; khởi động lại không nhân đôi dataset.
 
-API mặc định tại `http://localhost:5000`; kiểm tra tiến trình bằng `http://localhost:5000/health/live`. Tài liệu API trong môi trường Development tại `http://localhost:5000/scalar/v1`.
+### 3. Khởi động frontend
 
-Khi bật `SEED_DEMO_DATA=true`, backend tạo dữ liệu mẫu trong môi trường Development. Khởi động lại giữ dữ liệu đã thao tác và không nhân đôi dataset.
-
-### 3. Chạy frontend
-
-Mở terminal khác tại thư mục gốc:
+Mở terminal thứ hai tại thư mục gốc:
 
 ```powershell
 npx.cmd --yes npm@11.5.2 ci --prefix frontend
 npm.cmd start --prefix frontend
 ```
 
-Mở `http://localhost:4200`. Frontend gọi `/api` qua proxy đến API cổng 5000.
+| Địa chỉ mặc định | Mục đích |
+| --- | --- |
+| http://localhost:4200 | Giao diện ứng dụng |
+| http://localhost:5000 | Backend API |
+| http://localhost:5000/scalar/v1 | Tài liệu API tương tác, chỉ trong Development |
+| http://localhost:5000/health/live | Kiểm tra tiến trình API, không yêu cầu đăng nhập |
+| http://localhost:5000/health/ready | Kiểm tra dependency, yêu cầu token Admin |
 
-- Admin: tên đăng nhập theo `ADMIN_USERNAME` (mặc định `admin`), mật khẩu theo `ADMIN_PASSWORD`.
-- Khi bật dữ liệu mẫu: `yard`, `order`, `gate` dùng mật khẩu `SEED_USER_PASSWORD`, với vai trò tương ứng.
+Frontend chuyển tiếp `/api` tới cổng 5000 qua [proxy configuration](frontend/proxy.conf.json). Nếu đổi `API_PORT`, cập nhật proxy tương ứng. Có thể đổi `POSTGRES_PORT` hoặc `REDIS_PORT` khi cổng trên máy đã được sử dụng.
 
-Nếu đổi cổng API, cập nhật `frontend/proxy.conf.json` tương ứng. Nếu cổng trên máy đang được dùng, chọn cổng khác trong env-file trước khi chạy.
+### 4. Đăng nhập
 
-### 4. Dừng và chạy lại
+| Tài khoản | Mật khẩu | Điều kiện |
+| --- | --- | --- |
+| Giá trị `ADMIN_USERNAME`, mặc định `admin` | `ADMIN_PASSWORD` | Được seed lúc khởi động |
+| `yard`, `order`, `gate` | `SEED_USER_PASSWORD` | Bật `SEED_DEMO_DATA=true` trong Development |
+
+Các tài khoản demo tương ứng với vai trò `YardPlanner`, `OrderClerk`, `GateClerk`.
+
+### 5. Dừng và chạy lại
 
 ```powershell
 docker compose --env-file .env stop
 docker compose --env-file .env up -d
 ```
 
-Dừng frontend bằng `Ctrl+C` ở terminal chạy npm. Volume PostgreSQL giữ dữ liệu qua các lần dừng/khởi động; không dùng `down -v` nếu cần giữ dữ liệu.
+Dừng frontend bằng `Ctrl+C`. Volume PostgreSQL giữ dữ liệu qua các lần dừng/khởi động; `docker compose down -v` sẽ xóa volume dữ liệu của stack.
+
+## Cấu trúc repository
+
+```text
+frontend/                       Angular app, unit tests và Playwright E2E
+src/
+  Api/                          HTTP endpoints, contracts và authorization
+  Application/                  Use cases, handlers, DTO và abstraction
+  Domain/                       Entities, value objects và business rules
+  Infrastructure/               Persistence, identity, tenancy, cache, background jobs
+tests/                         Các bộ kiểm thử backend
+  Domain.UnitTests/
+  Application.UnitTests/
+  Infrastructure.UnitTests/
+  Infrastructure.IntegrationTests/
+  Api.IntegrationTests/
+  Architecture.Tests/
+scripts/                        Migration, backup, kiểm tra API và tài liệu
+docs/
+  images/                       Sơ đồ kiến trúc SVG
+Dockerfile                      Build API và migration bundle
+docker-compose.yml              Stack phát triển / demo
+docker-compose.prod.yml         Stack backend production
+.env.example                    Mẫu cấu hình phát triển
+.env.prod.example               Mẫu cấu hình production
+```
+
+## Kiểm thử và build
+
+### Backend
+
+```powershell
+dotnet test SnpDepotManagement.sln
+dotnet build SnpDepotManagement.sln --no-restore
+```
+
+Integration tests dùng **Testcontainers** tạo PostgreSQL riêng, cần Docker đang chạy. Các bộ unit test kiểm tra nghiệp vụ và handler; architecture tests kiểm tra quy tắc phụ thuộc giữa các tầng.
+
+Nếu Testcontainers trên Windows timeout khi kết nối Docker, cấu hình endpoint trong terminal chạy test:
+
+```powershell
+if (-not $env:DOCKER_HOST) {
+    $dockerEndpoint = docker context inspect --format '{{.Endpoints.docker.Host}}'
+    if ($LASTEXITCODE -ne 0) { throw 'Không đọc được Docker context.' }
+    $env:DOCKER_HOST = $dockerEndpoint.Trim() -replace '^npipe:/+\./pipe/', 'npipe://./pipe/'
+}
+docker version
+dotnet test SnpDepotManagement.sln
+```
+
+### Frontend
+
+```powershell
+npm.cmd test --prefix frontend
+npm.cmd run build --prefix frontend
+```
+
+Playwright E2E yêu cầu Docker và stack kiểm thử cô lập. Chuẩn bị bằng `pwsh -File scripts/prepare-api-e2e.ps1`, sau đó chạy `npm.cmd run e2e --prefix frontend`.
+
+### Tài liệu và dependency
+
+```powershell
+node scripts/check-doc-links.mjs
+dotnet list SnpDepotManagement.sln package --vulnerable --include-transitive
+```
+
+Lệnh kiểm tra package cần restore trước. Kết quả phụ thuộc dữ liệu vulnerability tại thời điểm chạy.
+
+## Triển khai và vận hành
+
+Production dùng [docker-compose.prod.yml](docker-compose.prod.yml) và [.env.prod.example](.env.prod.example), với tên biến cấu hình riêng so với môi trường phát triển. Stack này triển khai backend và dependency; frontend cần build riêng và cấu hình web server chuyển tiếp `/api` tới backend.
+
+Đặt reverse proxy xử lý TLS trước API, cấu hình origin CORS cụ thể và IP proxy tin cậy nếu sử dụng forwarded headers. Sao lưu database trước khi nâng cấp; dùng các script migration, backup và restore trong `scripts/`. Readiness kiểm tra PostgreSQL và Redis theo chính sách `Redis__Required`; liveness chỉ xác nhận tiến trình đang hoạt động.

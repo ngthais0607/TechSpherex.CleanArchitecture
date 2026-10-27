@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const output = resolve(root, 'docs/week-04/postman');
+const output = resolve(root, 'TestResults/postman');
 mkdirSync(output, { recursive: true });
 const variable = name => `{{${name}}}`;
 const folders = [];

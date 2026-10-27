@@ -25,7 +25,7 @@ public sealed class ReportPerformanceTests
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root is not null && !File.Exists(Path.Combine(root.FullName, "SnpDepotManagement.sln"))) root = root.Parent;
         Assert.NotNull(root);
-        var evidence = Path.Combine(root.FullName, "docs", "week-04", "performance-evidence");
+        var evidence = Path.Combine(root.FullName, "TestResults", "performance-evidence");
         Directory.CreateDirectory(evidence);
         // A separate container ensures neither shared test data nor any developer DB is modified.
         await using var factory = new ApiFactory();

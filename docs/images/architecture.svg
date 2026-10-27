@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1080" viewBox="0 0 1440 1080" role="img" aria-labelledby="title desc">
+<title id="title">SNP Depot Management — System Architecture</title><desc id="desc">Angular communicates with a layered ASP.NET Core API. Application handlers use Domain rules and Infrastructure adapters for PostgreSQL and Redis. A migration task completes before API startup. Dashed arrows distinguish source dependencies from runtime flow.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#516780"/></marker></defs>
+<style>text{font-family:Segoe UI,Arial,sans-serif;fill:#15304b}.eyebrow{font-size:13px;font-weight:700;letter-spacing:2px;fill:#56718d}.title{font-size:34px;font-weight:700}.subtitle{font-size:16px;fill:#56718d}.heading{font-size:20px;font-weight:700}.body{font-size:15px;fill:#45617c}.small{font-size:13px;fill:#56718d}.tag{font-size:12px;font-weight:700;fill:#087f8c;letter-spacing:1px}.line{fill:none;stroke:#516780;stroke-width:2;marker-end:url(#arrow)}.dash{stroke-dasharray:7 6}</style>
+<rect width="1440" height="1080" fill="#f4f7fb"/>
+<rect x="0" width="1440" height="8" fill="#0891a5"/>
+<text x="64" y="57" class="eyebrow">SNP DEPOT MANAGEMENT / ENGINEERING OVERVIEW</text>
+<text x="64" y="105" class="title">Container operations. One connected system.</text>
+<text x="64" y="137" class="subtitle">Angular 21 · ASP.NET Core / .NET 10 · Clean Architecture · PostgreSQL 17 · Redis 7</text>
+<rect x="64" y="187" width="310" height="98" rx="14" fill="#ffffff" stroke="#d8e2ed"/>
+<text x="86" y="221" class="heading">Depot teams</text>
+<text x="86" y="250" class="body">Admin · YardPlanner</text>
+<text x="86" y="274" class="body">OrderClerk · GateClerk</text>
+<rect x="64" y="327" width="310" height="219" rx="14" fill="#eaf7fa" stroke="#b4dfe7"/>
+<text x="86" y="355" class="tag">PRESENTATION</text>
+<text x="86" y="385" class="heading">Angular frontend</text>
+<text x="86" y="414" class="body">Feature components &amp; facades</text>
+<text x="86" y="438" class="body">API clients · DTO mappers</text>
+<text x="86" y="462" class="body">Role-aware navigation</text>
+<text x="86" y="486" class="body">Dev server: localhost:4200</text>
+<path d="M219 285V327" class="line"/>
+<rect x="438" y="181" width="620" height="638" rx="20" fill="#eaf0f7" stroke="#c5d4e4"/><text x="462" y="211" class="eyebrow">BACKEND / ONE API PROCESS</text>
+<rect x="462" y="231" width="572" height="130" rx="14" fill="#ffffff" stroke="#c6d6e6"/>
+<text x="484" y="259" class="tag">API</text>
+<text x="484" y="289" class="heading">ASP.NET Core Minimal APIs</text>
+<text x="484" y="318" class="body">JWT · authorization · tenant middleware</text>
+<text x="484" y="342" class="body">Validation · Problem Details · OpenAPI / Scalar</text>
+<rect x="462" y="406" width="572" height="128" rx="14" fill="#ffffff" stroke="#c6d6e6"/>
+<text x="484" y="434" class="tag">USE CASES</text>
+<text x="484" y="464" class="heading">Application</text>
+<text x="484" y="493" class="body">Command / query handlers · DTOs · rule engine</text>
+<text x="484" y="517" class="body">IAppDbContext · ICacheService · identity abstractions</text>
+<rect x="462" y="579" width="266" height="160" rx="14" fill="#f0f2ff" stroke="#c4c9ef"/>
+<text x="484" y="607" class="tag">BUSINESS CORE</text>
+<text x="484" y="637" class="heading">Domain</text>
+<text x="484" y="666" class="body">Entities · value objects</text>
+<text x="484" y="690" class="body">Yard &amp; delivery rules</text>
+<text x="484" y="714" class="body">No outer-layer dependency</text>
+<rect x="752" y="579" width="282" height="160" rx="14" fill="#eaf7fa" stroke="#b4dfe7"/>
+<text x="774" y="607" class="tag">ADAPTERS</text>
+<text x="774" y="637" class="heading">Infrastructure</text>
+<text x="774" y="666" class="body">EF Core / Npgsql · tenancy</text>
+<text x="774" y="690" class="body">JWT · HybridCache / Redis</text>
+<text x="774" y="714" class="body">Implements app abstractions</text>
+<text x="462" y="777" class="body">Hosted service: booking expiration check every minute</text><text x="462" y="801" class="small">API composition root registers Application + Infrastructure.</text>
+<path d="M374 401H462" class="line"/>
+<text x="382" y="372" class="small">HTTP</text><text x="382" y="390" class="small">/api</text>
+<path d="M748 361V406" class="line"/>
+<text x="763" y="389" class="small">dispatch</text>
+<path d="M595 534V579" class="line"/>
+<path d="M893 534V579" class="line"/>
+<rect x="1110" y="406" width="266" height="128" rx="14" fill="#ffffff" stroke="#d8e2ed"/>
+<text x="1132" y="440" class="heading">PostgreSQL 17</text>
+<text x="1132" y="469" class="body">Operational data</text>
+<text x="1132" y="493" class="body">Identity · tenant-scoped data</text>
+<text x="1132" y="517" class="body">EF Core migrations</text>
+<rect x="1110" y="579" width="266" height="128" rx="14" fill="#ffffff" stroke="#d8e2ed"/>
+<text x="1132" y="613" class="heading">Redis 7</text>
+<text x="1132" y="642" class="body">Distributed cache</text>
+<text x="1132" y="666" class="body">HybridCache + local memory</text>
+<text x="1132" y="690" class="body">Optional in dev readiness</text>
+<path d="M1034 613H1073V470H1110" class="line"/>
+<path d="M1034 663H1110" class="line"/>
+<rect x="1110" y="231" width="266" height="118" rx="14" fill="#fff8e9" stroke="#eed9aa"/>
+<text x="1132" y="265" class="heading">Migration task</text>
+<text x="1132" y="294" class="body">EF migration bundle</text>
+<text x="1132" y="318" class="body">Completes before API starts</text>
+<path d="M1243 349V406" class="line"/>
+<path d="M1110 281H1034" class="line dash"/>
+<rect x="64" y="593" width="310" height="167" rx="14" fill="#ffffff" stroke="#d8e2ed"/>
+<text x="86" y="627" class="heading">Operations workspace</text>
+<text x="86" y="656" class="body">Containers · yard layout</text>
+<text x="86" y="680" class="body">Delivery orders · bookings</text>
+<text x="86" y="704" class="body">Gate transactions</text>
+<text x="86" y="728" class="body">Dashboard · Excel reports</text>
+<rect x="64" y="859" width="1312" height="161" rx="16" fill="#ffffff" stroke="#d8e2ed"/><text x="88" y="892" class="eyebrow">SOURCE DEPENDENCIES &amp; DEPLOYMENT NOTES</text>
+<rect x="88" y="916" width="200" height="49" rx="14" fill="#ffffff" stroke="#d8e2ed"/>
+<text x="110" y="950" class="heading">API</text>
+<rect x="346" y="916" width="248" height="49" rx="14" fill="#ffffff" stroke="#d8e2ed"/>
+<text x="368" y="950" class="heading">Infrastructure</text>
+<rect x="652" y="916" width="248" height="49" rx="14" fill="#ffffff" stroke="#d8e2ed"/>
+<text x="674" y="950" class="heading">Application</text>
+<rect x="958" y="916" width="200" height="49" rx="14" fill="#ffffff" stroke="#d8e2ed"/>
+<text x="980" y="950" class="heading">Domain</text>
+<path d="M288 941H346" class="line dash"/>
+<path d="M594 941H652" class="line dash"/>
+<path d="M900 941H958" class="line dash"/>
+<text x="88" y="995" class="small">API also references Application directly. Frontend runs separately; Compose starts PostgreSQL, Redis, migrate and API.</text><text x="64" y="1052" class="small">Solid arrows: request / adapter flow. Dashed arrows: source dependency or startup ordering (migration → API).</text></svg>

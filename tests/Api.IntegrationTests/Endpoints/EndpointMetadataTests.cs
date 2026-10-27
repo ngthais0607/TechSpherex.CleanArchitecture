@@ -54,7 +54,9 @@ public sealed class EndpointMetadataTests(ApiFactory factory)
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root is not null && !File.Exists(Path.Combine(root.FullName, "SnpDepotManagement.sln"))) root = root.Parent;
         Assert.NotNull(root);
-        await File.WriteAllTextAsync(Path.Combine(root.FullName, "docs/week-04/endpoint-inventory.json"),
+        var outputDirectory = Path.Combine(root.FullName, "TestResults");
+        Directory.CreateDirectory(outputDirectory);
+        await File.WriteAllTextAsync(Path.Combine(outputDirectory, "endpoint-inventory.json"),
             JsonSerializer.Serialize(inventory, new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine,
             TestContext.Current.CancellationToken);
     }
