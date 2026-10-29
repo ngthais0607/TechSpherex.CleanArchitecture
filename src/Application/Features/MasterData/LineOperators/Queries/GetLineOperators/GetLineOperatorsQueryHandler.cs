@@ -41,18 +41,24 @@ public sealed class GetLineOperatorsQueryHandler : IQueryHandler<GetLineOperator
             .Select(g => new { Code = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Code, x => x.Count, cancellationToken);
 
-        var orders = await _context.DeliveryOrders
+        var orderCounts = await _context.DeliveryOrders
             .AsNoTracking()
             .Where(o => codes.Contains(o.LineOperator))
-            .Select(o => new { o.LineOperator, o.IsCompleted, o.ExpiryDate })
-            .ToListAsync(cancellationToken);
+            .GroupBy(o => o.LineOperator)
+            .Select(g => new
+            {
+                Code = g.Key,
+                Total = g.Count(),
+                Active = g.Count(o => !o.IsCompleted && o.ExpiryDate >= utcNow)
+            })
+            .ToDictionaryAsync(g => g.Code, cancellationToken);
 
         var list = operators.Select(l =>
         {
             var inYard = containersInYard.GetValueOrDefault(l.Code, 0);
-            var opOrders = orders.Where(o => o.LineOperator == l.Code).ToList();
-            var totalOrders = opOrders.Count;
-            var activeOrders = opOrders.Count(o => !o.IsCompleted && o.ExpiryDate >= utcNow);
+            orderCounts.TryGetValue(l.Code, out var stats);
+            var totalOrders = stats?.Total ?? 0;
+            var activeOrders = stats?.Active ?? 0;
             return new LineOperatorDto(l.Id, l.Code, l.Name, l.IsActive, inYard, totalOrders, activeOrders);
         }).ToList();
 

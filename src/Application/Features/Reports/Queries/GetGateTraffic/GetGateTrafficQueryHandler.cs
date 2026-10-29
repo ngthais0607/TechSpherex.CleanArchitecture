@@ -40,15 +40,17 @@ public sealed class GetGateTrafficQueryHandler : IQueryHandler<GetGateTrafficQue
         var startDateVn = vnToday.AddDays(-(days - 1));
         var startUtc = startDateVn.AddHours(-7);
 
-        var transactions = await _context.GateTransactions
+        var grouped = await _context.GateTransactions
             .AsNoTracking()
             .Where(t => t.Status == GateTransactionStatus.Active && t.CreatedAt >= startUtc)
-            .Select(t => new { t.Type, t.CreatedAt })
-            .ToListAsync(cancellationToken);
-
-        var grouped = transactions
             .GroupBy(t => t.CreatedAt.AddHours(7).Date)
-            .ToDictionary(g => g.Key, g => g.ToList());
+            .Select(g => new
+            {
+                Date = g.Key,
+                GateIn = g.Count(t => t.Type == GateTransactionType.GateIn),
+                GateOut = g.Count(t => t.Type == GateTransactionType.GateOut)
+            })
+            .ToDictionaryAsync(g => g.Date, cancellationToken);
 
         var result = new List<DailyGateTrafficDto>();
         for (var i = 0; i < days; i++)
@@ -56,10 +58,10 @@ public sealed class GetGateTrafficQueryHandler : IQueryHandler<GetGateTrafficQue
             var day = startDateVn.AddDays(i);
             var dateStr = day.ToString("yyyy-MM-dd");
 
-            if (grouped.TryGetValue(day, out var dayList))
+            if (grouped.TryGetValue(day, out var stats))
             {
-                var gateIn = dayList.Count(x => x.Type == GateTransactionType.GateIn);
-                var gateOut = dayList.Count(x => x.Type == GateTransactionType.GateOut);
+                var gateIn = stats.GateIn;
+                var gateOut = stats.GateOut;
                 result.Add(new DailyGateTrafficDto(dateStr, gateIn, gateOut, gateIn + gateOut));
             }
             else

@@ -37,20 +37,18 @@ public sealed class GetBlockCapacityQueryHandler : IQueryHandler<GetBlockCapacit
 
         var blockIds = blocks.Select(b => b.Id).ToList();
 
-        var slots = await _context.YardSlots
+        var slotGroups = await _context.YardSlots
             .AsNoTracking()
             .Where(s => blockIds.Contains(s.BlockId))
-            .Select(s => new { s.BlockId, s.IsOccupied, s.ContainerId })
-            .ToListAsync(cancellationToken);
-
-        var slotGroups = slots
             .GroupBy(s => s.BlockId)
-            .ToDictionary(g => g.Key, g => new
+            .Select(g => new
             {
+                BlockId = g.Key,
                 Total = g.Count(),
                 Occupied = g.Count(s => s.IsOccupied),
                 ContainersCount = g.Where(s => s.ContainerId.HasValue).Select(s => s.ContainerId!.Value).Distinct().Count()
-            });
+            })
+            .ToDictionaryAsync(g => g.BlockId, cancellationToken);
 
         var result = blocks.Select(b =>
         {

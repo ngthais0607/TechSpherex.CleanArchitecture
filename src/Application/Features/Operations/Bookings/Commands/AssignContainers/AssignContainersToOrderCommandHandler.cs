@@ -101,6 +101,32 @@ public sealed class AssignContainersToOrderCommandHandler : ICommandHandler<Assi
             .Select(g => new { ItemId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(g => g.ItemId, g => g.Count, cancellationToken);
 
+        // Resolve operators and reservations once for the entire batch, not per container.
+        var ownerCodes = containers.Select(c => c.OwnerCode).Distinct().ToList();
+        var ownerMappings = await _context.LineOperatorOwnerCodes
+            .AsNoTracking()
+            .Where(x => ownerCodes.Contains(x.OwnerCode))
+            .ToDictionaryAsync(x => x.OwnerCode, cancellationToken);
+        var operatorIds = ownerMappings.Values.Select(x => x.LineOperatorId).Distinct().ToList();
+        var operators = await _context.LineOperators
+            .AsNoTracking()
+            .Where(l => operatorIds.Contains(l.Id) || ownerCodes.Contains(l.Code))
+            .Select(l => new { l.Id, l.Code })
+            .ToListAsync(cancellationToken);
+        var operatorCodesById = operators.ToDictionary(l => l.Id, l => l.Code);
+        var directOperatorCodes = operators.Select(l => l.Code).ToHashSet();
+
+        // Keep bookings tracked: an expired reservation is updated in the same save as the new one.
+        var activeBookings = await _context.Bookings
+            .Where(b => containerIds.Contains(b.ContainerId) && b.Status == BookingStatus.Reserved)
+            .ToDictionaryAsync(b => b.ContainerId, cancellationToken);
+        var otherOrderIds = activeBookings.Values.Where(b => b.OrderId != order.Id)
+            .Select(b => b.OrderId).Distinct().ToList();
+        var otherOrderExpiries = await _context.DeliveryOrders
+            .AsNoTracking()
+            .Where(o => otherOrderIds.Contains(o.Id))
+            .ToDictionaryAsync(o => o.Id, o => o.ExpiryDate, cancellationToken);
+
         var newBookings = new List<DeliveryOrderBooking>();
         var tenantId = !string.IsNullOrEmpty(_currentUser?.TenantId) ? _currentUser.TenantId : order.TenantId;
 
@@ -113,24 +139,16 @@ public sealed class AssignContainersToOrderCommandHandler : ICommandHandler<Assi
             }
 
             // Tra cứu hãng khai thác của container
-            var ownerCodeRecord = await _context.LineOperatorOwnerCodes
-                .FirstOrDefaultAsync(x => x.OwnerCode == container.OwnerCode, cancellationToken);
-
             string? resolvedOpCode = null;
-            if (ownerCodeRecord is not null)
+            if (ownerMappings.TryGetValue(container.OwnerCode, out var ownerCodeRecord))
             {
-                resolvedOpCode = await _context.LineOperators
-                    .Where(l => l.Id == ownerCodeRecord.LineOperatorId)
-                    .Select(l => l.Code)
-                    .FirstOrDefaultAsync(cancellationToken);
+                resolvedOpCode = operatorCodesById.GetValueOrDefault(ownerCodeRecord.LineOperatorId);
             }
             else
             {
-                var directOp = await _context.LineOperators
-                    .FirstOrDefaultAsync(l => l.Code == container.OwnerCode, cancellationToken);
-                if (directOp is not null)
+                if (directOperatorCodes.Contains(container.OwnerCode))
                 {
-                    resolvedOpCode = directOp.Code;
+                    resolvedOpCode = container.OwnerCode;
                 }
                 else if (string.Equals(container.OwnerCode, order.LineOperator, StringComparison.OrdinalIgnoreCase))
                 {
@@ -145,10 +163,7 @@ public sealed class AssignContainersToOrderCommandHandler : ICommandHandler<Assi
             }
 
             // Kiểm tra booking hiện tại của container
-            var activeBooking = await _context.Bookings
-                .FirstOrDefaultAsync(b => b.ContainerId == container.Id && b.Status == BookingStatus.Reserved, cancellationToken);
-
-            if (activeBooking is not null)
+            if (activeBookings.TryGetValue(container.Id, out var activeBooking))
             {
                 if (activeBooking.OrderId == order.Id)
                 {
@@ -157,10 +172,7 @@ public sealed class AssignContainersToOrderCommandHandler : ICommandHandler<Assi
                 }
 
                 // Kiểm tra lệnh của activeBooking xem đã hết hạn chưa
-                var otherOrder = await _context.DeliveryOrders
-                    .FirstOrDefaultAsync(o => o.Id == activeBooking.OrderId, cancellationToken);
-
-                if (otherOrder is not null && otherOrder.ExpiryDate < utcNow)
+                if (otherOrderExpiries.TryGetValue(activeBooking.OrderId, out var expiryDate) && expiryDate < utcNow)
                 {
                     activeBooking.Expire(utcNow);
                 }

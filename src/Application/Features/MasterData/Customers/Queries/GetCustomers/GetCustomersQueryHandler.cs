@@ -33,17 +33,23 @@ public sealed class GetCustomersQueryHandler : IQueryHandler<GetCustomersQuery, 
 
         var taxCodes = customers.Select(c => c.TaxCode).Distinct().ToList();
 
-        var orders = await _context.DeliveryOrders
+        var orderCounts = await _context.DeliveryOrders
             .AsNoTracking()
             .Where(o => taxCodes.Contains(o.CustomerTaxCode))
-            .Select(o => new { o.CustomerTaxCode, o.IsCompleted, o.ExpiryDate })
-            .ToListAsync(cancellationToken);
+            .GroupBy(o => o.CustomerTaxCode)
+            .Select(g => new
+            {
+                TaxCode = g.Key,
+                Total = g.Count(),
+                Active = g.Count(o => !o.IsCompleted && o.ExpiryDate >= utcNow)
+            })
+            .ToDictionaryAsync(g => g.TaxCode, cancellationToken);
 
         var list = customers.Select(c =>
         {
-            var cOrders = orders.Where(o => o.CustomerTaxCode == c.TaxCode).ToList();
-            var totalOrders = cOrders.Count;
-            var activeOrders = cOrders.Count(o => !o.IsCompleted && o.ExpiryDate >= utcNow);
+            orderCounts.TryGetValue(c.TaxCode, out var stats);
+            var totalOrders = stats?.Total ?? 0;
+            var activeOrders = stats?.Active ?? 0;
             return new CustomerDto(c.Id, c.TaxCode, c.Name, c.IsActive, totalOrders, activeOrders);
         }).ToList();
 
